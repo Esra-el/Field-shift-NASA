@@ -12,26 +12,18 @@
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
   <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css" />
-  <link rel="stylesheet" href="/css/site.css" />
+  <link rel="stylesheet" href="/css/site.css?v=2" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
 <body>
   <!-- Menu pilule flottant -->
   <header class="s-nav" id="top">
     <a class="s-brand" href="#top"><span class="s-logo"><iconify-icon icon="lucide:sprout" width="18" height="18"></iconify-icon></span>Field Shift</a>
-    <nav class="s-links" id="s-links">
-      <a href="#solution" data-t="s.nav.solution"></a>
-      <a href="#fonctionnement" data-t="s.nav.how"></a>
-      <a href="#donnees" data-t="s.nav.data"></a>
-      <a href="#galerie" data-t="s.nav.gallery"></a>
-      <a href="#faq" data-t="s.nav.faq"></a>
-    </nav>
     <div class="s-right">
       <div class="s-lang" role="group" aria-label="Langue · Language · Lingua">
         <button type="button" data-l="fr">FR</button><button type="button" data-l="en">EN</button><button type="button" data-l="it">IT</button>
       </div>
-      <a class="s-btn s-btn-lime s-hide-sm" href="/inicio.html"><span data-t="s.open"></span><iconify-icon icon="lucide:arrow-right" width="16" height="16"></iconify-icon></a>
-      <button class="s-burger" id="burger" aria-label="Menu" aria-expanded="false"><iconify-icon icon="lucide:menu" width="22" height="22"></iconify-icon></button>
+      <a class="s-btn s-btn-lime" href="/connexion.html"><iconify-icon icon="lucide:log-in" width="16" height="16"></iconify-icon><span data-t="s.login"></span></a>
     </div>
   </header>
 
@@ -51,7 +43,7 @@
         </figure>
         <div class="s-hero-cta reveal">
           <p data-t="s.hero.lead"></p>
-          <a class="s-btn s-btn-lime" href="/globo.html"><span data-t="s.hero.cta"></span><iconify-icon icon="lucide:arrow-right" width="16" height="16"></iconify-icon></a>
+          <a class="s-btn s-btn-lime" href="/connexion.html?next=/globo.html"><span data-t="s.hero.cta"></span><iconify-icon icon="lucide:arrow-right" width="16" height="16"></iconify-icon></a>
         </div>
       </div>
     </div>
@@ -205,8 +197,8 @@
           <p data-t="s.cta.sub"></p>
         </div>
         <div class="s-cta-btns">
-          <a class="s-btn s-btn-lime s-btn-lg" href="/globo.html"><span data-t="s.hero.cta"></span><iconify-icon icon="lucide:arrow-right" width="18" height="18"></iconify-icon></a>
-          <a class="s-btn s-btn-ghost s-btn-lg" href="/inicio.html"><span data-t="s.open"></span></a>
+          <a class="s-btn s-btn-lime s-btn-lg" href="/connexion.html?next=/globo.html"><span data-t="s.hero.cta"></span><iconify-icon icon="lucide:arrow-right" width="18" height="18"></iconify-icon></a>
+          <a class="s-btn s-btn-ghost s-btn-lg" href="/connexion.html"><span data-t="s.open"></span></a>
         </div>
       </div>
     </div>
@@ -219,7 +211,7 @@
         <p data-t="s.foot.about"></p>
       </div>
       <div class="s-foot-cols">
-        <div><b data-t="s.foot.prod"></b><a href="/globo.html" data-t="s.hero.cta"></a><a href="/inicio.html" data-t="s.open"></a><a href="#faq" data-t="s.nav.faq"></a></div>
+        <div><b data-t="s.foot.prod"></b><a href="/connexion.html?next=/globo.html" data-t="s.hero.cta"></a><a href="/connexion.html" data-t="s.open"></a><a href="#faq" data-t="s.nav.faq"></a></div>
         <div><b data-t="s.foot.data"></b><span>NASA GPM IMERG</span><span>NASA SMAP</span><span>NASA VIIRS · MODIS</span><span>NASA MERRA-2 · POWER</span></div>
       </div>
     </div>
@@ -228,6 +220,6 @@
 
   <script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
   <script src="/js/terra.js"></script>
-  <script src="/js/site.js"></script>
+  <script src="/js/site.js?v=2"></script>
 </body>
 </html>

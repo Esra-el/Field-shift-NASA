@@ -1,0 +1,40 @@
+/* Field Shift — page de connexion, dans le style du tableau de bord (sauge, citron). */
+* { box-sizing: border-box; }
+body { margin: 0; min-height: 100vh; background: #E6E7DE; color: #1D231B; font-family: "BDO Grotesk", system-ui, sans-serif; -webkit-font-smoothing: antialiased; }
+.hidden { display: none !important; }
+.lg { min-height: 100vh; display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.1fr); gap: 12px; padding: 12px; }
+.lg-card { position: relative; display: flex; flex-direction: column; justify-content: center; gap: 18px; padding: 48px clamp(24px, 6vw, 88px); border-radius: 18px; background: #F4F5EF; }
+.lg-logo { position: absolute; top: 28px; left: clamp(24px, 6vw, 88px); display: flex; align-items: center; gap: 9px; font-size: 1.2rem; font-weight: 500; letter-spacing: -.04em; color: inherit; text-decoration: none; }
+.lg-mark { width: 36px; height: 36px; border-radius: 50%; display: grid; place-items: center; border: 2px solid #1D231B; }
+.lg-lang { position: absolute; top: 28px; right: clamp(24px, 6vw, 88px); display: inline-flex; padding: 3px; border-radius: 999px; background: #E6E7DE; }
+.lg-lang button { min-width: 34px; min-height: 30px; border: 0; border-radius: 999px; background: transparent; font: inherit; font-size: .75rem; font-weight: 600; color: #4B5345; cursor: pointer; }
+.lg-lang button[aria-pressed="true"] { background: #5E6752; color: #fff; }
+.lg-card h1 { margin: 0; font-size: clamp(2rem, 3.4vw, 2.8rem); font-weight: 400; letter-spacing: -.04em; }
+.lg-sub { margin: -6px 0 6px; color: #4B5345; font-size: 1.02rem; line-height: 1.5; max-width: 30em; }
+.lg-form { display: grid; gap: 14px; max-width: 420px; }
+.lg-form label { display: grid; gap: 6px; font-size: .9rem; color: #4B5345; }
+.lg-form input { min-height: 52px; padding: 0 18px; border: 1.5px solid transparent; border-radius: 999px; background: #fff; font: inherit; font-size: 1rem; color: #1D231B; outline: none; }
+.lg-form input:focus { border-color: #5E6752; }
+.lg-err { margin: 0; color: #9A3B22; font-size: .9rem; }
+.lg-btn { display: inline-flex; align-items: center; justify-content: center; gap: 8px; min-height: 48px; padding: 0 22px; border: 0; border-radius: 999px; background: #E3F24A; color: #1D231B; font: inherit; font-size: 1rem; font-weight: 500; text-decoration: none; cursor: pointer; }
+.lg-btn:hover { background: #D3E23A; }
+.lg-btn-full { width: 100%; min-height: 54px; margin-top: 4px; }
+.lg-known { display: flex; align-items: center; gap: 12px; max-width: 420px; padding: 12px 12px 12px 14px; border-radius: 18px; background: #E6E7DE; }
+.lg-known div { flex: 1; min-width: 0; display: grid; }
+.lg-known small { font-size: .78rem; color: #4B5345; }
+.lg-known b { font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lg-avatar { width: 38px; height: 38px; flex: none; border-radius: 50%; display: grid; place-items: center; background: #E3F24A; }
+.lg-note { display: flex; gap: 8px; align-items: flex-start; max-width: 420px; margin: 0; font-size: .84rem; line-height: 1.45; color: #6B7263; }
+.lg-note iconify-icon { margin-top: 2px; }
+.lg-back { display: inline-flex; align-items: center; gap: 6px; font-size: .9rem; color: #4B5345; text-decoration: none; }
+.lg-back:hover { color: #1D231B; }
+.lg-visual { position: relative; border-radius: 18px; overflow: hidden; background: #33452A; }
+.lg-visual img { width: 100%; height: 100%; object-fit: cover; }
+.lg-visual-txt { position: absolute; left: 24px; right: 24px; bottom: 24px; display: grid; gap: 4px; padding: 16px 18px; border-radius: 18px; background: rgba(229,231,221,.9); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px); }
+.lg-visual-txt b { font-size: 1.15rem; font-weight: 500; letter-spacing: -.02em; }
+.lg-visual-txt span { color: #4B5345; font-size: .92rem; }
+@media (max-width: 860px) {
+  .lg { grid-template-columns: 1fr; }
+  .lg-visual { display: none; }
+  .lg-card { padding-top: 96px; min-height: calc(100vh - 24px); justify-content: flex-start; }
+}

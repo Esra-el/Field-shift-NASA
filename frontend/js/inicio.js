@@ -1,155 +1,297 @@
-/* Field Shift — Accueil : globe d'ambiance + 3 chiffres + calendrier + focus de la semaine. */
+/* Field Shift — tableau de bord : la parcelle vue du satellite + chiffres réels (API en direct). */
 (function () {
   const T = Terra.t;
-  let reco = null;
+  const $ = (id) => document.getElementById(id);
+  let reco = null, map = null, sigView = "now", chartView = "soil";
 
-  /* ---------- Globe d'ambiance : vraie planète satellite qui tourne, puis se pose sur la parcelle ---------- */
-  function heroGlobe(lat, lng) {
-    const el = document.getElementById("hero-globe");
-    if (!window.maplibregl || !Terra.hasWebGL()) return;
-    const map = new maplibregl.Map({
-      container: el, style: Terra.satStyle(false), center: [lng + 70, lat - 5], zoom: el.clientWidth < 500 ? 0.9 : 1.35,
-      interactive: false, attributionControl: { compact: true }, renderWorldCopies: false,
-    });
-    map.on("load", () => {
-      const d = document.createElement("div");
-      d.className = "pin";
-      d.innerHTML = `<span class="dot"><i></i></span>`;
-      new maplibregl.Marker({ element: d }).setLngLat([lng, lat]).addTo(map);
-      // Arrivée : la planète tourne jusqu'à la parcelle, puis continue doucement.
-      map.easeTo({ center: [lng, lat], duration: 3600, easing: (t) => 1 - Math.pow(1 - t, 3) });
-      map.once("moveend", () => Terra.spinGlobe(map, { speed: 2.5 }));
-    });
-    new ResizeObserver(() => map.resize()).observe(el);
-  }
-
-  /* ---------- 3 chiffres ---------- */
   FSI18N.extend({
-    fr: { "home.photos": "Photos : Wikimedia Commons (domaine public, CC0, CC BY)", "sc.covered": "des besoins en eau couverts", "sc.have": "Disponible", "sc.need": "Besoin", "sc.missing": "Il manque {n} mm d'eau pour finir la saison.", "sc.surplus": "{n} mm de marge : l'eau suffit pour la saison.", "rp.window": "Fenêtre de semis" },
-    en: { "home.photos": "Photos: Wikimedia Commons (public domain, CC0, CC BY)", "sc.covered": "of water needs covered", "sc.have": "Available", "sc.need": "Needed", "sc.missing": "{n} mm of water missing to finish the season.", "sc.surplus": "{n} mm to spare: water is enough for the season.", "rp.window": "Planting window" },
-    it: { "home.photos": "Foto: Wikimedia Commons (pubblico dominio, CC0, CC BY)", "sc.covered": "del fabbisogno d'acqua coperto", "sc.have": "Disponibile", "sc.need": "Fabbisogno", "sc.missing": "Mancano {n} mm d'acqua per finire la stagione.", "sc.surplus": "{n} mm di margine: l'acqua basta per la stagione.", "rp.window": "Finestra di semina" },
+    fr: {
+      "d.back": "Retour au site", "d.rain16": "Pluie prévue 16 j", "d.location": "Localisation", "d.full": "Plein écran",
+      "d.risk": "Risque sécheresse", "d.ndvi": "NDVI actuel", "d.soil": "Humidité du sol",
+      "d.water_cov": "Besoin en eau couvert", "d.details": "Voir le détail", "d.new": "Nouvelle analyse",
+      "d.ask_ph": "Comment puis-je t'aider ?", "d.send": "Envoyer", "d.mic": "Parler",
+      "d.signals": "Signaux du champ", "d.this_week": "Cette semaine", "d.tab_now": "Actuel", "d.tab_norm": "Il y a 2 mois",
+      "d.rain_vs": "Pluie vs normale", "d.soil_row": "Humidité du sol", "d.veg_row": "Végétation",
+      "d.veg": "Végétation (NDVI)", "d.w4": "Il y a 4 sem.", "d.wnow": "Cette semaine", "d.trend": "Tendance",
+      "d.soil_chart": "Humidité du sol", "d.rain_chart": "Pluie prévue", "d.8w": "8 semaines", "d.16d": "16 prochains jours",
+      "d.tab_8w": "8 sem.", "d.tab_16d": "16 jours", "d.max": "Max",
+      "d.water_save": "−{n} % d'eau",
+      "d.adv.plant_now": "Les conditions sont <span class=\"soft\">idéales pour semer</span> {crop} <span class=\"soft\">maintenant.</span>",
+      "d.adv.wait": "Mieux vaut <span class=\"soft\">attendre la pluie</span> avant de semer {crop}.",
+      "d.adv.switch_crop": "Trop sec pour {crop} : <span class=\"soft\">choisissez une culture</span> plus résistante.",
+      "d.credit": "Imagerie © Esri, Maxar · Données NASA POWER, MODIS, Open-Meteo",
+    },
+    en: {
+      "d.back": "Back to site", "d.rain16": "Rain next 16 d", "d.location": "Location", "d.full": "Full screen",
+      "d.risk": "Drought risk", "d.ndvi": "Current NDVI", "d.soil": "Soil moisture",
+      "d.water_cov": "Water need covered", "d.details": "See details", "d.new": "New analysis",
+      "d.ask_ph": "How can I help you?", "d.send": "Send", "d.mic": "Speak",
+      "d.signals": "Field signals", "d.this_week": "This week", "d.tab_now": "Now", "d.tab_norm": "2 months ago",
+      "d.rain_vs": "Rain vs normal", "d.soil_row": "Soil moisture", "d.veg_row": "Vegetation",
+      "d.veg": "Vegetation (NDVI)", "d.w4": "4 weeks ago", "d.wnow": "This week", "d.trend": "Trend",
+      "d.soil_chart": "Soil moisture", "d.rain_chart": "Rain forecast", "d.8w": "8 weeks", "d.16d": "Next 16 days",
+      "d.tab_8w": "8 wks", "d.tab_16d": "16 days", "d.max": "Max",
+      "d.water_save": "−{n}% water",
+      "d.adv.plant_now": "Conditions are <span class=\"soft\">ideal for planting</span> {crop} <span class=\"soft\">now.</span>",
+      "d.adv.wait": "Better <span class=\"soft\">wait for the rain</span> before planting {crop}.",
+      "d.adv.switch_crop": "Too dry for {crop}: <span class=\"soft\">pick a more resilient</span> crop.",
+      "d.credit": "Imagery © Esri, Maxar · Data NASA POWER, MODIS, Open-Meteo",
+    },
+    it: {
+      "d.back": "Torna al sito", "d.rain16": "Pioggia 16 gg", "d.location": "Località", "d.full": "Schermo intero",
+      "d.risk": "Rischio siccità", "d.ndvi": "NDVI attuale", "d.soil": "Umidità del suolo",
+      "d.water_cov": "Fabbisogno d'acqua coperto", "d.details": "Vedi dettagli", "d.new": "Nuova analisi",
+      "d.ask_ph": "Come posso aiutarti?", "d.send": "Invia", "d.mic": "Parla",
+      "d.signals": "Segnali del campo", "d.this_week": "Questa settimana", "d.tab_now": "Ora", "d.tab_norm": "2 mesi fa",
+      "d.rain_vs": "Pioggia vs normale", "d.soil_row": "Umidità del suolo", "d.veg_row": "Vegetazione",
+      "d.veg": "Vegetazione (NDVI)", "d.w4": "4 sett. fa", "d.wnow": "Questa sett.", "d.trend": "Tendenza",
+      "d.soil_chart": "Umidità del suolo", "d.rain_chart": "Pioggia prevista", "d.8w": "8 settimane", "d.16d": "Prossimi 16 giorni",
+      "d.tab_8w": "8 sett.", "d.tab_16d": "16 giorni", "d.max": "Max",
+      "d.water_save": "−{n}% d'acqua",
+      "d.adv.plant_now": "Le condizioni sono <span class=\"soft\">ideali per seminare</span> {crop} <span class=\"soft\">ora.</span>",
+      "d.adv.wait": "Meglio <span class=\"soft\">aspettare la pioggia</span> prima di seminare {crop}.",
+      "d.adv.switch_crop": "Troppo secco per {crop}: <span class=\"soft\">scegli una coltura</span> più resistente.",
+      "d.credit": "Immagini © Esri, Maxar · Dati NASA POWER, MODIS, Open-Meteo",
+    },
   });
 
-  /* Arc de cercle (jauge) : de a0 à a1 en « points » 0–100. */
-  function arc(p0, p1) {
-    const cx = 110, cy = 112, r = 88;
-    const pt = (p) => { const a = Math.PI * (1 - p / 100); return [cx + r * Math.cos(a), cy - r * Math.sin(a)]; };
-    const [x0, y0] = pt(p0), [x1, y1] = pt(p1);
-    return `M ${x0.toFixed(1)} ${y0.toFixed(1)} A ${r} ${r} 0 0 1 ${x1.toFixed(1)} ${y1.toFixed(1)}`;
-  }
-  document.getElementById("seg-low").setAttribute("d", arc(1.5, 38.5));
-  document.getElementById("seg-mod").setAttribute("d", arc(41.5, 68.5));
-  document.getElementById("seg-high").setAttribute("d", arc(71.5, 98.5));
-
-  function paintStats(r) {
-    const rc = Terra.riskClass(r.risk_level);
-    const rb = document.getElementById("s-risk-badge");
-    rb.className = "badge " + rc; rb.textContent = T("risk." + rc);
-    document.getElementById("s-risk").textContent = r.risk_score;
-    const ang = -90 + Math.max(0, Math.min(100, r.risk_score)) * 1.8;
-    requestAnimationFrame(() => setTimeout(() => { document.getElementById("needle").style.transform = `rotate(${ang}deg)`; }, 80));
-    document.querySelectorAll(".semi-seg").forEach((p) => p.classList.toggle("is-on", p.classList.contains({ low: "low", moderate: "mod", high: "high" }[rc])));
-    document.getElementById("s-risk-d").textContent = T("risk." + rc + ".d");
-
-    const wb = r.water_budget || {};
-    const need = wb.crop_water_need_mm || 0, have = wb.available_water_mm || 0;
-    const max = Math.max(need, have, 1);
-    const wcls = Terra.wsClass(wb.status);
-    const wbB = document.getElementById("s-water-badge");
-    wbB.className = "badge " + wcls; wbB.textContent = T("ws." + wb.status);
-    document.getElementById("s-water").textContent = wb.coverage_pct;
-    document.getElementById("s-have").textContent = have + " mm";
-    document.getElementById("s-need").textContent = need + " mm";
-    const bar = document.getElementById("s-water-bar");
-    bar.className = "wbar-fill " + wcls;
-    bar.style.width = "0";
-    requestAnimationFrame(() => setTimeout(() => { bar.style.width = (have / max) * 100 + "%"; }, 80));
-    document.getElementById("s-water-goal").style.left = (need / max) * 100 + "%";
-    const gap = need - have;
-    document.getElementById("s-water-d").textContent = gap > 0 ? T("sc.missing", { n: gap }) : T("sc.surplus", { n: -gap });
-
+  /* ---------- Images (photos libres du projet) ---------- */
+  const IMG = { maize: "cornfield.jpg", beans: "seedlings.jpg", sorghum: "rows.jpg", millet: "rows.jpg", cover: "mulch.jpg", other: "seedlings.jpg" };
+  function cropImg(word) {
+    const w = String(word || "").toLowerCase();
+    if (/ma[iï]s|maize|corn|maíz/.test(w)) return IMG.maize;
+    if (/haricot|bean|fagiol|frijol|légum|legum|niébé/.test(w)) return IMG.beans;
+    if (/sorgh|sorgo|mil|miglio|millet|céréale|cereal|cereale/.test(w)) return IMG.sorghum;
+    if (/couvert|cover|copertura|jachère|fallow|maggese/.test(w)) return IMG.cover;
+    return IMG.other;
   }
 
-  /* ---------- Calendrier ---------- */
-  const STAGE_ICON = { planting: "lucide:sprout", growing: "lucide:leaf", flowering: "lucide:flower-2", harvest: "lucide:wheat" };
-  function paintCalendar(r) {
-    const cal = document.getElementById("cal");
-    const now = new Date();
-    const start = new Date(now.getFullYear(), now.getMonth(), 1);
-    const months = 6;
-    const end = new Date(now.getFullYear(), now.getMonth() + months, 1);
-    const span = end - start;
-    const pct = (iso) => Math.max(0, Math.min(100, ((new Date(iso + "T12:00:00") - start) / span) * 100));
-    const loc = FSI18N.locale;
+  /* ---------- Carte satellite de la parcelle ---------- */
+  function initMap(lat, lng) {
+    if (!window.maplibregl || !Terra.hasWebGL()) return;
+    const style = Terra.satStyle(false);
+    style.projection = { type: "mercator" };
+    delete style.sky;
+    map = new maplibregl.Map({
+      container: "d-map", style, center: [lng, lat], zoom: 15.4, attributionControl: false,
+      scrollZoom: false, dragRotate: false, pitchWithRotate: false, touchZoomRotate: false, fadeDuration: 0,
+    });
+    map.on("load", drawContours);
+    map.on("move", drawContours);
+    new ResizeObserver(() => { map.resize(); drawContours(); }).observe($("d-map"));
+    $("d-zin").onclick = () => map.zoomIn();
+    $("d-zout").onclick = () => map.zoomOut();
+  }
+  $("d-full").onclick = () => {
+    const el = document.querySelector(".d-main");
+    if (document.fullscreenElement) document.exitFullscreen(); else if (el.requestFullscreen) el.requestFullscreen();
+  };
 
-    let head = `<div class="cal-months" style="--cols:${months}"><span></span>`;
-    for (let i = 0; i < months; i++) {
-      const d = new Date(start.getFullYear(), start.getMonth() + i, 1);
-      head += `<span class="${i === 0 ? "is-now" : ""}">${d.toLocaleDateString(loc, { month: "short" }).replace(".", "")}</span>`;
+  /* Courbes de niveau autour de la parcelle (repère visuel, comme un relevé de terrain). */
+  function rings(cx, cy, base, n, seed) {
+    let out = "";
+    for (let k = 1; k <= n; k++) {
+      const r = base * k;
+      let d = "";
+      for (let i = 0; i <= 72; i++) {
+        const a = (i / 72) * Math.PI * 2;
+        const w = 1 + 0.09 * Math.sin(3 * a + seed) + 0.05 * Math.sin(5 * a + seed * 2) + 0.03 * k * Math.sin(2 * a + seed / 2) / n;
+        d += (i ? "L" : "M") + (cx + Math.cos(a) * r * w).toFixed(1) + " " + (cy + Math.sin(a) * r * w * 0.82).toFixed(1);
+      }
+      out += `<path d="${d}Z"/>`;
     }
-    head += `</div>`;
-
-    const stages = (r.season && r.season.stages) || [];
-    const rows = stages.map((s) => {
-      const l = pct(s.start), w = Math.max(1.5, pct(s.end) - l);
-      return `<div class="cal-row"><span class="lab"><iconify-icon icon="${STAGE_ICON[s.stage]}" width="18" height="18"></iconify-icon>${T("stage." + s.stage)}</span>
-        <div class="cal-track"><span class="cal-seg ${s.stage}" style="left:${l}%;width:${w}%" title="${Terra.fmtDate(s.start)} – ${Terra.fmtDate(s.end)}"></span></div></div>`;
-    }).join("");
-    const dry = (r.season && r.season.dry_spells) || [];
-    const dryRow = dry.length ? `<div class="cal-row"><span class="lab"><iconify-icon icon="lucide:triangle-alert" width="18" height="18" style="color:var(--warn)"></iconify-icon>${T("stage.dry")}</span>
-      <div class="cal-track">${dry.map((d) => { const l = pct(d.start); return `<span class="cal-seg dry ${d.level}" style="left:${l}%;width:${Math.max(1.5, pct(d.end) - l)}%"></span>`; }).join("")}</div></div>` : "";
-
-    const today = pct(now.toISOString().slice(0, 10));
-    cal.style.setProperty("--cols", months);
-    cal.innerHTML = head + `<div style="position:relative">${rows}${dryRow}
-      <div style="position:absolute;inset:0 0 0 var(--lab-w,110px);pointer-events:none" class="cal-today-wrap"><span class="cal-today" style="left:${today}%"><b>${T("today")}</b></span></div></div>`;
-    const lab = window.matchMedia("(max-width:560px)").matches ? "74px" : "110px";
-    cal.querySelector(".cal-today-wrap").style.setProperty("--lab-w", lab);
-
-    document.getElementById("cal-legend").innerHTML = [
-      ["planting", "var(--forest-600)"], ["growing", "var(--leaf-300)"], ["flowering", "#E9C46A"], ["harvest", "var(--soil-500)"],
-    ].map(([k, c]) => `<span><i style="background:${c}"></i>${T("stage." + k)}</span>`).join("") +
-      (dry.length ? `<span><i style="background:repeating-linear-gradient(135deg,var(--warn-bg) 0 3px,#F6D9B6 3px 6px);border:1px solid var(--warn)"></i>${T("stage.dry")}</span>` : "");
+    return out + `<circle class="hub" cx="${cx}" cy="${cy}" r="11"/><circle class="hub-dot" cx="${cx}" cy="${cy}" r="4"/>`;
+  }
+  function drawContours() {
+    const svg = $("d-contours");
+    const w = svg.clientWidth, h = svg.clientHeight;
+    if (!w || !h) return;
+    let main = [w * 0.55, h * 0.47];
+    if (map) { const p = map.project(map.getCenter()); main = [p.x, p.y]; }
+    const s = Math.min(w, h);
+    svg.setAttribute("viewBox", `0 0 ${w} ${h}`);
+    svg.innerHTML = rings(main[0], main[1], s * 0.022, 8, 1.3) + rings(w * 0.66, h * 0.17, s * 0.016, 7, 2.6) + rings(w * 0.2, h * 0.52, s * 0.015, 6, 4.1);
   }
 
-  /* ---------- Focus ---------- */
-  const FOCUS_IMG = { prepare_soil: "mulch.jpg", monitor_rain: "rain.jpg", consider_rotation: "cornfield.jpg", plant_now: "seedlings.jpg" };
-  const FOCUS_ICON = { prepare_soil: "lucide:shovel", monitor_rain: "lucide:cloud-rain", consider_rotation: "lucide:refresh-cw", plant_now: "lucide:sprout" };
-  function paintFocus(r) {
-    let f = r.week_focus;
-    if (!FOCUS_ICON[f]) f = r.planting_timeline && r.planting_timeline.recommendation === "plant_now" ? "plant_now" : "monitor_rain";
-    document.getElementById("focus-text").textContent = T("focus." + f);
-    document.getElementById("focus-why").textContent = T("focus.why." + f);
-    document.getElementById("focus-icon").setAttribute("icon", FOCUS_ICON[f]);
-    document.getElementById("focus-card").style.setProperty("--bg", `url('/img/photos/${FOCUS_IMG[f]}')`);
-    const pt = r.planting_timeline || {};
-    document.getElementById("focus-win").innerHTML = `<iconify-icon icon="lucide:calendar-days" width="16" height="16"></iconify-icon>${T("rp.window")} : <b>${Terra.fmtWindow(pt.best_window)}</b>`;
-  }
-
-  function paintField() {
+  /* ---------- En-tête ---------- */
+  function paintHead() {
     const place = Terra.getPlace();
-    const p = FSStore.getProfile();
-    document.getElementById("field-name").textContent = place && place.name ? place.name : T("home.example");
-    document.getElementById("field-crop").textContent = Terra.cropLabel(p || {});
+    const f = FSStore.buildPayload();
+    const name = place && place.name ? place.name : T("home.example");
+    $("d-field").textContent = name.split(",")[0];
+    const lat = f.latitude, lng = f.longitude;
+    $("d-coords").textContent = `${Math.abs(lat).toFixed(4)}°${lat >= 0 ? "N" : "S"},\n${Math.abs(lng).toFixed(4)}°${lng >= 0 ? "E" : "W"}`;
+    const parts = name.split(",").map((s) => s.trim()).filter(Boolean);
+    $("d-place").textContent = parts.length > 1 ? parts[parts.length - 1] : place && place.name ? parts[0] : `${lat.toFixed(2)}°, ${lng.toFixed(2)}°`;
   }
 
-  function paintAll() { paintField(); if (reco) { paintStats(reco); paintCalendar(reco); paintFocus(reco); } }
+  /* ---------- Chiffres ---------- */
+  function ndviNow(r) {
+    const n = r.nasa_indicators || {};
+    if (n.ndvi != null) return n.ndvi;
+    const s = (r.series && r.series.ndvi) || [];
+    return s.length ? s[s.length - 1] : null;
+  }
+  function paintStats(r) {
+    const n = r.nasa_indicators || {}, wb = r.water_budget || {};
+    $("d-risk").textContent = r.risk_score;
+    const nd = ndviNow(r);
+    $("d-ndvi").textContent = nd != null ? Number(nd).toFixed(2) : "—";
+    $("d-soil").textContent = n.soil_moisture != null ? Math.round(n.soil_moisture * 100) : "—";
+    const fc = r.forecast || [];
+    const r16 = n.forecast_rain_16d_mm != null ? n.forecast_rain_16d_mm : fc.reduce((a, x) => a + (x.rain_mm || 0), 0);
+    $("d-rain16").textContent = fc.length || n.forecast_rain_16d_mm != null ? Math.round(r16) + " mm" : "—";
+    $("d-water").textContent = wb.coverage_pct != null ? wb.coverage_pct : "—";
+    const cls = Terra.wsClass(wb.status);
+    $("d-water-pill").className = "d-pill " + (cls === "ok" ? "" : cls);
+    $("d-water-pill").textContent = T("ws." + wb.status);
+    const bad = (r.risk_components || []).filter((c) => c.level === "bad").length;
+    if (window.FSSide) FSSide.setAlerts(bad);
+  }
+
+  /* ---------- Carte culture : culture actuelle + 3 rotations conseillées ---------- */
+  function paintCrop(r) {
+    const p = FSStore.getProfile() || {};
+    $("d-crop-img").style.backgroundImage = `url('/img/photos/${cropImg(p.crop_label || p.crop || "maize")}')`;
+    const rots = (r.rotations || []).slice(0, 3);
+    $("d-crop-grid").innerHTML = rots.map((rt) => {
+      const first = String(rt.name || "").split(/→|->/)[0].replace(/\(.*\)/, "").trim();
+      const pct = rt.water_saving_pct != null ? rt.water_saving_pct : { high: 35, medium: 20, low: 5 }[rt.water_saving] || 0;
+      return `<a class="d-tile" href="/globo.html#rotations" title="${rt.name}"><i style="background-image:url('/img/photos/${cropImg(first)}')"></i>
+        <span>${first}<small>${T("d.water_save", { n: pct })}</small></span></a>`;
+    }).join("") + `<a class="d-tile add" href="/globo.html"><b>+</b>${T("d.new")}</a>`;
+  }
+
+  /* ---------- Conseil ---------- */
+  function paintAdvice(r) {
+    const pt = r.planting_timeline || {};
+    const key = { plant_now: "plant_now", wait: "wait", switch_crop: "switch_crop" }[pt.recommendation] || "wait";
+    const crop = Terra.cropLabel(FSStore.getProfile() || {});
+    $("d-advice").innerHTML = T("d.adv." + key).replace("{crop}", crop);
+  }
+
+  /* ---------- Signaux (barres segmentées) ---------- */
+  function seg(pct) {
+    const v = Math.max(0, Math.min(100, pct)) / 12.5;
+    return `<div class="d-seg">${Array.from({ length: 8 }, (_, i) => `<i class="${v >= i + 1 ? "on" : v > i + 0.4 ? "half" : ""}"></i>`).join("")}</div>`;
+  }
+  function paintBars(r) {
+    const n = r.nasa_indicators || {}, s = r.series || {};
+    let rain, soil, veg;
+    if (sigView === "now") {
+      rain = n.rainfall_normal_mm ? (n.rainfall_60d_mm / n.rainfall_normal_mm) * 100 : 0;
+      soil = (n.soil_moisture || 0) * 100;
+      veg = (ndviNow(r) || 0) * 100;
+    } else {
+      const rn = (s.rainfall_normal_mm || [])[0] || 0;
+      rain = rn ? (((s.rainfall_mm || [])[0] || 0) / rn) * 100 : 0;
+      soil = ((s.soil_moisture || [])[0] || 0) * 100;
+      veg = ((s.ndvi || [])[0] || 0) * 100;
+    }
+    const rows = [["d.rain_vs", rain], ["d.soil_row", soil], ["d.veg_row", veg]];
+    $("d-bars").innerHTML = rows.map(([k, v]) => `<div class="d-bar-row"><header><span>${T(k)}</span><b>${Math.round(v)}<small>/100</small></b></header>${seg(v)}</div>`).join("");
+  }
+
+  /* ---------- Végétation : trois cercles ---------- */
+  function paintCircles(r) {
+    const nd = (r.series && r.series.ndvi) || [];
+    const now = ndviNow(r);
+    const w4 = nd.length >= 5 ? nd[nd.length - 5] : null;
+    const tr = (r.nasa_indicators || {}).ndvi_trend;
+    const f = (v) => (v == null ? "—" : "~" + Number(v).toFixed(2));
+    $("d-circles").innerHTML = `
+      <div class="d-circ c1"><b>${f(w4)}</b><small>${T("d.w4")}</small></div>
+      <div class="d-circ c2"><b>${f(now)}</b><small>${T("d.wnow")}</small></div>
+      <div class="d-circ c3"><b>${tr == null ? "—" : (tr > 0 ? "+" : "") + Number(tr).toFixed(2)}</b><small>${T("d.trend")}</small></div>`;
+  }
+
+  /* ---------- Courbe : humidité du sol (8 sem.) ou pluie prévue (16 j) ---------- */
+  function paintChart(r) {
+    const el = $("d-chart");
+    let vals, labels, unit, title, sub;
+    if (chartView === "soil") {
+      const s = r.series || {};
+      vals = (s.soil_moisture || []).map(Number); labels = s.labels || [];
+      unit = ""; title = "d.soil_chart"; sub = "d.8w";
+    } else {
+      const fc = r.forecast || [];
+      vals = fc.map((x) => x.rain_mm || 0);
+      labels = fc.map((x) => new Date(x.date + "T12:00:00").toLocaleDateString(FSI18N.locale, { day: "numeric", month: "short" }).replace(".", ""));
+      unit = " mm"; title = "d.rain_chart"; sub = "d.16d";
+    }
+    $("ch-title").textContent = T(title); $("ch-sub").textContent = T(sub);
+    if (!vals.length) { el.innerHTML = ""; return; }
+    const W = el.clientWidth || 360, H = el.clientHeight || 140, padB = 22, padT = 26;
+    const mx = Math.max(...vals), mn = Math.min(...vals);
+    const span = mx - mn || 1;
+    const x = (i) => (vals.length === 1 ? W / 2 : (i / (vals.length - 1)) * W);
+    const y = (v) => padT + (1 - (v - mn) / span) * (H - padT - padB - 10);
+    const pts = vals.map((v, i) => [x(i), y(v)]);
+    const line = pts.map((p, i) => (i ? "L" : "M") + p[0].toFixed(1) + " " + p[1].toFixed(1)).join(" ");
+    const area = line + ` L ${W} ${H - padB} L 0 ${H - padB} Z`;
+    const iMax = vals.indexOf(mx);
+    const step = Math.ceil(labels.length / 6);
+    const xl = labels.map((l, i) => (i % step === 0 || i === iMax ? `<text class="xl ${i === iMax ? "on" : ""}" x="${Math.min(W - 18, Math.max(18, x(i)))}" y="${H - 6}" text-anchor="middle">${l}</text>` : "")).join("");
+    el.innerHTML = `<svg viewBox="0 0 ${W} ${H}" preserveAspectRatio="none">
+      <defs><linearGradient id="d-grad" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2E3A2F" stop-opacity=".28"/><stop offset="1" stop-color="#2E3A2F" stop-opacity="0"/></linearGradient></defs>
+      <path class="ar" d="${area}"/><path class="ln" d="${line}"/>
+      <line class="vl" x1="${pts[iMax][0]}" y1="${pts[iMax][1]}" x2="${pts[iMax][0]}" y2="${H - padB}"/>
+      <circle class="pk" cx="${pts[iMax][0]}" cy="${pts[iMax][1]}" r="3.5"/>${xl}</svg>
+      <span class="d-tip" style="left:${Math.min(W - 50, Math.max(50, pts[iMax][0]))}px;top:${pts[iMax][1]}px">${T("d.max")}<b>${chartView === "soil" ? mx.toFixed(2) : Math.round(mx) + unit}</b></span>`;
+  }
+
+  /* ---------- Onglets, barre IA, micro ---------- */
+  function tabs(id, cb) {
+    $(id).addEventListener("click", (e) => {
+      const b = e.target.closest("button[data-v]");
+      if (!b) return;
+      $(id).querySelectorAll("button").forEach((x) => x.classList.toggle("on", x === b));
+      cb(b.dataset.v);
+    });
+  }
+  tabs("sig-tabs", (v) => { sigView = v; if (reco) paintBars(reco); });
+  tabs("ch-tabs", (v) => { chartView = v; if (reco) paintChart(reco); });
+
+  $("d-ask").addEventListener("submit", (e) => {
+    e.preventDefault();
+    const q = $("d-ask-in").value.trim();
+    if (!window.FSAssistant) return;
+    if (q) { FSAssistant.ask(q); $("d-ask-in").value = ""; } else FSAssistant.open();
+  });
+  const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+  $("d-mic").onclick = () => {
+    if (!SR) { $("d-ask-in").focus(); return; }
+    const rec = new SR();
+    rec.lang = FSI18N.locale; rec.interimResults = false;
+    $("d-mic").classList.add("rec");
+    rec.onresult = (e) => { $("d-ask-in").value = e.results[0][0].transcript; $("d-ask").requestSubmit(); };
+    rec.onend = () => $("d-mic").classList.remove("rec");
+    rec.start();
+  };
+
+  function paintAll() {
+    paintHead();
+    if (!reco) return;
+    paintStats(reco); paintCrop(reco); paintAdvice(reco); paintBars(reco); paintCircles(reco); paintChart(reco);
+  }
 
   async function load() {
-    paintField();
     const payload = FSStore.buildPayload();
-    heroGlobe(payload.latitude, payload.longitude);
+    paintHead();
+    initMap(payload.latitude, payload.longitude);
+    reco = FSStore.getLastReco();
+    if (reco) paintAll();
     try {
       const { data } = await FSApi.getRecommendation(payload);
       reco = data;
     } catch (e) {
-      reco = FSStore.getLastReco();
       if (!reco) { Terra.toast(T("an.error")); return; }
     }
     paintAll();
     if (window.FSAssistant && reco) FSAssistant.setContext(reco);
   }
 
+  window.addEventListener("resize", () => { if (reco) paintChart(reco); });
   document.addEventListener("DOMContentLoaded", load);
   document.addEventListener("fs:langchange", async () => {
     paintAll();

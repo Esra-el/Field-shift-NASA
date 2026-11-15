@@ -3,7 +3,7 @@
   FSI18N.extend({
     fr: {
       "s.nav.solution": "La solution", "s.nav.how": "Comment ça marche", "s.nav.data": "Données NASA", "s.nav.gallery": "Galerie", "s.nav.faq": "FAQ",
-      "s.open": "Ouvrir l'application",
+      "s.open": "Ouvrir l'application", "s.login": "Se connecter",
       "s.hero.kicker": "Aide à la décision par satellite",
       "s.hero.title": "Semez au bon moment, avant la sécheresse",
       "s.hero.lead": "Field Shift lit chaque semaine les satellites de la NASA au-dessus de votre parcelle et vous dit, en mots simples, quand semer, quoi semer et combien d'eau vous aurez.",
@@ -69,7 +69,7 @@
     },
     en: {
       "s.nav.solution": "Solution", "s.nav.how": "How it works", "s.nav.data": "NASA data", "s.nav.gallery": "Gallery", "s.nav.faq": "FAQ",
-      "s.open": "Open the app",
+      "s.open": "Open the app", "s.login": "Sign in",
       "s.hero.kicker": "Satellite decision support",
       "s.hero.title": "Plant at the right time, before the drought",
       "s.hero.lead": "Every week Field Shift reads NASA satellites over your field and tells you, in plain words, when to plant, what to plant and how much water you will have.",
@@ -135,7 +135,7 @@
     },
     it: {
       "s.nav.solution": "La soluzione", "s.nav.how": "Come funziona", "s.nav.data": "Dati NASA", "s.nav.gallery": "Galleria", "s.nav.faq": "FAQ",
-      "s.open": "Apri l'app",
+      "s.open": "Apri l'app", "s.login": "Accedi",
       "s.hero.kicker": "Supporto decisionale satellitare",
       "s.hero.title": "Semina al momento giusto, prima della siccità",
       "s.hero.lead": "Ogni settimana Field Shift legge i satelliti NASA sopra il tuo campo e ti dice, con parole semplici, quando seminare, cosa seminare e quanta acqua avrai.",
@@ -213,13 +213,6 @@
     const b = e.target.closest("button[data-l]"); if (b) FSI18N.setLang(b.dataset.l);
   });
   document.addEventListener("fs:langchange", paintLang);
-
-  /* Menu mobile */
-  $("burger").addEventListener("click", () => {
-    const open = $("s-links").classList.toggle("is-open");
-    $("burger").setAttribute("aria-expanded", open);
-  });
-  $("s-links").addEventListener("click", (e) => { if (e.target.closest("a")) $("s-links").classList.remove("is-open"); });
 
   /* Apparitions + compteurs */
   const io = new IntersectionObserver((entries) => {
