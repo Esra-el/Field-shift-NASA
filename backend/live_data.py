@@ -78,10 +78,96 @@ def _open_meteo(lat: float, lon: float) -> dict[str, Any]:
     return _get("https://api.open-meteo.com/v1/forecast", {
         "latitude": round(lat, 4), "longitude": round(lon, 4),
         "current": "temperature_2m,wind_speed_10m,wind_direction_10m,precipitation,relative_humidity_2m",
-        "daily": "precipitation_sum,et0_fao_evapotranspiration,temperature_2m_mean,temperature_2m_max,shortwave_radiation_sum",
+        "daily": "precipitation_sum,et0_fao_evapotranspiration,temperature_2m_mean,temperature_2m_max,"
+                 "temperature_2m_min,shortwave_radiation_sum",
         "hourly": "soil_moisture_9_to_27cm",
         "past_days": 60, "forecast_days": 16, "timezone": "auto",
     })
+
+
+# Normale de pluie ERA5 (1991-2020) via l'archive Open-Meteo : même famille de modèles
+# que la pluie récente Open-Meteo, donc « pluie des 60 j vs normale » se compare à
+# armes égales. (NASA POWER donnait ~2x la pluie des autres sources sous les tropiques.)
+_ERA5: dict[str, tuple[float, dict[str, Any]]] = {}
+_ERA5_TTL = 30 * 86400
+
+
+def _era5_normal(lat: float, lon: float) -> dict[str, Any]:
+    key = f"{round(lat, 1)}:{round(lon, 1)}"
+    hit = _ERA5.get(key)
+    if hit and time.time() - hit[0] < _ERA5_TTL:
+        return hit[1]
+    d = _get("https://archive-api.open-meteo.com/v1/archive", {
+        "latitude": round(lat, 4), "longitude": round(lon, 4),
+        "start_date": "1991-01-01", "end_date": "2020-12-31",
+        "daily": "precipitation_sum", "timezone": "GMT",
+    })
+    days = (d.get("daily") or {}).get("time") or []
+    vals = (d.get("daily") or {}).get("precipitation_sum") or []
+    by_doy: dict[str, list[float]] = {}
+    by_month: dict[str, list[float]] = {}
+    for t, v in zip(days, vals):
+        if v is None:
+            continue
+        by_doy.setdefault(t[5:10], []).append(v)
+        by_month.setdefault(MONTHS[int(t[5:7]) - 1], []).append(v)
+    if len(by_month) < 12:
+        raise ValueError("era5_incomplete")
+    out = {"doy": {k: sum(v) / len(v) for k, v in by_doy.items()},
+           "monthly": {m: round(sum(v) / len(v), 2) for m, v in by_month.items()}}
+    _ERA5[key] = (time.time(), out)
+    return out
+
+
+# Grille météo autour de la parcelle pour les couches du globe (pluie 60 j, température,
+# vent, soleil). Même modèle et même fenêtre que les chiffres de l'analyse : le point
+# central de la grille EST la parcelle, donc la carte et le texte disent la même chose.
+GRID_N = 9          # 9 x 9 points
+GRID_STEP = 0.85    # degrés entre deux points (~95 km) -> ±3,4° autour du champ
+_GRID: dict[str, tuple[float, dict[str, Any]]] = {}
+_GRID_TTL = 1800
+
+
+def grid(lat: float, lon: float) -> dict[str, Any]:
+    """Valeurs Open-Meteo sur une grille centrée sur (lat, lon). Lève une exception si la source échoue."""
+    key = f"{round(lat, 2)}:{round(lon, 2)}"
+    hit = _GRID.get(key)
+    if hit and time.time() - hit[0] < _GRID_TTL:
+        return hit[1]
+    half = GRID_N // 2
+    lats = [max(-89.9, min(89.9, lat + GRID_STEP * (half - i))) for i in range(GRID_N)]   # nord -> sud
+    lons = [lon + GRID_STEP * (j - half) for j in range(GRID_N)]                          # ouest -> est
+    pts = [(a, ((b + 180) % 360) - 180) for a in lats for b in lons]
+    resp = _get("https://api.open-meteo.com/v1/forecast", {
+        "latitude": ",".join(f"{a:.4f}" for a, _ in pts),
+        "longitude": ",".join(f"{b:.4f}" for _, b in pts),
+        "current": "temperature_2m,wind_speed_10m,wind_direction_10m",
+        "daily": "precipitation_sum,shortwave_radiation_sum",
+        "past_days": 60, "forecast_days": 1, "timezone": "auto",
+    })
+    if isinstance(resp, dict):
+        resp = [resp]
+    temp, wind, wdir, rain60, solar7 = [], [], [], [], []
+    when = None
+    for r in resp:
+        cur = r.get("current") or {}
+        when = when or cur.get("time")
+        today_loc = (cur.get("time") or "")[:10]
+        dd = r.get("daily") or {}
+        past = [(t, p, s) for t, p, s in zip(dd.get("time") or [], dd.get("precipitation_sum") or [],
+                                              dd.get("shortwave_radiation_sum") or []) if t < today_loc]
+        rp = [p for _, p, _ in past[-60:] if p is not None]
+        sp = [s for _, _, s in past[-7:] if s is not None]
+        temp.append(cur.get("temperature_2m"))
+        wind.append(cur.get("wind_speed_10m"))
+        wdir.append(cur.get("wind_direction_10m"))
+        rain60.append(round(sum(rp)) if len(rp) >= 50 else None)
+        solar7.append(round(sum(sp) / len(sp), 1) if sp else None)
+    out = {"n": GRID_N, "lats": [round(a, 4) for a in lats], "lons": [round(b, 4) for b in lons],
+           "temp": temp, "wind": wind, "wind_dir": wdir, "rain60": rain60, "solar7": solar7,
+           "time": when, "source": "Open-Meteo"}
+    _GRID[key] = (time.time(), out)
+    return out
 
 
 def _modis_code(d: date) -> str:
@@ -186,6 +272,7 @@ def fetch(lat: float, lon: float) -> dict[str, Any]:
         "power": lambda: _power_daily(lat, lon, today - timedelta(days=62), today),
         "clim": lambda: _power_clim(lat, lon),
         "meteo": lambda: _open_meteo(lat, lon),
+        "era5": lambda: _era5_normal(lat, lon),
         "ndvi": lambda: _ndvi(lat, lon, today),
     }
     raw: dict[str, Any] = {}
@@ -236,6 +323,7 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
     m_et0 = dict(zip(m_days, md.get("et0_fao_evapotranspiration") or []))
     m_temp = dict(zip(m_days, md.get("temperature_2m_mean") or []))
     m_tmax = dict(zip(m_days, md.get("temperature_2m_max") or []))
+    m_tmin = dict(zip(m_days, md.get("temperature_2m_min") or []))
     m_sw = dict(zip(m_days, md.get("shortwave_radiation_sum") or []))
     if meteo:
         # Open-Meteo travaille en heure locale : « aujourd'hui » au point.
@@ -244,26 +332,39 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
         today = date.fromisoformat(local_today)
     past60 = _days(60, today - timedelta(days=1))
 
-    # --- Pluie des 60 derniers jours : NASA POWER, complétée par Open-Meteo
+    # --- Pluie des 60 derniers jours et sa normale, TOUJOURS de la même famille de sources :
+    #   1) Open-Meteo (récent) vs ERA5 1991-2020 (normale) — accord avec les prévisions
+    #      locales et la carte du globe ;
+    #   2) sinon NASA POWER vs normale NASA POWER 1981-2020.
+    # (Mélanger les deux faussait le rapport : POWER donne ~2x plus de pluie sous les tropiques.)
     p_rain = power.get("PRECTOTCORR") or {}
-    rain_days, n_power, last_power = {}, 0, None
-    for d in past60:
-        if d in p_rain:
-            rain_days[d] = p_rain[d]; n_power += 1; last_power = d
-        elif m_rain.get(d) is not None:
-            rain_days[d] = m_rain[d]
-    if len(rain_days) >= 50:
-        out["rain_daily"] = rain_days
-        out["rainfall_60d_mm"] = round(sum(rain_days.values()))
+    last_power = max(p_rain) if p_rain else None
+    clim = raw.get("clim")
+    era5 = raw.get("era5")
+    om_days = {d: m_rain[d] for d in past60 if m_rain.get(d) is not None}
+    if len(om_days) >= 50 and era5:
+        out["rain_daily"] = om_days
+        out["rainfall_60d_mm"] = round(sum(om_days.values()))
+        out["rainfall_normal_mm"] = round(sum(era5["doy"].get(d[5:10], era5["doy"].get("02-28", 0)) for d in past60))
+        out["clim_mm_day"] = {m: era5["monthly"][m] for m in MONTHS}
+        out["rain_source"], out["normal_source"] = "Open-Meteo", "ERA5 1991-2020"
+    else:
+        rain_days = {}
+        for d in past60:
+            if d in p_rain:
+                rain_days[d] = p_rain[d]
+            elif m_rain.get(d) is not None:
+                rain_days[d] = m_rain[d]
+        if len(rain_days) >= 50:
+            out["rain_daily"] = rain_days
+            out["rainfall_60d_mm"] = round(sum(rain_days.values()))
+            out["rain_source"] = "NASA POWER" if p_rain else "Open-Meteo"
+        if clim:
+            out["rainfall_normal_mm"] = round(sum(clim[MONTHS[date.fromisoformat(d).month - 1]] for d in past60))
+            out["clim_mm_day"] = {m: clim[m] for m in MONTHS}
+            out["normal_source"] = "NASA POWER 1981-2020"
     if p_rain:
         out["sources"].append({"name": "NASA POWER", "what": "rain_temp_solar_soil", "date": last_power, "live": True})
-
-    # --- Normale climatologique sur la même fenêtre (NASA POWER 1981-2020)
-    clim = raw.get("clim")
-    if clim:
-        normal = sum(clim[MONTHS[date.fromisoformat(d).month - 1]] for d in past60)
-        out["rainfall_normal_mm"] = round(normal)
-        out["clim_mm_day"] = {m: clim[m] for m in MONTHS}
 
     # --- Anomalie de température : NASA POWER journalier vs normale NASA POWER (même source)
     t2m = power.get("T2M") or {}
@@ -304,7 +405,7 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
         }
         fut = [d for d in m_days if d >= today.isoformat()][:16]
         out["forecast"] = [{"date": d, "rain_mm": m_rain.get(d) or 0.0, "et0_mm": m_et0.get(d),
-                            "tmax_c": m_tmax.get(d)} for d in fut]
+                            "tmax_c": m_tmax.get(d), "tmin_c": m_tmin.get(d)} for d in fut]
         out["forecast_rain_16d_mm"] = round(sum(f["rain_mm"] for f in out["forecast"]))
         last7 = _days(7, today - timedelta(days=1))
         et = [m_et0[d] for d in last7 if m_et0.get(d) is not None]

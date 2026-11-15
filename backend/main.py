@@ -132,6 +132,23 @@ async def ndvi(payload: dict) -> JSONResponse:
     return JSONResponse(await run_in_threadpool(live_data.warm_ndvi, lat, lon))
 
 
+@app.post("/api/grid")
+async def weather_grid(payload: dict) -> JSONResponse:
+    """Grille Open-Meteo autour de la parcelle pour les couches météo du globe
+    (pluie 60 j, température et vent actuels, soleil 7 j) — même source que l'analyse."""
+    payload = payload or {}
+    try:
+        lat = float(payload.get("latitude")); lon = float(payload.get("longitude"))
+    except (TypeError, ValueError):
+        return JSONResponse({"error": "bad_coords"}, status_code=422)
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return JSONResponse({"error": "bad_coords"}, status_code=422)
+    try:
+        return JSONResponse(await run_in_threadpool(live_data.grid, lat, lon))
+    except Exception as e:
+        return JSONResponse({"error": type(e).__name__}, status_code=502)
+
+
 @app.post("/api/backtesting")
 async def backtest(payload: dict) -> JSONResponse:
     """Backtesting : « l'outil aurait-il prévenu ? » sur les saisons sèches passées."""

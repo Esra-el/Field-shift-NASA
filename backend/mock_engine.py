@@ -527,7 +527,7 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
 
     risk_components = [
         {"factor": "rainfall", "value": f"{rainfall_60d}/{rainfall_normal} mm", "level": rc_rain,
-         "source": _src("rainfall_60d_mm", "NASA POWER"), "weight": "35%"},
+         "source": _src("rainfall_60d_mm", live.get("rain_source") or "NASA POWER"), "weight": "35%"},
         {"factor": "soil_moisture", "value": f"{soil_moisture} m³/m³", "level": rc_soil,
          "source": _src("soil_moisture", "Open-Meteo"), "weight": "25%"},
         {"factor": "ndvi", "value": ndvi_txt, "level": rc_ndvi,
@@ -565,6 +565,8 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
             "temperature_c": temperature_c,
             "ndvi": ndvi_now, "root_zone_wetness": live.get("root_zone_wetness"),
             "forecast_rain_16d_mm": live.get("forecast_rain_16d_mm"),
+            "temp_anomaly": live.get("temp_anomaly"),
+            "rain_source": live.get("rain_source"), "normal_source": live.get("normal_source"),
         },
         "ai_explanation": ai_explanation,
         "series": series,
@@ -573,6 +575,8 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
             "wind_speed_kmh": wind_speed, "wind_dir_deg": wind_dir,
             "temperature_c": _first(cur.get("temperature_c"), temperature_c),
             "humidity_pct": cur.get("humidity_pct"), "observed_at": cur.get("time"),
+            "tmax_today_c": ((live.get("forecast") or [{}])[0]).get("tmax_c"),
+            "tmin_today_c": ((live.get("forecast") or [{}])[0]).get("tmin_c"),
             "heat_stress": temperature_c >= 29 or evapotranspiration > 5.5 or tmax_fc >= 36,
         },
         "forecast": live.get("forecast") or [],

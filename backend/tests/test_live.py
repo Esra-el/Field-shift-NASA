@@ -84,3 +84,37 @@ def test_ml_risk_is_higher_when_live_data_is_dry(live_on, monkeypatch):
     monkeypatch.setattr(live_data, "fetch", lambda lat, lon: _fake_live(0.2))
     dry = client.post("/api/recommendation", json={"latitude": 13.3, "longitude": -87.2}).json()
     assert dry["risk_score"] > wet["risk_score"]
+
+
+# --- Pluie 60 j et normale : toujours de la même famille de sources ---------------
+def _raw(today: date, with_era5: bool, with_meteo: bool = True) -> dict:
+    past = [(today - timedelta(days=i)).isoformat() for i in range(70, -1, -1)]
+    raw = {
+        "power": {"PRECTOTCORR": {d: 10.0 for d in past[:-3]}},  # POWER : 2x plus de pluie
+        "clim": {**{m: 10.0 for m in MONTHS}, "_T2M": {}},
+    }
+    if with_meteo:
+        raw["meteo"] = {"current": {"time": today.isoformat() + "T12:00"},
+                        "daily": {"time": past, "precipitation_sum": [5.0] * len(past)}}
+    if with_era5:
+        raw["era5"] = {"doy": {f"{m:02d}-{d:02d}": 4.0 for m in range(1, 13) for d in range(1, 32)},
+                       "monthly": {m: 4.0 for m in MONTHS}}
+    return raw
+
+
+def test_rain_open_meteo_paired_with_era5_normal():
+    out = live_data.summarize(_raw(date(2026, 11, 15), with_era5=True), date(2026, 11, 15))
+    assert out["rain_source"] == "Open-Meteo" and out["normal_source"].startswith("ERA5")
+    assert out["rainfall_60d_mm"] == 300 and out["rainfall_normal_mm"] == 240
+    assert out["clim_mm_day"]["NOV"] == 4.0
+
+
+def test_rain_falls_back_to_power_pair_without_era5():
+    out = live_data.summarize(_raw(date(2026, 11, 15), with_era5=False), date(2026, 11, 15))
+    assert out["rain_source"] == "NASA POWER" and out["normal_source"].startswith("NASA POWER")
+    assert out["rainfall_normal_mm"] == 600
+
+
+def test_grid_endpoint_rejects_bad_coords():
+    assert client.post("/api/grid", json={"latitude": "x"}).status_code == 422
+    assert client.post("/api/grid", json={"latitude": 95, "longitude": 0}).status_code == 422

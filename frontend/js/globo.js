@@ -160,6 +160,7 @@
     $("g-name").textContent = name || T("home.your_field");
     $("g-coords").textContent = Terra.fmtCoords(lat, lng);
     placeMarker(lat, lng);
+    Object.keys(dateCache).forEach((k) => delete dateCache[k]);  // dates NASA : propres au lieu
   }
 
   /* ---------- Vues : formulaire → chargement → rapport ---------- */
@@ -208,6 +209,7 @@
       Terra.setPlace({ name: state.name, lat: state.lat, lng: state.lng });
 
       showView("loading"); runLoadingSteps();
+      loadGrid();  // carte météo du globe, en parallèle de l'analyse
       stopTour();
       showLayer("sat", { silent: true });
       const flight = flyToField(state.lat, state.lng);
@@ -234,18 +236,23 @@
      ===================================================== */
   let map = null, spinner = null, marker = null, mapReady = null;
 
-  /* Couches NASA GIBS réelles — palettes officielles GIBS pour les légendes. */
+  /* Couches du globe.
+     - Pluie, vent, température, soleil : grille Open-Meteo autour de la parcelle (/api/grid),
+       la MÊME source et la MÊME heure que les chiffres de l'analyse (le point central = la parcelle).
+       Les anciennes cartes NASA (IMERG une demi-heure, AIRS en bandes, MERRA-2 mensuel vieux de
+       3-4 mois) ne correspondaient pas à la météo affichée.
+     - Humidité du sol (SMAP) et végétation (VIIRS) : vraies cartes NASA GIBS, à jour. */
   const GIBS = "https://gibs.earthdata.nasa.gov/wmts/epsg3857/best/";
   const LAYERS = {
     sat:   { icon: "lucide:satellite" },
-    rain:  { icon: "lucide:cloud-rain", id: "IMERG_Precipitation_Rate", tms: "GoogleMapsCompatible_Level6", z: 6, period: "day", src: "NASA GPM IMERG",
-             ramp: ["#00764E", "#1EB200", "#EFED00", "#FF532A", "#BB0000"] },
-    wind:  { icon: "lucide:wind", id: "MERRA2_Surface_Wind_Speed_Monthly", tms: "GoogleMapsCompatible_Level6", z: 6, period: "month", src: "NASA MERRA-2",
+    rain:  { icon: "lucide:cloud-rain", grid: "rain60", unit: "mm", min: 0, max: "auto", src: "Open-Meteo",
+             ramp: ["#F4F1DE", "#A8D5E2", "#4A9FD1", "#1F5BA8", "#0B2C6B"] },
+    wind:  { icon: "lucide:wind", grid: "wind", unit: "km/h", min: 0, max: 50, src: "Open-Meteo",
              ramp: ["#5E4FA2", "#8FD2A4", "#EBF79F", "#FEE492", "#F89053", "#9E0142"] },
-    temp:  { icon: "lucide:thermometer", id: "AIRS_L2_Surface_Air_Temperature_Day", tms: "GoogleMapsCompatible_Level6", z: 6, period: "day", src: "NASA AIRS",
-             ramp: ["#5E4FA2", "#8ED1A4", "#EBF7A0", "#FEE28F", "#F88A50", "#9E0142"] },
-    solar: { icon: "lucide:sun", id: "MERRA2_Incident_Shortwave_Over_Land_Monthly", tms: "GoogleMapsCompatible_Level6", z: 6, period: "month", src: "NASA MERRA-2",
-             ramp: ["#5E4FA2", "#8DD1A4", "#EAF69F", "#FEE594", "#F99254", "#9E0142"] },
+    temp:  { icon: "lucide:thermometer", grid: "temp", unit: "°C", min: -10, max: 40, src: "Open-Meteo",
+             ramp: ["#5E4FA2", "#3288BD", "#8ED1A4", "#EBF7A0", "#FEE28F", "#F88A50", "#9E0142"] },
+    solar: { icon: "lucide:sun", grid: "solar7", unit: "MJ/m²/j", min: 0, max: 30, src: "Open-Meteo",
+             ramp: ["#3B3B6D", "#7B6FA8", "#E8B04A", "#F9D648", "#FFF6B0"] },
     soil:  { icon: "lucide:layers", id: "SMAP_L4_Analyzed_Root_Zone_Soil_Moisture", tms: "GoogleMapsCompatible_Level6", z: 6, period: "day", src: "NASA SMAP L4",
              ramp: ["#FFA200", "#CAE400", "#00B46A", "#0071FF", "#00008C"] },
     ndvi:  { icon: "lucide:leaf", id: "VIIRS_NOAA20_NDVI_8Day", tms: "GoogleMapsCompatible_Level8", z: 8, period: "day", src: "NASA VIIRS NOAA-20",
@@ -332,6 +339,74 @@
     $("layers").innerHTML = ORDER.map((k) => `<button class="layer-btn" data-layer="${k}" aria-pressed="${state.layer === k}"><iconify-icon icon="${LAYERS[k].icon}" width="18" height="18"></iconify-icon>${T("layer." + k)}</button>`).join("");
   }
 
+  /* ---------- Grille météo Open-Meteo (pluie / vent / température / soleil) ---------- */
+  let gridReq = null;
+  function loadGrid() {
+    if (state.lat == null) return Promise.resolve(null);
+    const key = `${state.lat.toFixed(3)},${state.lng.toFixed(3)}`;
+    if (gridReq && gridReq.key === key) return gridReq.p;
+    const p = fetch("/api/grid", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ latitude: state.lat, longitude: state.lng }) })
+      .then((r) => (r.ok ? r.json() : null)).then((g) => (g && g.lats ? g : null)).catch(() => null);
+    gridReq = { key, p };
+    return p;
+  }
+
+  function gridMax(L, vals) {
+    if (L.max !== "auto") return L.max;
+    const m = Math.max(0, ...vals.filter((v) => v != null));
+    return Math.max(100, Math.ceil(m / 50) * 50);
+  }
+  function hexRgb(h) { const n = parseInt(h.slice(1), 16); return [(n >> 16) & 255, (n >> 8) & 255, n & 255]; }
+  function rampAt(ramp, t) {
+    t = Math.max(0, Math.min(1, t)) * (ramp.length - 1);
+    const i = Math.min(ramp.length - 2, Math.floor(t)), f = t - i;
+    const a = hexRgb(ramp[i]), b = hexRgb(ramp[i + 1]);
+    return [0, 1, 2].map((c) => Math.round(a[c] + (b[c] - a[c]) * f));
+  }
+  /* Image lissée (bilinéaire) des valeurs de la grille, posée sur le globe. */
+  function gridImage(L, g) {
+    const vals = g[L.grid], n = g.n, S = 128;
+    const lo = L.min, hi = gridMax(L, vals);
+    const cv = document.createElement("canvas"); cv.width = cv.height = S;
+    const ctx = cv.getContext("2d"), img = ctx.createImageData(S, S);
+    const at = (r, c) => vals[r * n + c];
+    for (let y = 0; y < S; y++) {
+      const fy = (y / (S - 1)) * (n - 1), r0 = Math.min(n - 2, Math.floor(fy)), dy = fy - r0;
+      for (let x = 0; x < S; x++) {
+        const fx = (x / (S - 1)) * (n - 1), c0 = Math.min(n - 2, Math.floor(fx)), dx = fx - c0;
+        const q = [[at(r0, c0), (1 - dx) * (1 - dy)], [at(r0, c0 + 1), dx * (1 - dy)], [at(r0 + 1, c0), (1 - dx) * dy], [at(r0 + 1, c0 + 1), dx * dy]]
+          .filter(([v]) => v != null);
+        const o = (y * S + x) * 4;
+        if (!q.length) { img.data[o + 3] = 0; continue; }
+        const w = q.reduce((s, [, k]) => s + k, 0) || 1;
+        const v = q.reduce((s, [val, k]) => s + val * k, 0) / w;
+        const [R, G, B] = rampAt(L.ramp, (v - lo) / (hi - lo));
+        img.data[o] = R; img.data[o + 1] = G; img.data[o + 2] = B; img.data[o + 3] = 255;
+      }
+    }
+    ctx.putImageData(img, 0, 0);
+    return { url: cv.toDataURL("image/png"), lo, hi };
+  }
+
+  async function ensureGrid(k) {
+    await mapReady;
+    const g = await loadGrid();
+    const id = "grid-" + k;
+    if (!g) { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none"); return null; }
+    const L = LAYERS[k];
+    const { url } = gridImage(L, g);
+    const n = g.n, west = g.lons[0], east = g.lons[n - 1], north = g.lats[0], south = g.lats[n - 1];
+    const coordinates = [[west, north], [east, north], [east, south], [west, south]];
+    const src = map.getSource(id);
+    if (src) src.updateImage({ url, coordinates });
+    else {
+      map.addSource(id, { type: "image", url, coordinates });
+      map.addLayer({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": 0.62, "raster-fade-duration": 300 } }, "labels");
+    }
+    return id;
+  }
+
   async function ensureGibs(k) {
     await mapReady;
     const L = LAYERS[k], id = "gibs-" + k;
@@ -362,10 +437,10 @@
     wind(k === "wind");
     if (map) {
       await mapReady;
-      Object.keys(LAYERS).forEach((o) => { if (o !== "sat" && map.getLayer("gibs-" + o)) map.setLayoutProperty("gibs-" + o, "visibility", "none"); });
+      Object.keys(LAYERS).forEach((o) => ["gibs-", "grid-"].forEach((p) => { if (map.getLayer(p + o)) map.setLayoutProperty(p + o, "visibility", "none"); }));
       if (k !== "sat") {
-        const id = await ensureGibs(k);
-        if (state.layer === k) map.setLayoutProperty(id, "visibility", "visible");
+        const id = LAYERS[k].grid ? await ensureGrid(k) : await ensureGibs(k);
+        if (id && state.layer === k) map.setLayoutProperty(id, "visibility", "visible");
         // Les données NASA couvrent une région : on recule pour voir la tendance autour du champ.
         if (state.lat != null && map.getZoom() > 7.2) map.flyTo({ center: [state.lng, state.lat], zoom: 6.2, pitch: 20, bearing: 0, duration: 2200, essential: true });
       } else if (!(opts && opts.silent) && state.lat != null && map.getZoom() < 11) {
@@ -386,11 +461,25 @@
       return;
     }
     box.classList.remove("is-sat");
+    $("lg-ramp").style.background = `linear-gradient(90deg, ${L.ramp.join(",")})`;
+    box.classList.remove("is-stale");
+    if (L.grid) {
+      // Échelle chiffrée + valeur exacte à la parcelle (= le chiffre du rapport).
+      $("lg-min").textContent = `${L.min} ${L.unit}`; $("lg-max").textContent = "…";
+      $("lg-date").textContent = `${L.src} · ${T("gl." + k)}`;
+      const g = await loadGrid();
+      if (state.layer !== k) return;
+      if (!g) { $("lg-max").textContent = ""; $("lg-date").textContent = T("gl.none"); box.classList.add("is-stale"); return; }
+      const vals = g[L.grid], here = vals[Math.floor(vals.length / 2)];
+      $("lg-max").textContent = `${gridMax(L, vals)} ${L.unit}`;
+      const when = g.time ? ` · ${Terra.fmtDate(g.time.slice(0, 10))} ${g.time.slice(11, 16)}` : "";
+      $("lg-title").textContent = here != null ? `${T("layer." + k)} · ${T("gl.here", { v: `${here} ${L.unit}` })}` : T("layer." + k);
+      $("lg-date").textContent = `${L.src} · ${T("gl." + k)}${k === "temp" || k === "wind" ? when : ""}`;
+      return;
+    }
     const lg = T("lg." + k);
     $("lg-min").textContent = lg[0]; $("lg-max").textContent = lg[1];
-    $("lg-ramp").style.background = `linear-gradient(90deg, ${L.ramp.join(",")})`;
     $("lg-date").textContent = L.src;
-    box.classList.remove("is-stale");
     if (state.lat == null) return;
     const d = await layerDate(k);
     if (d && state.layer === k) {
@@ -407,7 +496,7 @@
     }
   }
 
-  /* Vent : particules animées dans la vraie direction du vent (NASA POWER), au-dessus de la carte MERRA-2. */
+  /* Vent : particules animées dans la direction du vent actuel (Open-Meteo), au-dessus de la carte de vitesse. */
   let windRAF = null;
   function wind(on) {
     const cv = $("wind");
@@ -471,15 +560,24 @@
       case "sat": return { lead: T("in.sat"), more: T("in.sat.more"), lvl: "info" };
       case "rain": {
         const below = n.rainfall_60d_mm < n.rainfall_normal_mm * 0.85;
-        return { lead: T(below ? "in.rain.below" : "in.rain.ok"), more: T("in.rain.more", { a: n.rainfall_60d_mm, b: n.rainfall_normal_mm }), lvl: below ? "warn" : "ok" };
+        const above = n.rainfall_60d_mm > n.rainfall_normal_mm * 1.25;
+        return { lead: T(below ? "in.rain.below" : above ? "in.rain.above" : "in.rain.ok"),
+          more: T("in.rain.more", { a: n.rainfall_60d_mm, b: n.rainfall_normal_mm, src: n.normal_source || T("adv.normal_src") }), lvl: below ? "warn" : "ok" };
       }
       case "wind": {
         const strong = w.wind_speed_kmh > 20;
         return { lead: T("in.wind", { s: Math.round(w.wind_speed_kmh), d: compass(w.wind_dir_deg) }), more: T(strong ? "in.wind.more" : "in.wind.calm"), lvl: strong ? "warn" : "ok" };
       }
       case "temp": {
-        const hot = w.heat_stress || n.temperature_c > 30;
-        return { lead: T(hot ? "in.temp.hot" : "in.temp.ok", { t: n.temperature_c }), more: T("in.temp.more"), lvl: hot ? "bad" : "ok" };
+        // Température du moment + min/max du jour (comparables à une prévision locale),
+        // et écart RÉEL à la normale (NASA POWER, 2 dernières semaines).
+        const r1 = (v) => (v == null ? "—" : Math.round(v));
+        const now = w.temperature_c != null ? w.temperature_c : n.temperature_c;
+        const hot = w.heat_stress || (w.tmax_today_c != null && w.tmax_today_c >= 33);
+        const a = n.temp_anomaly;
+        const anom = a == null ? "" : a >= 1.5 ? T("in.temp.warm", { a: a.toFixed(1) }) : a <= -1.5 ? T("in.temp.cool", { a: a.toFixed(1) }) : T("in.temp.normal");
+        return { lead: T(hot ? "in.temp.hot" : "in.temp.ok", { t: r1(now), min: r1(w.tmin_today_c), max: r1(w.tmax_today_c) }),
+          more: [anom, hot ? T("in.temp.more") : ""].filter(Boolean).join(" ") || T("in.temp.more"), lvl: hot ? "bad" : "ok" };
       }
       case "solar": {
         // < 10 MJ/m2/day = overcast / little sun (e.g. cloudy winter), not "moderate".
@@ -488,8 +586,12 @@
         return { lead: T(key), more: T("in.solar.more", { et: n.evapotranspiration }), lvl: high ? "warn" : "ok" };
       }
       case "soil": {
-        const low = n.soil_moisture < 0.2;
-        return { lead: T(low ? "in.soil.low" : "in.soil.ok"), more: T("in.soil.more", { p: Math.round(n.soil_moisture * 100) }), lvl: low ? "warn" : "ok" };
+        // Surface (Open-Meteo, 9-27 cm) et zone racinaire (NASA POWER GWETROOT) : si elles
+        // se contredisent, on le dit au lieu d'annoncer « sol sec » après de fortes pluies.
+        const low = n.soil_moisture < 0.2, root = n.root_zone_wetness;
+        const mixed = low && root != null && root >= 0.5;
+        const more = T("in.soil.more", { p: Math.round(n.soil_moisture * 100) }) + (root != null ? T("in.soil.root", { r: Math.round(root * 100) }) : "");
+        return { lead: T(mixed ? "in.soil.mixed" : low ? "in.soil.low" : "in.soil.ok"), more, lvl: low ? "warn" : "ok" };
       }
       case "ndvi": {
         const stress = n.ndvi_trend < -0.04;
@@ -604,9 +706,9 @@
     const ds = {}; (r.data_sources || []).forEach((s) => { ds[s.name] = s.date; });
     const d = (name) => (ds[name] ? ` · ${Terra.fmtDate(String(ds[name]).slice(0, 10))}` : "");
     const rows = [
-      ["adv.rain", src("rainfall_60d_mm", "NASA POWER" + d("NASA POWER")), `${n.rainfall_60d_mm} mm`],
-      ["adv.normal", src("rainfall_normal_mm", T("adv.normal_src")), `${n.rainfall_normal_mm} mm`],
-      ["adv.soil", src("soil_moisture", "Open-Meteo" + d("Open-Meteo")), `${n.soil_moisture} m³/m³`],
+      ["adv.rain", src("rainfall_60d_mm", (n.rain_source || "NASA POWER") + d(n.rain_source || "NASA POWER")), `${n.rainfall_60d_mm} mm`],
+      ["adv.normal", src("rainfall_normal_mm", n.normal_source || T("adv.normal_src")), `${n.rainfall_normal_mm} mm`],
+      ["adv.soil", src("soil_moisture", "Open-Meteo · 9–27 cm" + d("Open-Meteo")), `${n.soil_moisture} m³/m³`],
       ...(n.root_zone_wetness != null ? [["adv.root", "NASA POWER GWETROOT", `${Math.round(n.root_zone_wetness * 100)} %`]] : []),
       ["adv.ndvi", src("ndvi_trend", "NASA MODIS" + d("NASA MODIS (MOD13Q1)")), `${n.ndvi_trend > 0 ? "+" : ""}${n.ndvi_trend}${n.ndvi != null ? ` (${n.ndvi})` : ""}`],
       ["adv.solar", src("solar_mj_m2", "Open-Meteo"), `${n.solar_radiation} MJ/m²/j`],
