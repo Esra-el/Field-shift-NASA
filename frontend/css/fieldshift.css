@@ -295,8 +295,9 @@ button.sr-item:hover { background: var(--beige-50); }
 
 .chat { display: flex; flex-direction: column; gap: .75rem; max-height: 26rem; overflow-y: auto; padding: .2rem .1rem; }
 .chat.tall { max-height: 58vh; min-height: 18rem; }
-.msg-user { align-self: flex-end; max-width: 85%; background: var(--green-800); color: #fff; padding: .75rem 1rem; border-radius: 18px 18px 6px 18px; animation: pop .25s var(--ease); }
-.msg-bot { display: flex; gap: .55rem; max-width: 95%; animation: pop .25s var(--ease); }
+/* Mes messages alignés à GAUCHE + retour à la ligne (jamais coupés à droite). */
+.msg-user { align-self: flex-start; max-width: 85%; min-width: 0; overflow-wrap: anywhere; word-break: break-word; background: var(--green-800); color: #fff; padding: .75rem 1rem; border-radius: 18px 18px 18px 6px; animation: pop .25s var(--ease); }
+.msg-bot { display: flex; gap: .55rem; max-width: 95%; min-width: 0; overflow-wrap: anywhere; word-break: break-word; animation: pop .25s var(--ease); }
 .bot-av { width: 2.3rem; height: 2.3rem; border-radius: 12px; background: var(--sky-100); color: var(--sky-700); display: grid; place-items: center; flex-shrink: 0; }
 .bub { background: var(--beige-50); border: 1px solid var(--line); padding: .8rem .95rem; border-radius: 18px 18px 18px 6px; }
 .bub .sec-h { display: flex; align-items: center; gap: .35rem; font-weight: 750; color: var(--green-800); font-size: .95rem; }
