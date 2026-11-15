@@ -396,7 +396,13 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
     wind_dir = int(_first(cur.get("wind_dir_deg"), (40 + s * 280) % 360))
     if not cur:
         estimated.append("wind")
-    temperature_c = _first(live.get("temperature_7d_c"), round(24 + s * 6, 1))
+    if live.get("temperature_7d_c") is not None:
+        temperature_c = live["temperature_7d_c"]
+    else:
+        # Aucune source réelle de température : on le signale honnêtement.
+        temperature_c = round(24 + s * 6, 1)
+        if is_live:
+            estimated.append("temperature")
     tmax_fc = max([x["tmax_c"] for x in live.get("forecast") or [] if x.get("tmax_c") is not None] or [0])
 
     # Calendrier de saison : stades de la culture + épisodes secs

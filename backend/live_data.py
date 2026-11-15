@@ -286,6 +286,14 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
         out["root_zone_wetness"] = round(gw[last], 2)
         out["root_zone_date"] = last
 
+    # --- Température récente : NASA POWER T2M comme base réelle. Évite d'afficher
+    # une fausse température (~24°C tropical) quand Open-Meteo ne répond pas ;
+    # Open-Meteo, plus à jour, l'écrase plus bas s'il est disponible.
+    if t2m:
+        recent_t = [t2m[d] for d in sorted(t2m)[-7:] if t2m.get(d, -999) > -900]
+        if recent_t:
+            out["temperature_7d_c"] = round(sum(recent_t) / len(recent_t), 1)
+
     # --- Météo actuelle et prévision (Open-Meteo)
     if meteo:
         cur = meteo.get("current") or {}
