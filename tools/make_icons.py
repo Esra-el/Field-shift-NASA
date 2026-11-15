@@ -15,11 +15,11 @@ from PIL import Image, ImageDraw
 
 OUT = Path(__file__).resolve().parent.parent / "frontend" / "icons"
 
-GREEN = (46, 158, 91, 255)       # #2e9e5b fondo
-SUN = (255, 211, 78, 255)        # #ffd34e sol
-HILL = (28, 107, 60, 255)        # #1c6b3c colina
+GREEN = (30, 77, 43, 255)        # #1e4d2b fondo (verde profundo)
+SUN = (205, 232, 246, 255)       # #cde8f6 cielo
+HILL = (62, 142, 65, 255)        # #3e8e41 colina
 LEAF = (233, 247, 238, 255)      # #e9f7ee planta
-GROUND = (138, 90, 43, 255)      # #8a5a2b tierra
+GROUND = (167, 132, 90, 255)     # #a7845a tierra
 
 BASE = 512  # el diseño está definido en un lienzo de 512x512
 

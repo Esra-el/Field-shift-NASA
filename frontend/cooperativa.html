@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#DEDEDA" />
-  <title>Field Shift — Carte coopérative</title>
+  <meta name="theme-color" content="#F6F1E7" />
+  <title>Field Shift — Fiche coopérative</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/fieldshift.css" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
@@ -21,33 +21,44 @@
   <div class="frame">
     <header id="topbar"></header>
 
-    <div class="page-head no-print" style="max-width:680px;margin-left:auto;margin-right:auto">
+    <div class="page-head no-print" style="max-width:760px;margin-left:auto;margin-right:auto">
       <div><h1 data-i18n="coop.title"></h1><p class="sub" data-i18n="coop.help"></p></div>
-      <button class="btn btn-dark" onclick="window.print()"><iconify-icon icon="solar:printer-linear" width="18" height="18"></iconify-icon><span data-i18n="coop.print"></span></button>
+      <div style="display:flex;gap:.6rem;flex-wrap:wrap">
+        <button class="btn btn-dark" onclick="window.print()"><iconify-icon icon="solar:file-download-bold" width="20" height="20"></iconify-icon><span data-i18n="coop.pdf"></span></button>
+        <button class="btn btn-light" onclick="window.print()"><iconify-icon icon="solar:printer-bold" width="20" height="20"></iconify-icon><span data-i18n="coop.print"></span></button>
+      </div>
     </div>
 
-    <section id="card" class="card" style="max-width:680px;margin:0 auto">
-      <div style="display:flex;justify-content:space-between;align-items:center;border-bottom:1px solid var(--line);padding-bottom:14px;margin-bottom:16px">
-        <span class="brand" style="font-size:18px"><iconify-icon icon="mdi:sprout" width="26" height="26" style="color:var(--green)"></iconify-icon>Field Shift</span>
-        <span class="xs faint" id="c-coords"></span>
-      </div>
-      <div class="stack" style="gap:14px">
-        <div style="display:flex;justify-content:space-between;align-items:center;gap:10px">
-          <span class="muted" data-i18n="coop.risk"></span>
+    <section id="card" class="card" style="max-width:760px;margin:0 auto">
+      <div class="mini-hero" style="min-height:170px;align-items:stretch;flex-direction:column;justify-content:space-between">
+        <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap">
+          <span class="badge badge-glass"><iconify-icon icon="mdi:sprout" width="16" height="16" style="color:var(--green)"></iconify-icon>Field Shift</span>
+          <span class="badge badge-glass"><iconify-icon icon="solar:map-point-linear" width="14" height="14"></iconify-icon><span id="c-coords"></span></span>
+        </div>
+        <div class="glass" style="display:flex;justify-content:space-between;align-items:center;gap:12px">
+          <div><span class="xs muted" data-i18n="coop.planting"></span><b id="c-planting"></b></div>
           <span class="badge" id="c-risk" style="color:#fff"></span>
         </div>
-        <div><p class="xs muted" data-i18n="coop.water"></p><p class="bold" id="c-water"></p></div>
-        <div><p class="xs muted" data-i18n="coop.rotation"></p><p class="bold" id="c-rotation"></p></div>
-        <div><p class="xs muted" data-i18n="coop.planting"></p><p class="bold" id="c-planting"></p></div>
-        <div><p class="xs muted" data-i18n="coop.actions"></p><p class="bold" id="c-actions"></p></div>
       </div>
+
+      <div class="kv-tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+        <div class="tile"><span class="t-label"><iconify-icon icon="solar:danger-triangle-linear" width="14" height="14"></iconify-icon><span data-i18n="coop.risk"></span></span><div class="t-value" id="c-risk-txt">—</div></div>
+        <div class="tile"><span class="t-label"><iconify-icon icon="solar:waterdrop-linear" width="14" height="14"></iconify-icon><span data-i18n="coop.water"></span></span><div class="t-value" id="c-water"></div></div>
+        <div class="tile"><span class="t-label"><iconify-icon icon="solar:refresh-circle-linear" width="14" height="14"></iconify-icon><span data-i18n="coop.rotation"></span></span><div class="t-value" id="c-rotation"></div></div>
+      </div>
+
+      <div class="wb-box" style="display:flex;gap:12px;align-items:center;margin-top:12px;background:var(--green-soft)">
+        <span class="card-ico" style="background:var(--green);color:#fff"><iconify-icon icon="solar:checklist-minimalistic-bold" width="20" height="20"></iconify-icon></span>
+        <div><p class="xs" style="color:var(--green-600)" data-i18n="coop.actions"></p><p class="bold" id="c-actions"></p></div>
+      </div>
+
       <div style="display:flex;justify-content:space-between;align-items:flex-end;border-top:1px solid var(--line);margin-top:18px;padding-top:16px;gap:14px">
         <div class="xs muted" style="max-width:60%">
           <p class="bold" data-i18n="coop.sources"></p>
           <p>GPM IMERG · SMAP · MODIS · NASA POWER · GRACE-FO</p>
         </div>
         <div style="text-align:center">
-          <div id="qr" style="display:inline-block"></div>
+          <div id="qr" style="display:inline-block;padding:6px;background:#fff;border-radius:12px;box-shadow:var(--shadow-sm)"></div>
           <p class="xs faint" data-i18n="coop.scan"></p>
         </div>
       </div>

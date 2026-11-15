@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#DEDEDA" />
-  <title>Field Shift — Profil</title>
+  <meta name="theme-color" content="#F6F1E7" />
+  <title>Field Shift — Mon profil</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/fieldshift.css" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
@@ -20,53 +20,87 @@
   <div class="frame">
     <header id="topbar"></header>
 
-    <div class="page-head" style="max-width:900px;margin-left:auto;margin-right:auto">
-      <div><h1 data-i18n="profile.title"></h1><p class="sub" data-i18n="profile.sub"></p></div>
-    </div>
+    <section class="page-hero">
+      <div class="hero-top">
+        <span class="badge badge-glass" id="hero-parcel"><iconify-icon icon="solar:map-point-linear" width="14" height="14"></iconify-icon><span></span></span>
+        <span class="stepper" id="steps"></span>
+      </div>
+      <div class="hero-card">
+        <p class="eyebrow" data-i18n="step.profile"></p>
+        <h1 data-i18n="profile.title"></h1>
+        <p data-i18n="profile.sub"></p>
+      </div>
+    </section>
 
-    <section class="card stack" style="max-width:900px;margin:0 auto;gap:28px">
-      <div>
-        <span class="field-label" data-i18n="profile.crop"></span>
-        <div class="choice-grid">
+    <div class="grid-dash" style="align-items:start">
+      <div class="stack span-2">
+        <section class="card">
+          <div class="card-head">
+            <div class="title-row"><span class="card-ico green"><iconify-icon icon="mdi:sprout" width="22" height="22"></iconify-icon></span>
+              <div><h2 class="card-title" data-i18n="profile.crop"></h2><p class="card-sub" data-i18n="profile.crop_sub"></p></div></div>
+          </div>
+          <div class="choice-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
           <button type="button" class="choice crop-btn" data-crop="maize"><span class="h-ico"><iconify-icon icon="mdi:corn" width="24" height="24"></iconify-icon></span><span data-i18n="crop.maize"></span></button>
           <button type="button" class="choice crop-btn" data-crop="beans"><span class="h-ico"><iconify-icon icon="mdi:seed-outline" width="24" height="24"></iconify-icon></span><span data-i18n="crop.beans"></span></button>
           <button type="button" class="choice crop-btn" data-crop="sorghum"><span class="h-ico"><iconify-icon icon="mdi:grass" width="24" height="24"></iconify-icon></span><span data-i18n="crop.sorghum"></span></button>
           <button type="button" class="choice crop-btn" data-crop="millet"><span class="h-ico"><iconify-icon icon="mdi:sprout" width="24" height="24"></iconify-icon></span><span data-i18n="crop.millet"></span></button>
-          <button type="button" class="choice crop-btn" data-crop="cover_crop"><span class="h-ico"><iconify-icon icon="solar:leaf-bold" width="24" height="24"></iconify-icon></span><span data-i18n="crop.cover_crop"></span></button>
         </div>
-      </div>
+        </section>
 
-      <div class="grid-2">
-        <div>
-          <span class="field-label" data-i18n="profile.soil"></span>
-          <select id="soil" class="select">
-            <option value="sandy" data-i18n="soil.sandy"></option>
-            <option value="sandy_loam" selected data-i18n="soil.sandy_loam"></option>
-            <option value="loam" data-i18n="soil.loam"></option>
-            <option value="clay_loam" data-i18n="soil.clay_loam"></option>
-            <option value="clay" data-i18n="soil.clay"></option>
-          </select>
-        </div>
-        <div>
-          <span class="field-label" data-i18n="profile.irrigation"></span>
-          <div class="pills">
-            <button type="button" class="pill-opt irr-btn" data-irr="false" data-i18n="profile.irrigation.no"></button>
-            <button type="button" class="pill-opt irr-btn" data-irr="true" data-i18n="profile.irrigation.yes"></button>
+        <section class="card">
+          <div class="card-head">
+            <div class="title-row"><span class="card-ico blue"><iconify-icon icon="solar:waterdrops-bold" width="22" height="22"></iconify-icon></span>
+              <div><h2 class="card-title" data-help="water"><span data-i18n="profile.soil_water"></span></h2><p class="card-sub" data-i18n="profile.soil_water_sub"></p></div></div>
           </div>
-        </div>
+          <div class="grid-2">
+            <div>
+              <span class="field-label" data-i18n="profile.soil"></span>
+              <select id="soil" class="select">
+                <option value="sandy" data-i18n="soil.sandy"></option>
+                <option value="sandy_loam" selected data-i18n="soil.sandy_loam"></option>
+                <option value="clay_loam" data-i18n="soil.clay_loam"></option>
+                <option value="clay" data-i18n="soil.clay"></option>
+              </select>
+            </div>
+            <div>
+              <span class="field-label" data-i18n="profile.irrigation"></span>
+              <div class="pills" style="flex-direction:column;align-items:stretch">
+                <button type="button" class="pill-opt irr-btn" data-irr="none"><iconify-icon icon="solar:cloud-rain-linear" width="20" height="20"></iconify-icon> <span data-i18n="profile.irr.none"></span></button>
+                <button type="button" class="pill-opt irr-btn" data-irr="limited"><iconify-icon icon="solar:waterdrop-linear" width="20" height="20"></iconify-icon> <span data-i18n="profile.irr.limited"></span></button>
+                <button type="button" class="pill-opt irr-btn" data-irr="available"><iconify-icon icon="solar:waterdrops-bold" width="20" height="20"></iconify-icon> <span data-i18n="profile.irr.available"></span></button>
+              </div>
+            </div>
+          </div>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <div class="title-row"><span class="card-ico yellow"><iconify-icon icon="solar:target-bold" width="22" height="22"></iconify-icon></span>
+              <div><h2 class="card-title" data-help="rotation"><span data-i18n="profile.priority"></span></h2><p class="card-sub" data-i18n="profile.priority_sub"></p></div></div>
+          </div>
+          <div class="choice-grid" style="grid-template-columns:repeat(4,minmax(0,1fr))">
+            <button type="button" class="choice prio-btn" data-prio="save_water"><span class="h-ico"><iconify-icon icon="solar:waterdrops-bold" width="24" height="24"></iconify-icon></span><span data-i18n="profile.prio.water"></span></button>
+            <button type="button" class="choice prio-btn" data-prio="protect_soil"><span class="h-ico"><iconify-icon icon="solar:shield-check-bold" width="24" height="24"></iconify-icon></span><span data-i18n="profile.prio.soil"></span></button>
+            <button type="button" class="choice prio-btn" data-prio="max_yield"><span class="h-ico"><iconify-icon icon="mdi:corn" width="24" height="24"></iconify-icon></span><span data-i18n="profile.prio.yield"></span></button>
+            <button type="button" class="choice prio-btn" data-prio="food_security"><span class="h-ico"><iconify-icon icon="solar:home-smile-bold" width="24" height="24"></iconify-icon></span><span data-i18n="profile.prio.food"></span></button>
+          </div>
+        </section>
       </div>
 
-      <div>
-        <span class="field-label" data-i18n="profile.priority"></span>
-        <div class="pills">
-          <button type="button" class="pill-opt prio-btn" data-prio="save_water" data-i18n="profile.prio.water"></button>
-          <button type="button" class="pill-opt prio-btn" data-prio="balanced" data-i18n="profile.prio.balanced"></button>
-          <button type="button" class="pill-opt prio-btn" data-prio="max_yield" data-i18n="profile.prio.yield"></button>
+      <section class="card sticky">
+        <div class="card-head">
+          <h2 class="card-title" data-i18n="profile.summary"></h2>
+          <span class="badge badge-green" data-i18n="profile.ready"></span>
         </div>
-      </div>
-
-      <button id="submit-btn" class="btn btn-dark btn-block" data-i18n="profile.submit"></button>
-    </section>
+        <div class="kv-tiles">
+          <div class="tile is-active wide"><span class="t-label"><iconify-icon icon="mdi:sprout" width="14" height="14"></iconify-icon><span data-i18n="profile.crop"></span></span><div class="t-value" id="s-crop"></div></div>
+          <div class="tile"><span class="t-label"><iconify-icon icon="solar:layers-linear" width="14" height="14"></iconify-icon><span data-i18n="profile.soil"></span></span><div class="t-value" id="s-soil"></div></div>
+          <div class="tile"><span class="t-label"><iconify-icon icon="solar:waterdrop-linear" width="14" height="14"></iconify-icon><span data-i18n="profile.irr_short"></span></span><div class="t-value" id="s-irr"></div></div>
+          <div class="tile wide"><span class="t-label"><iconify-icon icon="solar:target-linear" width="14" height="14"></iconify-icon><span data-i18n="profile.priority"></span></span><div class="t-value" id="s-prio"></div></div>
+        </div>
+        <button id="submit-btn" class="btn btn-dark btn-block" style="margin-top:16px"><span data-i18n="profile.submit"></span><iconify-icon icon="solar:alt-arrow-right-linear" width="18" height="18"></iconify-icon></button>
+      </section>
+    </div>
   </div>
 
   <script src="/js/i18n.js"></script>

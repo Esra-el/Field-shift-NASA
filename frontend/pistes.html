@@ -1,0 +1,239 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Field Shift — 3 pistes de design</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500;9..144,700;9..144,900&family=Archivo:wdth,wght@62..125,500..900&family=Baloo+2:wght@500;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+  <style>
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: "Atkinson Hyperlegible", system-ui, sans-serif; background: #ECEAE4; color: #1A1A1A; }
+    .top { max-width: 1320px; margin: 0 auto; padding: 2.5rem 1.5rem 1rem; }
+    .top h1 { font-family: "Archivo", sans-serif; font-weight: 800; font-size: 2.4rem; letter-spacing: -.03em; margin: 0; }
+    .top p { color: #555; font-size: 1.1rem; max-width: 52rem; }
+    .grid { max-width: 1320px; margin: 0 auto; padding: 1rem 1.5rem 4rem; display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 1.5rem; }
+    .col { background: #fff; border-radius: 22px; padding: 1.25rem; box-shadow: 0 10px 30px rgba(0,0,0,.06); display: flex; flex-direction: column; gap: 1rem; }
+    .col header h2 { margin: 0; font-size: 1.5rem; }
+    .col header .mood { color: #666; margin-top: .2rem; }
+    .chips { display: flex; gap: .35rem; flex-wrap: wrap; }
+    .chips span { display: flex; flex-direction: column; align-items: center; gap: .2rem; font-size: .7rem; color: #555; font-family: ui-monospace, monospace; }
+    .chips i { width: 2.6rem; height: 2.6rem; border-radius: 12px; border: 1px solid rgba(0,0,0,.08); }
+    .fonts { font-size: .9rem; color: #444; }
+    .phone { width: 100%; max-width: 360px; margin: 0 auto; border-radius: 38px; background: #111; padding: 10px; }
+    .screen { border-radius: 30px; overflow: hidden; height: 720px; overflow-y: auto; scrollbar-width: none; }
+    .screen::-webkit-scrollbar { display: none; }
+    .pick { display: flex; justify-content: center; }
+    .pick span { font-weight: 700; padding: .6rem 1.2rem; border-radius: 999px; background: #1A1A1A; color: #fff; }
+    @media (max-width: 1100px) { .grid { grid-template-columns: 1fr; } }
+
+    /* ============ A · CUADERNO DE CAMPO ============ */
+    .A { --paper: #FBF6EA; --ink: #22201C; --ink2: #5B554B; --line: #E7DCC4; --maize: #F2C14E; --leaf: #2F6B4F; --terra: #B65A35;
+         --ok: #2F6B4F; --mid: #C9821B; --bad: #B23A2B;
+         background: var(--paper); color: var(--ink); font-family: "Atkinson Hyperlegible", sans-serif; min-height: 100%;
+         background-image: linear-gradient(var(--line) 1px, transparent 1px); background-size: 100% 34px; background-position: 0 14px; }
+    .A .bar { display: flex; justify-content: space-between; align-items: center; padding: 1.1rem 1.1rem .4rem; }
+    .A .logo { font-family: "Fraunces", serif; font-weight: 900; font-size: 1.35rem; font-style: italic; }
+    .A .logo b { color: var(--leaf); font-style: normal; }
+    .A .tool { display: flex; gap: .35rem; }
+    .A .tool span { width: 2.5rem; height: 2.5rem; border-radius: 99px; border: 2px solid var(--ink); display: grid; place-items: center; background: var(--paper); font-weight: 700; }
+    .A .date { padding: 0 1.1rem; color: var(--ink2); font-size: .95rem; }
+    .A .verdict { margin: .6rem 1.1rem 0; background: #fff; border: 2px solid var(--ink); border-radius: 6px 18px 6px 18px; padding: 1rem 1.1rem 1.1rem; position: relative; box-shadow: 5px 5px 0 var(--ink); }
+    .A .verdict::before { content: ""; position: absolute; top: -12px; left: 40%; width: 70px; height: 22px; background: rgba(242,193,78,.75); transform: rotate(-4deg); }
+    .A .verdict small { font-weight: 700; color: var(--ink2); text-transform: uppercase; letter-spacing: .08em; font-size: .75rem; }
+    .A .verdict h3 { font-family: "Fraunces", serif; font-weight: 900; font-size: 2.6rem; line-height: 1; margin: .2rem 0 .4rem; }
+    .A .hl { background: linear-gradient(transparent 55%, var(--maize) 55%, var(--maize) 92%, transparent 92%); padding: 0 .1em; }
+    .A .verdict p { margin: 0; color: var(--ink2); font-size: 1.02rem; }
+    .A .btn { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 3.3rem; border-radius: 999px; font-weight: 700; font-size: 1.05rem; border: 2px solid var(--ink); margin-top: .8rem; }
+    .A .btn.dark { background: var(--ink); color: var(--paper); }
+    .A .sec { margin: 1.4rem 1.1rem 0; }
+    .A .sec h4 { font-family: "Fraunces", serif; font-weight: 700; font-size: 1.3rem; margin: 0 0 .5rem; display: flex; align-items: center; gap: .4rem; }
+    .A .stamp { display: inline-flex; align-items: center; gap: .3rem; border: 2px solid currentColor; border-radius: 6px; padding: .15rem .55rem; font-weight: 700; font-size: .85rem; transform: rotate(-3deg); text-transform: uppercase; letter-spacing: .05em; }
+    .A .row { display: grid; grid-template-columns: auto 1fr; gap: 1rem; align-items: center; background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: .9rem; }
+    .A .score { font-family: "Fraunces", serif; font-weight: 900; font-size: 3rem; line-height: 1; color: var(--mid); }
+    .A .score small { font-size: 1rem; color: var(--ink2); font-family: "Atkinson Hyperlegible"; font-weight: 400; }
+    .A .scale { display: flex; gap: 3px; margin-top: .5rem; }
+    .A .scale i { flex: 1; height: 10px; border-radius: 3px; background: var(--line); }
+    .A .scale i.on { background: var(--mid); }
+    .A .water { background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: .9rem; }
+    .A .jar { display: flex; gap: .8rem; align-items: flex-end; }
+    .A .jar div { flex: 1; text-align: center; font-size: .9rem; color: var(--ink2); }
+    .A .jar .glass { height: 90px; border: 2px solid var(--ink); border-top: 0; border-radius: 0 0 12px 12px; position: relative; overflow: hidden; margin-bottom: .3rem; }
+    .A .jar .glass i { position: absolute; left: 0; right: 0; bottom: 0; background: repeating-linear-gradient(-45deg, #6FA8C9 0 6px, #8DBDD8 6px 12px); }
+    .A .jar b { display: block; font-family: "Fraunces"; font-size: 1.3rem; color: var(--ink); }
+    .A .weeks { display: grid; grid-template-columns: repeat(6, 1fr); gap: 4px; background: #fff; border: 2px solid var(--ink); border-radius: 14px; padding: .7rem; text-align: center; font-size: .8rem; }
+    .A .weeks div { padding: .5rem 0; border-radius: 8px; }
+    .A .weeks .w { background: var(--maize); font-weight: 700; }
+    .A .tabs { position: sticky; bottom: 0; margin-top: 1.4rem; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--paper); border-top: 2px solid var(--ink); padding: .5rem .3rem .8rem; text-align: center; font-size: .72rem; font-weight: 700; }
+    .A .tabs div { display: flex; flex-direction: column; align-items: center; gap: .1rem; padding: .35rem 0; border-radius: 10px; }
+    .A .tabs .on { background: var(--ink); color: var(--paper); }
+
+    /* ============ B · SEÑAL ============ */
+    .B { --ink: #0D0D0D; --bg: #FFFFFF; --soft: #F2F2F0; --go: #00A36C; --wait: #FFB400; --stop: #FF4A3D; --sky: #2E6BFF;
+         background: var(--bg); color: var(--ink); font-family: "Atkinson Hyperlegible", sans-serif; min-height: 100%; }
+    .B .bar { display: flex; justify-content: space-between; align-items: center; padding: 1rem; border-bottom: 3px solid var(--ink); }
+    .B .logo { font-family: "Archivo", sans-serif; font-stretch: 75%; font-weight: 900; font-size: 1.5rem; text-transform: uppercase; letter-spacing: .01em; }
+    .B .logo i { display: inline-block; width: .75em; height: .75em; background: var(--go); margin-right: .25em; transform: rotate(45deg); }
+    .B .tool { display: flex; gap: .3rem; }
+    .B .tool span { min-width: 2.5rem; height: 2.5rem; border: 3px solid var(--ink); display: grid; place-items: center; font-weight: 900; padding: 0 .3rem; }
+    .B .sign { background: var(--wait); padding: 1.2rem 1rem 1.3rem; border-bottom: 3px solid var(--ink); }
+    .B .sign small { font-weight: 700; font-size: .85rem; text-transform: uppercase; letter-spacing: .12em; }
+    .B .sign h3 { font-family: "Archivo", sans-serif; font-stretch: 70%; font-weight: 900; font-size: 3.5rem; line-height: .9; text-transform: uppercase; margin: .3rem 0 .6rem; display: flex; align-items: center; gap: .3rem; }
+    .B .sign p { margin: 0; font-size: 1.05rem; font-weight: 700; }
+    .B .btn { display: flex; align-items: center; justify-content: space-between; min-height: 3.6rem; padding: 0 1rem; font-weight: 900; font-size: 1.05rem; text-transform: uppercase; letter-spacing: .03em; border: 3px solid var(--ink); margin-top: .9rem; background: var(--ink); color: #fff; }
+    .B .nums { display: grid; grid-template-columns: 1fr 1fr; border-bottom: 3px solid var(--ink); }
+    .B .num { padding: 1rem; }
+    .B .num + .num { border-left: 3px solid var(--ink); }
+    .B .num small { display: block; font-weight: 700; text-transform: uppercase; font-size: .75rem; letter-spacing: .1em; }
+    .B .num b { display: block; font-family: "Archivo", sans-serif; font-stretch: 70%; font-weight: 900; font-size: 4rem; line-height: 1; margin-top: .3rem; }
+    .B .num .lvl { display: inline-block; margin-top: .4rem; padding: .2rem .5rem; font-weight: 900; text-transform: uppercase; font-size: .8rem; }
+    .B .meter { padding: 1rem; border-bottom: 3px solid var(--ink); }
+    .B .meter small { font-weight: 700; text-transform: uppercase; font-size: .75rem; letter-spacing: .1em; }
+    .B .track { height: 2.2rem; border: 3px solid var(--ink); margin-top: .5rem; position: relative; background: repeating-linear-gradient(90deg, transparent 0 calc(10% - 2px), rgba(0,0,0,.12) calc(10% - 2px) 10%); }
+    .B .track i { position: absolute; top: 0; bottom: 0; left: 0; background: var(--sky); }
+    .B .track em { position: absolute; top: -3px; bottom: -3px; width: 4px; background: var(--ink); font-style: normal; }
+    .B .legend { display: flex; justify-content: space-between; font-weight: 700; margin-top: .4rem; font-size: .9rem; }
+    .B .weeks { display: grid; grid-template-columns: repeat(6, 1fr); border-bottom: 3px solid var(--ink); }
+    .B .weeks div { padding: .9rem 0; text-align: center; font-weight: 900; font-family: "Archivo"; font-size: 1.1rem; }
+    .B .weeks div + div { border-left: 2px solid var(--ink); }
+    .B .weeks .w { background: var(--go); color: #fff; }
+    .B .tabs { position: sticky; bottom: 0; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--ink); color: #fff; text-align: center; font-size: .72rem; font-weight: 900; text-transform: uppercase; }
+    .B .tabs div { display: flex; flex-direction: column; align-items: center; gap: .15rem; padding: .7rem 0 .9rem; }
+    .B .tabs .on { background: var(--wait); color: var(--ink); }
+
+    /* ============ C · MILPA ============ */
+    .C { --indigo: #23266B; --indigo2: #343A8F; --maize: #F6C343; --jade: #1F9E89; --chili: #E2513A; --rose: #E86A8B; --cream: #FFF6E6; --ink: #1E1B3A;
+         background: var(--cream); color: var(--ink); font-family: "Atkinson Hyperlegible", sans-serif; min-height: 100%; }
+    .C .band { height: 14px; background:
+        linear-gradient(135deg, var(--maize) 25%, transparent 25%) -7px 0/14px 14px,
+        linear-gradient(225deg, var(--maize) 25%, transparent 25%) -7px 0/14px 14px,
+        linear-gradient(315deg, var(--jade) 25%, transparent 25%) 0 0/14px 14px,
+        linear-gradient(45deg, var(--jade) 25%, var(--indigo) 25%) 0 0/14px 14px; }
+    .C .head { background: var(--indigo); color: #fff; padding: 1rem 1rem 1.6rem; border-radius: 0 0 32px 32px; position: relative; }
+    .C .bar { display: flex; justify-content: space-between; align-items: center; }
+    .C .logo { font-family: "Baloo 2", sans-serif; font-weight: 800; font-size: 1.5rem; display: flex; align-items: center; gap: .4rem; }
+    .C .logo i { width: 1.7rem; height: 1.7rem; border-radius: 50% 50% 50% 0; background: var(--maize); transform: rotate(-45deg); display: inline-block; }
+    .C .tool { display: flex; gap: .35rem; }
+    .C .tool span { width: 2.5rem; height: 2.5rem; border-radius: 99px; background: rgba(255,255,255,.14); display: grid; place-items: center; font-weight: 700; }
+    .C .hello { margin-top: 1rem; font-family: "Baloo 2"; font-weight: 700; font-size: 1.1rem; opacity: .85; }
+    .C .verdict { margin-top: .4rem; background: var(--cream); color: var(--ink); border-radius: 26px; padding: 1rem 1.1rem 1.1rem; position: relative; overflow: hidden; }
+    .C .verdict::after { content: ""; position: absolute; right: -30px; top: -30px; width: 110px; height: 110px; border-radius: 99px; background: var(--maize); opacity: .55; }
+    .C .verdict > * { position: relative; z-index: 1; }
+    .C .verdict h3 { font-family: "Baloo 2"; font-weight: 800; font-size: 2.6rem; line-height: 1; margin: .1rem 0 .3rem; color: var(--chili); display: flex; align-items: center; gap: .4rem; }
+    .C .verdict p { margin: 0; color: #4A4766; }
+    .C .btn { display: flex; align-items: center; justify-content: center; gap: .5rem; min-height: 3.4rem; border-radius: 999px; font-weight: 700; font-size: 1.05rem; margin-top: .9rem; background: var(--indigo); color: #fff; }
+    .C .cards { display: grid; grid-template-columns: 1fr 1fr; gap: .7rem; padding: 1.1rem 1rem 0; }
+    .C .card { background: #fff; border-radius: 22px; padding: .9rem; box-shadow: 0 6px 0 rgba(35,38,107,.08); }
+    .C .card.wide { grid-column: span 2; }
+    .C .card small { font-weight: 700; color: #6A6788; display: flex; align-items: center; gap: .3rem; }
+    .C .big { font-family: "Baloo 2"; font-weight: 800; font-size: 2.6rem; line-height: 1; margin-top: .3rem; }
+    .C .pill { display: inline-block; margin-top: .3rem; padding: .2rem .7rem; border-radius: 99px; font-weight: 700; font-size: .85rem; }
+    .C .drops { display: flex; gap: .2rem; margin-top: .5rem; }
+    .C .drops i { width: 1rem; height: 1.25rem; border-radius: 50% 50% 50% 50% / 60% 60% 40% 40%; background: #D9D6EA; }
+    .C .drops i.on { background: var(--jade); }
+    .C .weeks { display: grid; grid-template-columns: repeat(6, 1fr); gap: .3rem; margin-top: .6rem; }
+    .C .weeks div { height: 3rem; border-radius: 14px; background: #EFEAF7; display: grid; place-items: center; font-weight: 700; font-size: .85rem; }
+    .C .weeks .w { background: var(--jade); color: #fff; }
+    .C .tabs { position: sticky; bottom: 0; margin: 1.2rem .6rem .6rem; display: grid; grid-template-columns: repeat(4, 1fr); background: var(--indigo); border-radius: 26px; padding: .35rem; color: #fff; text-align: center; font-size: .72rem; font-weight: 700; }
+    .C .tabs div { display: flex; flex-direction: column; align-items: center; gap: .1rem; padding: .45rem 0; border-radius: 22px; }
+    .C .tabs .on { background: var(--maize); color: var(--indigo); }
+  </style>
+</head>
+<body>
+  <div class="top">
+    <h1>Field Shift — 3 pistes de design</h1>
+    <p>Le même écran (la réponse du jour sur téléphone) dans trois directions différentes. Faites défiler à l'intérieur de chaque téléphone. Dites-moi laquelle vous plaît — ou ce que vous voulez mélanger — et je l'applique à toute la plateforme (site public + espace client).</p>
+  </div>
+
+  <div class="grid">
+    <!-- A -->
+    <section class="col">
+      <header><h2 style="font-family:'Fraunces',serif;font-weight:900">A · Cuaderno de campo</h2><p class="mood">Carnet de terrain · chaleureux · humain · « fait main »</p></header>
+      <div class="chips"><span><i style="background:#FBF6EA"></i>#FBF6EA</span><span><i style="background:#22201C"></i>#22201C</span><span><i style="background:#F2C14E"></i>#F2C14E</span><span><i style="background:#2F6B4F"></i>#2F6B4F</span><span><i style="background:#B65A35"></i>#B65A35</span><span><i style="background:#6FA8C9"></i>#6FA8C9</span></div>
+      <p class="fonts"><b>Fraunces</b> (titres, serif doux) + <b>Atkinson Hyperlegible</b> (texte)</p>
+      <div class="phone"><div class="screen"><div class="A">
+        <div class="bar"><span class="logo">Field <b>Shift</b></span><div class="tool"><span>Aa</span><span><iconify-icon icon="solar:volume-loud-linear" width="20"></iconify-icon></span><span>ES</span></div></div>
+        <p class="date">Sábado 14 de noviembre · Parcela de maíz, 2,4 ha</p>
+        <div class="verdict">
+          <small>Para hoy</small>
+          <h3><span class="hl">Esperar</span></h3>
+          <p>El suelo está seco y la lluvia todavía no alcanza. Mejor sembrar entre el <b>20 y el 30 de noviembre</b>.</p>
+          <div class="btn dark"><iconify-icon icon="solar:volume-loud-bold" width="20"></iconify-icon>Escuchar</div>
+        </div>
+        <div class="sec"><h4>¿Hay riesgo de sequía? <span class="stamp" style="color:var(--mid)">Moderado</span></h4>
+          <div class="row"><div class="score">69<small> /100</small></div><div><div class="scale"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i><i></i></div><p style="margin:.4rem 0 0;color:var(--ink2);font-size:.92rem">Lluvia al 62 % de lo normal.</p></div></div></div>
+        <div class="sec"><h4>Agua para el cultivo <span class="stamp" style="color:var(--bad)">Falta</span></h4>
+          <div class="water"><div class="jar">
+            <div><div class="glass"><i style="height:100%"></i></div>Necesita<b>590 mm</b></div>
+            <div><div class="glass"><i style="height:33%"></i></div>Tiene<b>192 mm</b></div>
+            <div style="flex:1.2;text-align:left"><b style="color:var(--bad);font-size:1.6rem">−398 mm</b>Faltan para la cosecha</div>
+          </div></div></div>
+        <div class="sec"><h4>¿Cuándo sembrar?</h4>
+          <div class="weeks"><div>S1</div><div class="w">S2</div><div class="w">S3</div><div>S4</div><div>S5</div><div>S6</div></div>
+          <div class="btn"><iconify-icon icon="solar:refresh-circle-linear" width="20"></iconify-icon>Ver planes de rotación</div></div>
+        <div class="tabs"><div class="on"><iconify-icon icon="solar:notebook-bold" width="22"></iconify-icon>Hoy</div><div><iconify-icon icon="solar:refresh-circle-linear" width="22"></iconify-icon>Rotación</div><div><iconify-icon icon="solar:chat-round-dots-linear" width="22"></iconify-icon>Preguntar</div><div><iconify-icon icon="solar:history-linear" width="22"></iconify-icon>Historial</div></div>
+      </div></div></div>
+      <div class="pick"><span>Piste A</span></div>
+    </section>
+
+    <!-- B -->
+    <section class="col">
+      <header><h2 style="font-family:'Archivo',sans-serif;font-stretch:75%;font-weight:900;text-transform:uppercase">B · Señal</h2><p class="mood">Panneau / instrument · ultra-lisible au soleil · graphique · direct</p></header>
+      <div class="chips"><span><i style="background:#FFFFFF"></i>#FFFFFF</span><span><i style="background:#0D0D0D"></i>#0D0D0D</span><span><i style="background:#00A36C"></i>#00A36C</span><span><i style="background:#FFB400"></i>#FFB400</span><span><i style="background:#FF4A3D"></i>#FF4A3D</span><span><i style="background:#2E6BFF"></i>#2E6BFF</span></div>
+      <p class="fonts"><b>Archivo Condensed Black</b> (titres, chiffres) + <b>Atkinson Hyperlegible</b> (texte)</p>
+      <div class="phone"><div class="screen"><div class="B">
+        <div class="bar"><span class="logo"><i></i>Field Shift</span><div class="tool"><span>Aa</span><span><iconify-icon icon="solar:volume-loud-bold" width="20"></iconify-icon></span><span>ES</span></div></div>
+        <div class="sign">
+          <small>Hoy · 14 nov · Maíz 2,4 ha</small>
+          <h3><iconify-icon icon="solar:pause-circle-bold" width="48"></iconify-icon>Esperar</h3>
+          <p>Suelo seco y poca lluvia. Siembre del 20 al 30 de noviembre.</p>
+          <div class="btn"><span>Escuchar la respuesta</span><iconify-icon icon="solar:volume-loud-bold" width="22"></iconify-icon></div>
+        </div>
+        <div class="nums">
+          <div class="num"><small>Riesgo de sequía</small><b>69</b><span class="lvl" style="background:var(--wait)">Moderado</span></div>
+          <div class="num"><small>Lluvia vs normal</small><b>62%</b><span class="lvl" style="background:var(--stop);color:#fff">Baja</span></div>
+        </div>
+        <div class="meter"><small>Agua: tiene 192 de 590 mm</small>
+          <div class="track"><i style="width:33%"></i><em style="left:100%"></em></div>
+          <div class="legend"><span style="color:var(--sky)">Tiene 192 mm</span><span>Faltan 398 mm</span></div></div>
+        <div class="meter" style="padding-bottom:.6rem"><small>¿Cuándo sembrar?</small></div>
+        <div class="weeks"><div>S1</div><div class="w">S2</div><div class="w">S3</div><div>S4</div><div>S5</div><div>S6</div></div>
+        <div style="padding:1rem"><div class="btn" style="margin:0"><span>Planes de rotación</span><iconify-icon icon="solar:arrow-right-bold" width="22"></iconify-icon></div></div>
+        <div class="tabs"><div class="on"><iconify-icon icon="solar:home-2-bold" width="22"></iconify-icon>Hoy</div><div><iconify-icon icon="solar:refresh-circle-bold" width="22"></iconify-icon>Rotación</div><div><iconify-icon icon="solar:chat-round-dots-bold" width="22"></iconify-icon>Preguntar</div><div><iconify-icon icon="solar:history-bold" width="22"></iconify-icon>Historial</div></div>
+      </div></div></div>
+      <div class="pick"><span>Piste B</span></div>
+    </section>
+
+    <!-- C -->
+    <section class="col">
+      <header><h2 style="font-family:'Baloo 2',sans-serif;font-weight:800">C · Milpa</h2><p class="mood">Identité centre-américaine · joyeux · rond · frises textiles</p></header>
+      <div class="chips"><span><i style="background:#23266B"></i>#23266B</span><span><i style="background:#F6C343"></i>#F6C343</span><span><i style="background:#1F9E89"></i>#1F9E89</span><span><i style="background:#E2513A"></i>#E2513A</span><span><i style="background:#E86A8B"></i>#E86A8B</span><span><i style="background:#FFF6E6"></i>#FFF6E6</span></div>
+      <p class="fonts"><b>Baloo 2</b> (titres, rond et amical) + <b>Atkinson Hyperlegible</b> (texte)</p>
+      <div class="phone"><div class="screen"><div class="C">
+        <div class="band"></div>
+        <div class="head">
+          <div class="bar"><span class="logo"><i></i>Field Shift</span><div class="tool"><span>Aa</span><span><iconify-icon icon="solar:volume-loud-bold" width="20"></iconify-icon></span><span>ES</span></div></div>
+          <p class="hello">¡Buenos días! Su parcela de maíz hoy:</p>
+          <div class="verdict">
+            <h3><iconify-icon icon="solar:clock-circle-bold" width="40"></iconify-icon>Esperar</h3>
+            <p>El suelo está seco. La mejor fecha para sembrar es del <b>20 al 30 de noviembre</b>.</p>
+            <div class="btn"><iconify-icon icon="solar:volume-loud-bold" width="20"></iconify-icon>Escuchar</div>
+          </div>
+        </div>
+        <div class="cards">
+          <div class="card"><small><iconify-icon icon="solar:sun-2-bold" width="16" style="color:var(--chili)"></iconify-icon>Riesgo</small><div class="big" style="color:var(--chili)">69</div><span class="pill" style="background:#FDE3D9;color:#A8341F">Moderado</span></div>
+          <div class="card"><small><iconify-icon icon="solar:waterdrops-bold" width="16" style="color:var(--jade)"></iconify-icon>Agua</small><div class="big" style="color:var(--jade)">33%</div><div class="drops"><i class="on"></i><i class="on"></i><i></i><i></i><i></i><i></i></div></div>
+          <div class="card wide"><small><iconify-icon icon="mdi:sprout" width="16" style="color:var(--jade)"></iconify-icon>¿Cuándo sembrar?</small>
+            <div class="weeks"><div>S1</div><div class="w">S2</div><div class="w">S3</div><div>S4</div><div>S5</div><div>S6</div></div></div>
+          <div class="card wide" style="background:var(--maize)"><small style="color:var(--indigo)"><iconify-icon icon="solar:refresh-circle-bold" width="16"></iconify-icon>Plan más seguro</small>
+            <div style="font-family:'Baloo 2';font-weight:800;font-size:1.35rem;margin-top:.2rem">Frijol → Sorgo → Cobertura</div></div>
+        </div>
+        <div class="tabs"><div class="on"><iconify-icon icon="solar:home-smile-bold" width="22"></iconify-icon>Hoy</div><div><iconify-icon icon="solar:refresh-circle-bold" width="22"></iconify-icon>Rotación</div><div><iconify-icon icon="solar:chat-round-dots-bold" width="22"></iconify-icon>Preguntar</div><div><iconify-icon icon="solar:history-bold" width="22"></iconify-icon>Historial</div></div>
+      </div></div></div>
+      <div class="pick"><span>Piste C</span></div>
+    </section>
+  </div>
+</body>
+</html>

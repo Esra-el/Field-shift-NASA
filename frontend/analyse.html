@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#DEDEDA" />
-  <title>Field Shift — Analyse du terrain</title>
+  <meta name="theme-color" content="#F6F1E7" />
+  <title>Field Shift — Vue satellite</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <link rel="stylesheet" href="/css/fieldshift.css" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
@@ -29,12 +29,12 @@
         <!-- Gauche : titre + scan satellite -->
         <section class="analyse-left">
           <div class="thumbs">
-            <a class="thumb is-active" href="/campo.html" aria-label="Parcelle"><img src="/img/field-thumb.jpg" alt="" /></a>
+            <a class="thumb is-active" href="/campo.html" aria-label="Parcelle"><img src="/img/fields.svg" alt="" /></a>
             <a class="thumb-add" href="/campo.html"><span>＋<br /><span data-i18n="an.add"></span></span></a>
           </div>
           <div>
-            <h1 class="an-title" id="an-title"></h1>
-            <p class="an-sub" id="an-sub"></p>
+            <h1 class="an-title" id="an-title" data-speak></h1>
+            <p class="an-sub" id="an-sub" data-speak></p>
             <div class="scan is-scanning" id="scan">
               <div class="scan-ring"></div>
               <div class="scan-map" id="scan-map"></div>
@@ -49,6 +49,7 @@
                 <button data-layer="ndvi" data-i18n="an.layer_ndvi"></button>
               </div>
               <p class="layer-note" id="layer-note"></p>
+              <p style="margin-top:.75rem;display:inline-flex;align-items:center;gap:.4rem;color:rgba(255,255,255,.85)" data-help="scan" class="small"><span data-i18n="help.scan.t"></span></p>
             </div>
           </div>
         </section>
@@ -57,15 +58,15 @@
         <section class="analyse-right">
           <div class="card glass">
             <div class="card-head">
-              <h2 class="card-title" data-i18n="ins.title"></h2>
-              <a class="link-under" href="/plan.html" data-i18n="common.see_all"></a>
+              <h2 class="card-title" data-help="health"><span data-i18n="ins.title"></span></h2>
+              <a class="link-under" href="/panel.html#details" data-i18n="common.see_all"></a>
             </div>
             <div class="health-grid" id="health"></div>
           </div>
 
           <div class="card growth" style="position:relative">
             <div class="card-head" style="margin-bottom:6px">
-              <h2 class="card-title" data-i18n="an.growth"></h2>
+              <h2 class="card-title" data-help="ndvi"><span data-i18n="an.growth"></span></h2>
               <span class="small" data-i18n="an.weeks8"></span>
             </div>
             <div class="chart-box" style="height:150px"><canvas id="growth-chart"></canvas><span class="delta hidden" id="growth-delta"></span></div>
@@ -90,7 +91,7 @@
           </div>
 
           <a class="card expert" href="/copiloto.html">
-            <img src="/img/assistant.jpg" alt="" />
+            <img src="/img/assistant.svg" alt="" />
             <div class="ex-top">
               <h2 class="card-title" data-i18n="an.expert"></h2>
               <p class="card-sub" data-i18n="an.expert_sub"></p>
@@ -101,7 +102,7 @@
           <div class="card glass updates span-2" id="alerts">
             <div class="card-head">
               <h2 class="card-title" data-i18n="an.updates"></h2>
-              <a class="link-under" href="/plan.html#why" data-i18n="common.see_all"></a>
+              <a class="link-under" href="/panel.html#details" data-i18n="common.see_all"></a>
             </div>
             <div id="upd-list"></div>
           </div>

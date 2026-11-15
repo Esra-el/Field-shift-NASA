@@ -1,153 +1,181 @@
-/* Field Shift — tableau de bord (maquette « serre »). */
+/* Field Shift — tableau de bord « compris en 30 secondes ».
+   1. La réponse du jour (semer / attendre / changer) · 2. risque, eau, quand semer
+   3. actions · 4. données scientifiques repliées (indicateurs NASA + graphiques). */
 (function () {
   const t = (k) => FSI18N.t(k);
   const $ = (id) => document.getElementById(id);
   const last = (a) => (a && a.length ? a[a.length - 1] : null);
-  const PLANT_COLOR = { plant_now: "#3F9D22", wait: "#E5A12A", switch_crop: "#D6462B" };
-
-  // Variables affichables dans « Santé du champ » (synchronisées avec les tuiles).
-  const VARS = {
-    temp: { key: "var.temp", unit: "°C", get: (s) => s.temperature_c },
-    soil: { key: "var.soil", unit: "m³/m³", get: (s) => s.soil_moisture },
-    rain: { key: "var.rain", unit: "mm", get: (s) => s.rainfall_mm },
-    ndvi: { key: "var.ndvi", unit: "", get: (s) => s.ndvi },
+  const PLANT = {
+    plant_now: { color: "#2E7D32", icon: "solar:check-circle-bold", badge: "badge-green" },
+    wait: { color: "#B85C10", icon: "solar:clock-circle-bold", badge: "badge-amber" },
+    switch_crop: { color: "#C0392B", icon: "solar:danger-triangle-bold", badge: "badge-red" },
   };
-  let data = null, chart = null, selected = "rain";
+  const LVL_BADGE = { low: "badge-green", moderate: "badge-amber", high: "badge-red" };
+  const LVL_ICON = { low: "solar:check-circle-bold", moderate: "solar:danger-circle-bold", high: "solar:danger-triangle-bold" };
+  const WATER = {
+    enough_water: { badge: "badge-green", icon: "solar:check-circle-bold" },
+    risky: { badge: "badge-amber", icon: "solar:danger-circle-bold" },
+    not_enough_water: { badge: "badge-red", icon: "solar:danger-triangle-bold" },
+  };
+  let data = null;
+  const charts = {};
 
   function render(d, res) {
     data = d;
-    const s = d.series || {}, ind = d.nasa_indicators, pt = d.planting_timeline;
     const field = FSStore.getField() || {};
-    const color = FSUI.RISK_COLOR[d.risk_level];
+    const pt = d.planting_timeline, wb = d.water_budget, P = PLANT[pt.recommendation] || PLANT.wait;
 
-    // --- Bandeau photo
-    $("hero-parcel").innerHTML = `${FSUI.icon("solar:map-point-bold", 16)} ${FSUI.cropLabel()}${field.area_ha ? " · " + field.area_ha + " ha" : ""} · ${field.latitude}, ${field.longitude}`;
+    // --- 1. Réponse du jour
+    $("hero-field").innerHTML = `${FSUI.icon("mdi:sprout", 16)} ${FSI18N.f("dash.field_of", { crop: FSUI.cropLabel().toLowerCase() })}${field.area_ha ? " · " + field.area_ha + " ha" : ""}`;
+    $("hero-place").innerHTML = `${FSUI.icon("solar:map-point-bold", 16)} ${field.latitude}, ${field.longitude}`;
     FSUI.stamp($("hero-stamp"), res, d);
-    const hr = $("hero-reco");
-    hr.textContent = t("plant." + pt.recommendation);
-    hr.style.color = PLANT_COLOR[pt.recommendation] || "";
+    $("hero-date").textContent = FSUI.fmtDay(new Date());
+    $("hero-reco").innerHTML = `${FSUI.icon(P.icon, 44)}<span>${t("plant." + pt.recommendation)}</span>`;
+    $("hero-reco").style.color = P.color;
     $("hero-reason").textContent = pt.reason;
 
-    // --- Suivi du champ
-    $("mon-badge").innerHTML = `<span style="width:7px;height:7px;border-radius:9px;background:currentColor;display:inline-block"></span> ${d._mock ? t("mon.badge_demo") : "Live"}`;
-    $("mon-date").textContent = FSUI.fmtDay(new Date());
-    $("mon-temp").textContent = `${last(s.temperature_c)}°C`;
-    $("mon-l1").innerHTML = `${FSUI.icon("solar:sun-2-bold", 14)} ${t("mon.solar")} ${ind.solar_radiation} MJ/m²`;
-    $("mon-l2").textContent = `${t("mon.soil")} ${Math.round(ind.soil_moisture * 100)} %`;
-    $("mon-ring").innerHTML = FSUI.ring(d.risk_score, color, 150, 12);
-    $("mon-score").textContent = d.risk_score;
-    $("mon-level").textContent = t("risk." + d.risk_level);
-    $("mon-level").style.color = color;
-    renderTiles(s, ind);
+    // --- 2a. Risque
+    const color = FSUI.RISK_COLOR[d.risk_level];
+    $("risk-ring").innerHTML = FSUI.ring(d.risk_score, color, 170, 14);
+    $("risk-score").textContent = d.risk_score;
+    $("risk-score").style.color = color;
+    $("risk-badge").className = "badge " + LVL_BADGE[d.risk_level];
+    $("risk-badge").innerHTML = `${FSUI.icon(LVL_ICON[d.risk_level], 16)} ${t("risk." + d.risk_level)}`;
+    $("risk-marker").style.left = `calc(${Math.max(0, Math.min(100, d.risk_score))}% - .6rem)`;
 
-    // --- Calendrier de semis
-    renderCalendar(pt);
+    // --- 2b. Eau
+    const W = WATER[wb.status] || WATER.risky;
+    $("water-status").className = "badge " + W.badge;
+    $("water-status").innerHTML = `${FSUI.icon(W.icon, 16)} ${t("water." + wb.status)}`;
+    $("w-need").textContent = wb.crop_water_need_mm + " mm";
+    $("w-avail").textContent = wb.available_water_mm + " mm";
+    const cov = Math.round((100 * wb.available_water_mm) / Math.max(1, wb.crop_water_need_mm));
+    $("w-bar").style.width = Math.min(100, cov) + "%";
+    $("w-bar").style.background = cov >= 100 ? "#2E7D32" : cov >= 65 ? "#D9731A" : "#C0392B";
+    const diff = wb.available_water_mm - wb.crop_water_need_mm;
+    $("w-delta").className = "water-delta " + (diff >= 0 ? "ok" : cov >= 65 ? "mid" : "bad");
+    $("w-delta").innerHTML = `${FSUI.icon(diff >= 0 ? "solar:check-circle-bold" : "solar:waterdrop-bold", 22)}
+      <span>${t(diff >= 0 ? "dash.surplus" : "dash.deficit")}</span><b>${Math.abs(diff)} mm</b>`;
+    $("w-explain").textContent = wb.explanation || "";
 
-    // --- Santé du champ
-    const score = 100 - d.risk_score;
-    $("ins-score").textContent = score;
-    $("ins-score").style.color = score >= 60 ? "#3F9D22" : score >= 31 ? "#E5A12A" : "#D6462B";
-    const pct = Math.round((100 * ind.rainfall_60d_mm) / ind.rainfall_normal_mm);
-    $("ins-delta").innerHTML = `<span class="${pct < 90 ? "c-red" : "c-green"}">${pct < 100 ? "↓" : "↑"} ${pct} %</span> <span class="faint">${t("ins.vs_normal")}</span>`;
-    const sel = $("ins-var");
-    sel.innerHTML = Object.keys(VARS).map((k) => `<option value="${k}">${t(VARS[k].key)}</option>`).join("");
-    sel.value = selected;
-    sel.onchange = () => select(sel.value);
-    drawChart();
+    // --- 2c. Quand semer
+    $("plant-badge").className = "badge " + P.badge;
+    $("plant-badge").innerHTML = `${FSUI.icon(P.icon, 16)} ${t("plant." + pt.recommendation)}`;
+    $("plant-window").textContent = FSUI.fmtWindow(pt.best_window);
+    renderCalendar(pt, P);
 
-    // --- Météo & eau
-    renderWeather(s, ind, d.water_budget);
+    // --- 4. Détails scientifiques
+    renderIndicators(d);
+    renderWhy(d);
+    $("ai-explain").textContent = d.ai_explanation || "";
+    const det = $("details");
+    if (det.open) drawCharts();
+    det.ontoggle = () => { if (det.open) drawCharts(); };
+    if (location.hash === "#details" && !det.dataset.opened) {
+      det.dataset.opened = "1"; det.open = true;
+      setTimeout(() => det.scrollIntoView({ behavior: "smooth" }), 300);
+    }
+
+    // --- Lecture à voix haute : la réponse en phrases simples
+    const summary = () => [
+      `${t("dash.today")} : ${t("plant." + pt.recommendation)}.`, pt.reason,
+      `${t("panel.risk")} : ${d.risk_score} ${t("dash.out_of")}, ${t("risk." + d.risk_level)}.`,
+      `${t("panel.water")} : ${t("water." + wb.status)}. ${t("panel.need")} ${wb.crop_water_need_mm} mm, ${t("panel.available")} ${wb.available_water_mm} mm.`,
+      `${t("plant.window")} : ${FSUI.fmtWindow(pt.best_window)}.`,
+    ].join(" ");
+    FSUI.setSpeech(summary);
+    $("hero-listen").onclick = () => FSUI.speak(summary());
   }
 
-  function renderTiles(s, ind) {
-    const tiles = [
-      { id: "temp", icon: "solar:temperature-linear", label: t("tile.temp"), value: `${last(s.temperature_c)}°C` },
-      { id: "soil", icon: "solar:waterdrops-linear", label: t("tile.soil"), value: `${Math.round(ind.soil_moisture * 100)}%` },
-      { id: "rain", icon: "solar:cloud-rain-linear", label: t("tile.rain"), value: `${ind.rainfall_60d_mm} mm` },
-      { id: "ndvi", icon: "solar:leaf-linear", label: t("tile.ndvi"), value: last(s.ndvi) },
-    ];
-    $("mon-tiles").innerHTML = tiles.map((x) => `
-      <button class="tile${x.id === selected ? " is-active" : ""}" data-var="${x.id}">
-        <span class="t-label">${FSUI.icon(x.icon, 14)} ${x.label}</span>
-        <span class="t-value" style="display:block">${x.value}</span>
-      </button>`).join("");
-    $("mon-tiles").querySelectorAll(".tile").forEach((b) => b.addEventListener("click", () => select(b.dataset.var)));
-  }
-
-  function select(id) {
-    selected = id;
-    $("ins-var").value = id;
-    $("mon-tiles").querySelectorAll(".tile").forEach((b) => b.classList.toggle("is-active", b.dataset.var === id));
-    drawChart();
-  }
-
-  function drawChart() {
-    const s = data.series || {};
-    const v = VARS[selected];
-    const values = v.get(s) || [];
-    const n = values.length;
-    if (chart) chart.destroy();
-    chart = new Chart($("ins-chart"), {
-      type: "bar",
-      data: {
-        labels: s.labels || [],
-        datasets: [{
-          label: t(v.key), data: values,
-          backgroundColor: values.map((_, i) => (i === n - 1 ? "#3F9D22" : "#D2EBC4")),
-          hoverBackgroundColor: "#57B33D", borderRadius: 10, borderSkipped: false, maxBarThickness: 30,
-        }],
-      },
-      options: {
-        responsive: true, maintainAspectRatio: false,
-        plugins: { tooltip: { callbacks: { label: (c) => `${c.formattedValue} ${v.unit}` } } },
-        scales: {
-          x: { grid: { display: false }, ticks: { font: { size: 10 } } },
-          y: { beginAtZero: selected === "rain", grid: { color: "#EFEFEA" }, border: { display: false }, ticks: { font: { size: 10 }, maxTicksLimit: 5 } },
-        },
-      },
-    });
-  }
-
-  function renderCalendar(pt) {
+  function renderCalendar(pt, P) {
     const win = FSUI.parseWindow(pt.best_window);
     const today = new Date(); today.setHours(0, 0, 0, 0);
     const monday = new Date(today); monday.setDate(today.getDate() - ((today.getDay() + 6) % 7));
     const weeks = Array.from({ length: 6 }, (_, i) => {
       const a = new Date(monday); a.setDate(monday.getDate() + i * 7);
       const b = new Date(a); b.setDate(a.getDate() + 6);
-      return { a, b, on: !!(win && a <= win[1] && b >= win[0]) };
+      return { a, on: !!(win && a <= win[1] && b >= win[0]) };
     });
     const firstOn = weeks.findIndex((w) => w.on);
     const lastOn = weeks.length - 1 - weeks.slice().reverse().findIndex((w) => w.on);
     const markerAt = firstOn >= 0 ? firstOn : 0;
-    const col = PLANT_COLOR[pt.recommendation] || "#3F9D22";
-
     $("cal-weeks").innerHTML = weeks.map((w, i) => `<div class="wk${i === 0 ? " is-now" : ""}">${t("cal.week")}${i + 1}</div>`).join("");
     $("cal-area").innerHTML = weeks.map((w, i) => {
       const cls = w.on ? ` is-window${i === firstOn ? " first" : ""}${i === lastOn ? " last" : ""}` : "";
-      const marker = i === markerAt ? `<div class="cal-marker"><span class="pill">${t("plant." + pt.recommendation)}</span>
-        <div class="seed" style="color:${col}">${FSUI.icon(pt.recommendation === "switch_crop" ? "solar:danger-triangle-bold" : "mdi:sprout", 28)}</div></div>` : "";
+      const marker = i === markerAt ? `<div class="cal-marker"><div class="seed" style="color:${P.color}">${FSUI.icon(pt.recommendation === "switch_crop" ? "solar:danger-triangle-bold" : "mdi:sprout", 28)}</div></div>` : "";
       return `<div class="cal-col${cls}">${marker}</div>`;
     }).join("");
     $("cal-axis").innerHTML = weeks.map((w) => `<span>${FSUI.fmtShort(w.a)}</span>`).join("");
-    $("cal-text").innerHTML = `<b>${t("plant.window")}</b> · ${FSUI.fmtWindow(pt.best_window)}`;
   }
 
-  function renderWeather(s, ind, wb) {
-    $("wx-temp").textContent = `${Math.round(last(s.temperature_c))}°`;
-    $("wx-list").innerHTML = `
-      <div>${FSUI.icon("solar:waterdrops-linear", 16)} ${t("wx.soil")} ${Math.round(ind.soil_moisture * 100)} %</div>
-      <div>${FSUI.icon("solar:sun-2-linear", 16)} ${t("wx.solar")} ${ind.solar_radiation} MJ/m²</div>
-      <div>${FSUI.icon("solar:wind-linear", 16)} ${t("wx.et")} ${ind.evapotranspiration} mm/j</div>`;
-    const items = [
-      { v: wb.available_water_mm, cls: "green", lbl: t("wx.available") },
-      { v: wb.crop_water_need_mm, cls: "olive", lbl: t("wx.need") },
+  function renderIndicators(d) {
+    const ind = d.nasa_indicators, s = d.series || {};
+    const rainPct = Math.round((100 * ind.rainfall_60d_mm) / ind.rainfall_normal_mm);
+    const lvl = (ok, warn) => (ok ? "ok" : warn ? "warn" : "bad");
+    const cells = [
+      { k: "ind.rainfall", help: "rain", icon: "solar:cloud-rain-bold", v: `${ind.rainfall_60d_mm} mm`, sub: `${rainPct} % · ${t("chart.normal")} ${ind.rainfall_normal_mm} mm`, l: lvl(rainPct >= 90, rainPct >= 70) },
+      { k: "ind.soil_moisture", help: "soil", icon: "solar:waterdrops-bold", v: `${Math.round(ind.soil_moisture * 100)} %`, sub: "SMAP", l: lvl(ind.soil_moisture >= 0.2, ind.soil_moisture >= 0.12) },
+      { k: "ind.ndvi", help: "ndvi", icon: "solar:leaf-bold", v: `${ind.ndvi_trend > 0 ? "+" : ""}${ind.ndvi_trend}`, sub: `${t(ind.ndvi_trend < -0.02 ? "lvl.declining" : ind.ndvi_trend > 0.02 ? "lvl.rising" : "lvl.stable")} · MODIS`, l: lvl(ind.ndvi_trend >= 0, ind.ndvi_trend >= -0.1) },
+      { k: "ind.temp", help: "temp", icon: "solar:temperature-bold", v: `${ind.temperature_c != null ? ind.temperature_c : last(s.temperature_c)} °C`, sub: "NASA POWER", l: "ok" },
+      { k: "ind.solar", help: "solar", icon: "solar:sun-2-bold", v: `${ind.solar_radiation} MJ/m²`, sub: "NASA POWER", l: "ok" },
+      { k: "ind.et", help: "et", icon: "solar:wind-bold", v: `${ind.evapotranspiration} mm/d`, sub: "NASA POWER", l: lvl(ind.evapotranspiration <= 4.5, ind.evapotranspiration <= 5.5) },
     ];
-    $("wx-stripes").innerHTML = items.map((x) => `
-      <div class="stripe-item" style="flex:${Math.max(1, x.v)}">
-        <div class="lbl">${x.v} mm<small>${x.lbl}</small></div>
-        <div class="stripe ${x.cls}"></div>
+    $("indicators").innerHTML = cells.map((c) => `
+      <div class="ind lvl-${c.l}">
+        <span class="ind-ico">${FSUI.icon(c.icon, 22)}</span>
+        <p class="ind-k" data-help="${c.help}"><span>${t(c.k)}</span></p>
+        <p class="ind-v num">${c.v}</p>
+        <p class="xs muted">${c.sub}</p>
       </div>`).join("");
+  }
+
+  function renderWhy(d) {
+    const ICON = { rainfall: "solar:cloud-rain-bold", soil_moisture: "solar:waterdrops-bold", ndvi: "solar:leaf-bold", heat: "solar:sun-2-bold" };
+    $("risk-why").innerHTML = (d.risk_components || []).map((c) => `
+      <div class="why-row">
+        <span class="why-ico c-${c.level}">${FSUI.icon(ICON[c.factor] || "solar:info-circle-linear", 22)}</span>
+        <div><p class="bold">${t("rc." + c.factor)}</p><p class="small c-${c.level}">${c.value}</p></div>
+        <div class="xs faint" style="text-align:right">${c.source}<br>${t("rc.weight")} ${c.weight}</div>
+      </div>`).join("");
+  }
+
+  /* Graphiques interactifs (dessinés à l'ouverture des détails : un canvas caché n'a pas de taille). */
+  function mk(id, cfg) {
+    if (charts[id]) charts[id].destroy();
+    charts[id] = new Chart($(id), cfg);
+  }
+  function base(unit) {
+    return {
+      responsive: true, maintainAspectRatio: false, interaction: { mode: "index", intersect: false },
+      plugins: { legend: { display: false }, tooltip: { callbacks: { label: (c) => ` ${c.dataset.label || ""} ${c.formattedValue} ${c.dataset.unit || unit || ""}` } } },
+      scales: {
+        x: { grid: { display: false }, ticks: { font: { size: 12 } } },
+        y: { grid: { color: "#EFE7D8" }, border: { display: false }, ticks: { font: { size: 12 }, maxTicksLimit: 5 } },
+      },
+    };
+  }
+  function drawCharts() {
+    const s = data && data.series;
+    if (!s) return;
+    const rain = base("mm");
+    rain.plugins.legend = { display: true, labels: { boxWidth: 12, font: { size: 13 } } };
+    mk("rain-chart", { type: "bar", data: { labels: s.labels, datasets: [
+      { type: "bar", label: t("var.rain"), data: s.rainfall_mm, backgroundColor: "#7FB6D9", hoverBackgroundColor: "#2B78B6", borderRadius: 8, maxBarThickness: 28 },
+      { type: "line", label: t("chart.normal"), data: s.rainfall_normal_mm, borderColor: "#7A4E2D", borderDash: [6, 5], pointRadius: 0, borderWidth: 2.5 },
+    ] }, options: rain });
+    mk("soil-chart", { type: "line", data: { labels: s.labels, datasets: [
+      { label: t("var.soil"), data: s.soil_moisture.map((v) => Math.round(v * 100)), unit: "%", borderColor: "#7A4E2D", backgroundColor: "rgba(167,132,90,.18)", fill: true, tension: 0.35, pointRadius: 4, pointBackgroundColor: "#7A4E2D" },
+    ] }, options: base("%") });
+    mk("ndvi-chart", { type: "line", data: { labels: s.labels, datasets: [
+      { label: "NDVI", data: s.ndvi, borderColor: "#2E7D32", backgroundColor: "rgba(46,125,50,.14)", fill: true, tension: 0.35, pointRadius: 4, pointBackgroundColor: "#2E7D32" },
+    ] }, options: base("") });
+    const clim = base("");
+    clim.plugins.legend = { display: true, labels: { boxWidth: 12, font: { size: 13 } } };
+    clim.scales.y1 = { position: "right", grid: { drawOnChartArea: false }, border: { display: false }, ticks: { font: { size: 12 }, maxTicksLimit: 5 } };
+    mk("climate-chart", { type: "line", data: { labels: s.labels, datasets: [
+      { label: t("chart.solar"), data: s.solar_radiation, unit: "MJ/m²", borderColor: "#D9A21A", backgroundColor: "#D9A21A", tension: 0.35, pointRadius: 3, yAxisID: "y" },
+      { label: t("chart.et"), data: s.evapotranspiration || [], unit: "mm/d", borderColor: "#1E4D2B", backgroundColor: "#1E4D2B", borderDash: [6, 4], tension: 0.35, pointRadius: 3, yAxisID: "y1" },
+    ] }, options: clim });
   }
 
   FSUI.dataPage(render);

@@ -1,9 +1,146 @@
-/* Field Shift — i18n (Français par défaut · Anglais · Italien).
+/* Field Shift — i18n (Español por defecto · English · Français · Italiano).
    HTML :  <span data-i18n="cle"></span>  ·  placeholder : data-i18n-ph="cle"
    Bouton langue :  <button data-lang-label onclick="FSI18N.cycle()"></button>
    JS :  FSI18N.t("cle")  ·  FSI18N.f("cle", { v: 12 })  (remplace {v}) */
 (function () {
   const DICT = {
+    es: {
+      "app.name": "Field Shift",
+      "app.tagline": "Decida qué sembrar antes de que llegue la sequía.",
+      "nav.home": "Inicio", "nav.dashboard": "Mi parcela", "nav.analyse": "Satélite",
+      "nav.plan": "Plan", "nav.backtest": "Historial", "nav.assistant": "Asistente",
+      "nav.map": "Mapa", "nav.profile": "Perfil", "nav.rotations": "Rotaciones",
+      "user.name": "Mi finca", "user.role": "Productor", "alerts.title": "Alertas",
+      "common.loading": "Calculando…",
+      "common.offline": "Sin conexión — se muestran los datos guardados",
+      "common.see_all": "Ver todo", "common.continue": "Continuar",
+
+      "home.eyebrow": "NASA Space Apps · Datos satelitales",
+      "home.subtitle": "Riesgo de sequía, agua, fecha de siembra y rotación: la decisión antes de sembrar, con datos de la NASA.",
+      "home.start": "Empezar", "home.dashboard": "Abrir mi panel",
+      "home.questions": "4 preguntas antes de sembrar",
+      "home.q1": "¿Qué riesgo de sequía tiene mi parcela?", "home.q2": "¿Tengo suficiente agua para este cultivo?",
+      "home.q3": "¿Cuándo debo sembrar?", "home.q4": "¿Qué rotación protege mejor mi suelo?",
+      "home.backtest": "Probar con sequías pasadas",
+      "home.kicker": "Agricultura de precisión", "home.questions_sub": "Cada respuesta se basa en satélites de la NASA.",
+      "home.sources": "Datos NASA usados", "home.sources_sub": "Actualizados automáticamente para su parcela", "home.groundwater": "Agua subterránea",
+
+      "field.title": "Mi parcela",
+      "field.sub": "Busque su pueblo, toque el mapa o dibuje el borde de su parcela.",
+      "field.draw_hint": "Toque el mapa para marcar un punto, o use el lápiz (arriba a la izquierda) para dibujar el borde de la parcela.",
+      "field.selected": "Parcela elegida", "field.none": "Todavía no eligió una parcela",
+      "field.area": "Superficie estimada", "field.use": "Analizar mi parcela",
+      "field.lat": "Latitud", "field.lon": "Longitud", "field.mode_point": "Punto", "field.mode_poly": "Polígono",
+      "map.plan": "Mapa", "map.sat": "Satélite",
+
+      "profile.title": "Su cultivo", "profile.sub": "Unas preguntas para adaptar la recomendación.",
+      "profile.crop": "¿Qué cultiva?", "profile.soil": "Tipo de suelo",
+      "profile.irrigation": "¿Tiene riego?",
+      "profile.irrigation.yes": "Sí", "profile.irrigation.no": "No",
+      "profile.priority": "¿Qué es lo más importante para usted?",
+      "profile.prio.water": "Ahorrar agua", "profile.prio.balanced": "Equilibrio", "profile.prio.yield": "Máxima cosecha",
+      "profile.submit": "Obtener mi recomendación",
+      "profile.crop_sub": "El cultivo que quiere sembrar esta temporada", "profile.soil_water": "Suelo y agua", "profile.soil_water_sub": "Para calcular el agua disponible",
+      "profile.priority_sub": "Orienta la elección de la rotación", "profile.summary": "Su perfil", "profile.ready": "Listo", "profile.irr_short": "Riego",
+      "crop.maize": "Maíz", "crop.beans": "Frijol", "crop.sorghum": "Sorgo", "crop.millet": "Mijo", "crop.cover_crop": "Cobertura",
+      "soil.sandy": "Arenoso", "soil.sandy_loam": "Franco arenoso", "soil.loam": "Franco",
+      "soil.clay_loam": "Franco arcilloso", "soil.clay": "Arcilloso",
+
+      "dash.listen": "Escuchar la respuesta", "dash.see_plan": "Ver el plan detallado", "dash.parcel": "Parcela", "dash.today": "Para hoy", "dash.risk": "Riesgo",
+      "mon.title": "Seguimiento de la parcela", "mon.badge_demo": "Simulado", "mon.link": "Ver el análisis satelital",
+      "mon.solar": "Radiación", "mon.soil": "Humedad del suelo",
+      "tile.temp": "Temp.", "tile.soil": "Humedad", "tile.rain": "Lluvia", "tile.ndvi": "NDVI",
+      "cal.title": "Calendario de siembra", "cal.sub": "Ventana de siembra recomendada", "cal.week": "S",
+      "ins.title": "Salud de la parcela", "ins.score": "Puntaje de salud", "ins.vs_normal": "de lluvia vs lo normal",
+      "var.rain": "Lluvia", "var.soil": "Humedad del suelo", "var.ndvi": "NDVI", "var.temp": "Temperatura",
+      "wx.title": "Clima y agua", "wx.today": "Hoy", "wx.soil": "Humedad del suelo",
+      "wx.solar": "Radiación", "wx.et": "Evapotranspiración",
+      "wx.available": "Disponible", "wx.need": "Necesita", "wx.report": "Ver el informe detallado",
+
+      "an.title": "Parcela de {crop}", "an.scanning": "Analizando…", "an.done": "Análisis listo",
+      "an.layer_sat": "Satélite", "an.layer_ndvi": "NDVI NASA",
+      "an.note_sat": "Imagen: Esri World Imagery",
+      "an.note_ndvi": "NDVI real: NASA GIBS · MODIS Terra 8 días (250 m)",
+      "an.add": "Agregar",
+      "h.water": "Nivel de agua", "h.soil": "Humedad", "h.light": "Sol", "h.veg": "Vegetación",
+      "lvl.low": "Bajo", "lvl.mid": "Moderado", "lvl.high": "Alto",
+      "lvl.declining": "Bajando", "lvl.stable": "Estable", "lvl.rising": "Subiendo",
+      "an.growth": "Crecimiento", "an.weeks8": "8 sem.",
+      "an.voice": "Análisis en voz alta", "an.voice_sub": "Escuche los puntos clave",
+      "an.voice_na": "La lectura en voz alta no está disponible en este navegador.",
+      "an.expert": "Asistente agrícola", "an.expert_sub": "Le explico sus datos",
+      "an.updates": "Alertas recientes",
+      "tag.rain": "Lluvia", "tag.water": "Riego", "tag.veg": "Crecimiento", "tag.heat": "Calor",
+      "upd.rain": "Lluvia: {v} % de lo normal", "upd.soil": "Humedad del suelo: {v}",
+      "upd.ndvi": "Tendencia NDVI: {v}", "upd.heat": "Evapotranspiración: {v}",
+      "callout.ndvi": "NDVI · MODIS", "callout.soil": "Humedad · SMAP",
+
+      "plan.title": "Plan de cultivo",
+      "panel.risk": "Riesgo de sequía", "panel.water": "Agua para el cultivo", "panel.timeline": "¿Cuándo sembrar?",
+      "panel.rotations": "Planes de rotación", "panel.rotations.sub": "Del más seguro al más productivo",
+      "panel.indicators": "Indicadores NASA", "panel.ai": "Explicación", "panel.why": "¿Por qué este riesgo?",
+      "panel.need": "Necesita", "panel.available": "Disponible", "panel.deficit": "Faltan",
+      "panel.cooperativa": "Ficha para la cooperativa", "panel.ask": "Preguntar al asistente IA",
+      "panel.updated": "Actualizado", "panel.mock": "datos simulados", "panel.offline": "sin conexión",
+      "panel.error": "No se pudo obtener la recomendación. ¿Está encendido el servidor?",
+      "panel.retry": "Reintentar",
+      "risk.low": "Bajo", "risk.moderate": "Moderado", "risk.high": "Alto",
+      "water.enough_water": "Agua suficiente", "water.risky": "Agua justa", "water.not_enough_water": "Agua insuficiente",
+      "plant.plant_now": "Sembrar ahora", "plant.wait": "Esperar", "plant.switch_crop": "Cambiar de cultivo",
+      "plant.window": "Mejor ventana",
+      "plant.step_wait": "Esperar", "plant.step_plant": "Sembrar", "plant.step_risk": "Riesgo",
+      "rot.safest": "Plan más seguro", "rot.balanced": "Plan equilibrado", "rot.highest_yield": "Plan de mayor cosecha",
+      "ind.rainfall": "Lluvia 60 días", "ind.rainfall_normal": "Lluvia normal", "ind.soil_moisture": "Humedad del suelo",
+      "ind.ndvi": "Tendencia NDVI", "ind.solar": "Radiación solar", "ind.et": "Evapotranspiración",
+      "chart.rainfall": "Lluvia vs lo normal (mm/sem)", "chart.soil": "Humedad del suelo", "chart.ndvi": "Tendencia de la vegetación (NDVI)",
+      "chart.climate": "Radiación solar y evapotranspiración", "chart.normal": "Normal",
+      "chart.temp": "Temperatura", "chart.solar": "Radiación solar",
+      "rc.rainfall": "Lluvia", "rc.soil_moisture": "Humedad del suelo", "rc.ndvi": "Vegetación (NDVI)",
+      "rc.heat": "Calor / ETP", "rc.weight": "peso",
+
+      "copilot.title": "Asistente IA", "copilot.subtitle": "Yo le explico, usted decide",
+      "copilot.placeholder": "Escriba su pregunta…", "copilot.send": "Enviar", "copilot.sources": "Fuentes:",
+      "copilot.disclaimer": "Verifique siempre. Use la IA para entender, no para reemplazar su criterio.",
+      "copilot.welcome_nofield": "Primero elija una parcela y complete su perfil; después podré explicarle su recomendación.",
+      "copilot.offline": "No puedo conectarme al servidor ahora. Intente de nuevo cuando tenga conexión.",
+      "copilot.sugg1": "¿Tengo suficiente agua?", "copilot.sugg2": "¿Cuándo debo sembrar?",
+      "copilot.sugg3": "¿Qué cultivo puedo cambiar?", "copilot.sugg4": "¿Cómo protejo mi suelo?",
+      "copilot.context": "Su parcela", "copilot.open_dash": "Ver mi parcela",
+
+      "coop.title": "Ficha para la cooperativa", "coop.help": "Resumen para compartir o imprimir.", "coop.print": "Imprimir",
+      "coop.risk": "Nivel de riesgo", "coop.water": "Resultado del agua", "coop.rotation": "Rotación recomendada",
+      "coop.planting": "Consejo de siembra", "coop.actions": "Acciones inmediatas", "coop.sources": "Fuentes de datos NASA",
+      "coop.scan": "Escanee para abrir Field Shift", "coop.none": "Todavía no hay recomendación. Abra primero su parcela.",
+      "coop.act_plant": "Preparar el suelo y sembrar dentro de la ventana.",
+      "coop.act_wait": "Esperar la lluvia; conservar la humedad del suelo.",
+      "coop.act_switch": "Elegir un cultivo o una rotación más resistente.",
+
+      "step.field": "Parcela", "step.profile": "Perfil", "step.dash": "Resultado",
+      "bt.score": "Resumen", "bt.score_sub": "Temporadas en que la herramienta habría avisado", "bt.warned": "con aviso", "bt.seasons": "Temporadas", "bt.alerts": "Avisos",
+      "lang.name": "Español",
+      "field.search_ph": "Buscar un pueblo o municipio…", "field.search": "Buscar", "field.search_none": "No encontramos ese lugar. Pruebe con otro nombre.",
+      "field.locate": "Usar mi ubicación", "field.locate_fail": "No se pudo obtener su ubicación.",
+      "profile.irr.none": "Sin riego", "profile.irr.limited": "Riego limitado", "profile.irr.available": "Riego disponible",
+      "profile.prio.soil": "Proteger el suelo", "profile.prio.food": "Seguridad alimentaria",
+      "dash.field_of": "Parcela de {crop}", "dash.out_of": "de 100", "dash.score_q": "¿Hay riesgo de sequía?",
+      "dash.deficit": "Faltan", "dash.surplus": "Sobran", "dash.rotations_btn": "Ver planes de rotación",
+      "dash.details": "Ver los datos científicos", "dash.details_sub": "Indicadores NASA, gráficos y razones del riesgo",
+      "dash.indicators": "Lo que dicen los satélites", "dash.why_short": "Razón",
+      "ind.temp": "Temperatura", "chart.soil_time": "Humedad del suelo en el tiempo", "chart.et": "Evapotranspiración",
+      "rot.title": "Planes de rotación", "rot.sub": "Tres caminos para su parcela, del más seguro al de mayor cosecha.",
+      "rot.risk": "Riesgo", "rot.water_saving": "Ahorro de agua", "rot.soil": "Salud del suelo", "rot.yield": "Cosecha esperada",
+      "rot.why": "Por qué se recomienda", "rot.actions": "Qué hacer ahora", "rot.recommended": "Recomendado para usted",
+      "rot.ask": "Preguntar al asistente IA", "rot.choose": "Elegir este plan", "rot.chosen": "Plan elegido",
+      "lvl3.low": "Bajo", "lvl3.medium": "Medio", "lvl3.high": "Alto",
+      "copilot.example": "No tengo riego y quiero sembrar maíz la próxima semana. ¿Qué debo hacer?",
+      "copilot.limits": "Límites",
+      "bt.timeline": "Temporadas", "bt.anomaly": "Lluvia vs normal", "bt.soil": "Humedad del suelo", "bt.ndvi": "Tendencia NDVI",
+      "bt.score_label": "Riesgo Field Shift", "bt.warned_q": "¿Avisó antes de sembrar?", "bt.yes": "Sí, avisó", "bt.no": "No hacía falta",
+      "bt.action": "Acción recomendada", "bt.chart": "Comparación: lluvia y riesgo por temporada",
+      "coop.pdf": "Descargar PDF", "coop.zone": "Parcela",
+      "bt.title": "¿Habría avisado Field Shift?", "bt.subtitle": "Lo probamos con temporadas secas pasadas, incluidos años de El Niño.",
+      "bt.open": "Ver el historial", "bt.alert": "Alerta", "bt.rainfall": "Lluvia (% de lo normal)",
+    },
     fr: {
       "app.name": "Field Shift",
       "app.tagline": "Décide quoi semer avant la sécheresse, pas après.",
@@ -43,7 +180,7 @@
       "soil.sandy": "Sableux", "soil.sandy_loam": "Limon sableux", "soil.loam": "Limon",
       "soil.clay_loam": "Limon argileux", "soil.clay": "Argileux",
 
-      "dash.parcel": "Parcelle", "dash.today": "Pour aujourd'hui", "dash.risk": "Risque",
+      "dash.listen": "Écouter la réponse", "dash.see_plan": "Voir le plan détaillé", "dash.parcel": "Parcelle", "dash.today": "Pour aujourd'hui", "dash.risk": "Risque",
       "mon.title": "Suivi du champ", "mon.badge_demo": "Simulé", "mon.link": "Voir l'analyse satellite",
       "mon.solar": "Rayonnement", "mon.soil": "Humidité du sol",
       "tile.temp": "Temp.", "tile.soil": "Humidité", "tile.rain": "Pluie", "tile.ndvi": "NDVI",
@@ -111,8 +248,37 @@
       "coop.act_wait": "Attendre la pluie ; conserver l'humidité du sol.",
       "coop.act_switch": "Choisir une culture ou rotation plus résistante.",
 
-      "bt.title": "Backtesting", "bt.subtitle": "L'outil aurait-il prévenu lors des sécheresses passées ?",
-      "bt.open": "Voir le backtesting", "bt.alert": "Alerte", "bt.rainfall": "Pluie (% du normal)",
+      "home.kicker": "Agriculture de précision", "home.questions_sub": "Chaque réponse s'appuie sur les satellites de la NASA.",
+      "home.sources": "Données NASA utilisées", "home.sources_sub": "Mises à jour automatiquement pour ta parcelle", "home.groundwater": "Nappe",
+      "step.field": "Parcelle", "step.profile": "Profil", "step.dash": "Tableau de bord",
+      "field.lat": "Latitude", "field.lon": "Longitude", "field.mode_point": "Point", "field.mode_poly": "Polygone",
+      "profile.crop_sub": "Ce que tu veux semer cette saison", "profile.soil_water": "Sol & eau", "profile.soil_water_sub": "Pour calculer le budget d'eau",
+      "profile.priority_sub": "Oriente le choix de la rotation", "profile.summary": "Ton profil", "profile.ready": "Prêt", "profile.irr_short": "Irrigation",
+      "copilot.context": "Ton champ", "copilot.open_dash": "Voir le tableau de bord",
+      "bt.score": "Bilan", "bt.score_sub": "Saisons où l'outil aurait alerté", "bt.warned": "signalées", "bt.seasons": "Saisons", "bt.alerts": "Alertes",
+      "lang.name": "Français", "nav.rotations": "Rotations",
+      "field.search_ph": "Rechercher une ville ou un village…", "field.search": "Rechercher", "field.search_none": "Lieu introuvable. Essayez un autre nom.",
+      "field.locate": "Utiliser ma position", "field.locate_fail": "Impossible d'obtenir votre position.",
+      "profile.irr.none": "Sans irrigation", "profile.irr.limited": "Irrigation limitée", "profile.irr.available": "Irrigation disponible",
+      "profile.prio.soil": "Protéger le sol", "profile.prio.food": "Sécurité alimentaire",
+      "dash.field_of": "Parcelle de {crop}", "dash.out_of": "sur 100", "dash.score_q": "Y a-t-il un risque de sécheresse ?",
+      "dash.deficit": "Il manque", "dash.surplus": "Surplus", "dash.rotations_btn": "Voir les plans de rotation",
+      "dash.details": "Voir les données scientifiques", "dash.details_sub": "Indicateurs NASA, graphiques et raisons du risque",
+      "dash.indicators": "Ce que disent les satellites", "dash.why_short": "Raison",
+      "ind.temp": "Température", "chart.soil_time": "Humidité du sol dans le temps", "chart.et": "Évapotranspiration",
+      "rot.title": "Plans de rotation", "rot.sub": "Trois chemins pour votre parcelle, du plus sûr au plus productif.",
+      "rot.risk": "Risque", "rot.water_saving": "Économie d'eau", "rot.soil": "Santé du sol", "rot.yield": "Rendement attendu",
+      "rot.why": "Pourquoi ce plan", "rot.actions": "Que faire maintenant", "rot.recommended": "Recommandé pour vous",
+      "rot.ask": "Demander à l'assistant IA", "rot.choose": "Choisir ce plan", "rot.chosen": "Plan choisi",
+      "lvl3.low": "Faible", "lvl3.medium": "Moyen", "lvl3.high": "Élevé",
+      "copilot.example": "Je n'ai pas d'irrigation et je veux semer du maïs la semaine prochaine. Que dois-je faire ?",
+      "copilot.limits": "Limites",
+      "bt.timeline": "Saisons", "bt.anomaly": "Pluie vs normale", "bt.soil": "Humidité du sol", "bt.ndvi": "Tendance NDVI",
+      "bt.score_label": "Risque Field Shift", "bt.warned_q": "Prévenu avant le semis ?", "bt.yes": "Oui, prévenu", "bt.no": "Pas nécessaire",
+      "bt.action": "Action recommandée", "bt.chart": "Comparaison : pluie et risque par saison",
+      "coop.pdf": "Télécharger le PDF", "coop.zone": "Parcelle",
+      "bt.title": "Field Shift aurait-il prévenu ?", "bt.subtitle": "Testé sur les saisons sèches passées, dont les années El Niño.",
+      "bt.open": "Voir l'historique", "bt.alert": "Alerte", "bt.rainfall": "Pluie (% du normal)",
     },
 
     en: {
@@ -154,7 +320,7 @@
       "soil.sandy": "Sandy", "soil.sandy_loam": "Sandy loam", "soil.loam": "Loam",
       "soil.clay_loam": "Clay loam", "soil.clay": "Clay",
 
-      "dash.parcel": "Field", "dash.today": "For today", "dash.risk": "Risk",
+      "dash.listen": "Listen to the answer", "dash.see_plan": "See the detailed plan", "dash.parcel": "Field", "dash.today": "For today", "dash.risk": "Risk",
       "mon.title": "Field monitoring", "mon.badge_demo": "Simulated", "mon.link": "See satellite analysis",
       "mon.solar": "Radiation", "mon.soil": "Soil moisture",
       "tile.temp": "Temp.", "tile.soil": "Moisture", "tile.rain": "Rain", "tile.ndvi": "NDVI",
@@ -222,7 +388,36 @@
       "coop.act_wait": "Wait for rain; conserve soil moisture.",
       "coop.act_switch": "Choose a more resilient crop or rotation.",
 
-      "bt.title": "Backtesting", "bt.subtitle": "Would the tool have warned in past droughts?",
+      "home.kicker": "Precision farming", "home.questions_sub": "Every answer is backed by NASA satellites.",
+      "home.sources": "NASA data used", "home.sources_sub": "Updated automatically for your field", "home.groundwater": "Groundwater",
+      "step.field": "Field", "step.profile": "Profile", "step.dash": "Dashboard",
+      "field.lat": "Latitude", "field.lon": "Longitude", "field.mode_point": "Point", "field.mode_poly": "Polygon",
+      "profile.crop_sub": "What you want to sow this season", "profile.soil_water": "Soil & water", "profile.soil_water_sub": "Used to compute the water budget",
+      "profile.priority_sub": "Guides the rotation choice", "profile.summary": "Your profile", "profile.ready": "Ready", "profile.irr_short": "Irrigation",
+      "copilot.context": "Your field", "copilot.open_dash": "Open the dashboard",
+      "bt.score": "Overview", "bt.score_sub": "Seasons where the tool would have alerted", "bt.warned": "flagged", "bt.seasons": "Seasons", "bt.alerts": "Alerts",
+      "lang.name": "English", "nav.rotations": "Rotations",
+      "field.search_ph": "Search a town or district…", "field.search": "Search", "field.search_none": "We couldn't find that place. Try another name.",
+      "field.locate": "Use my location", "field.locate_fail": "Could not get your location.",
+      "profile.irr.none": "No irrigation", "profile.irr.limited": "Limited irrigation", "profile.irr.available": "Irrigation available",
+      "profile.prio.soil": "Protect the soil", "profile.prio.food": "Food security",
+      "dash.field_of": "{crop} field", "dash.out_of": "out of 100", "dash.score_q": "Is there a drought risk?",
+      "dash.deficit": "Deficit", "dash.surplus": "Surplus", "dash.rotations_btn": "See crop rotation plans",
+      "dash.details": "See the scientific data", "dash.details_sub": "NASA indicators, charts and reasons for the risk",
+      "dash.indicators": "What the satellites say", "dash.why_short": "Reason",
+      "ind.temp": "Temperature", "chart.soil_time": "Soil moisture over time", "chart.et": "Evapotranspiration",
+      "rot.title": "Crop rotation plans", "rot.sub": "Three paths for your field, from safest to highest yield.",
+      "rot.risk": "Risk", "rot.water_saving": "Water saving", "rot.soil": "Soil health", "rot.yield": "Yield potential",
+      "rot.why": "Why it is recommended", "rot.actions": "What to do now", "rot.recommended": "Recommended for you",
+      "rot.ask": "Ask the AI assistant", "rot.choose": "Choose this plan", "rot.chosen": "Plan chosen",
+      "lvl3.low": "Low", "lvl3.medium": "Medium", "lvl3.high": "High",
+      "copilot.example": "I have no irrigation and want to plant maize next week. What should I do?",
+      "copilot.limits": "Limitations",
+      "bt.timeline": "Seasons", "bt.anomaly": "Rain vs normal", "bt.soil": "Soil moisture", "bt.ndvi": "NDVI trend",
+      "bt.score_label": "Field Shift risk", "bt.warned_q": "Warned before planting?", "bt.yes": "Yes, warned", "bt.no": "Not needed",
+      "bt.action": "Recommended action", "bt.chart": "Comparison: rainfall and risk by season",
+      "coop.pdf": "Download PDF", "coop.zone": "Field",
+      "bt.title": "Would Field Shift have warned farmers?", "bt.subtitle": "Tested on past dry seasons, including El Niño years.",
       "bt.open": "See backtesting", "bt.alert": "Alert", "bt.rainfall": "Rain (% of normal)",
     },
 
@@ -265,7 +460,7 @@
       "soil.sandy": "Sabbioso", "soil.sandy_loam": "Limo sabbioso", "soil.loam": "Limo",
       "soil.clay_loam": "Limo argilloso", "soil.clay": "Argilloso",
 
-      "dash.parcel": "Campo", "dash.today": "Per oggi", "dash.risk": "Rischio",
+      "dash.listen": "Ascolta la risposta", "dash.see_plan": "Vedi il piano dettagliato", "dash.parcel": "Campo", "dash.today": "Per oggi", "dash.risk": "Rischio",
       "mon.title": "Monitoraggio del campo", "mon.badge_demo": "Simulato", "mon.link": "Vedi l'analisi satellitare",
       "mon.solar": "Radiazione", "mon.soil": "Umidità del suolo",
       "tile.temp": "Temp.", "tile.soil": "Umidità", "tile.rain": "Pioggia", "tile.ndvi": "NDVI",
@@ -333,19 +528,48 @@
       "coop.act_wait": "Aspetta la pioggia; conserva l'umidità del suolo.",
       "coop.act_switch": "Scegli una coltura o rotazione più resistente.",
 
-      "bt.title": "Backtesting", "bt.subtitle": "Lo strumento avrebbe avvisato nelle siccità passate?",
+      "home.kicker": "Agricoltura di precisione", "home.questions_sub": "Ogni risposta si basa sui satelliti della NASA.",
+      "home.sources": "Dati NASA utilizzati", "home.sources_sub": "Aggiornati automaticamente per il tuo campo", "home.groundwater": "Falda",
+      "step.field": "Campo", "step.profile": "Profilo", "step.dash": "Dashboard",
+      "field.lat": "Latitudine", "field.lon": "Longitudine", "field.mode_point": "Punto", "field.mode_poly": "Poligono",
+      "profile.crop_sub": "Cosa vuoi seminare questa stagione", "profile.soil_water": "Suolo e acqua", "profile.soil_water_sub": "Per calcolare il bilancio idrico",
+      "profile.priority_sub": "Orienta la scelta della rotazione", "profile.summary": "Il tuo profilo", "profile.ready": "Pronto", "profile.irr_short": "Irrigazione",
+      "copilot.context": "Il tuo campo", "copilot.open_dash": "Apri la dashboard",
+      "bt.score": "Bilancio", "bt.score_sub": "Stagioni in cui lo strumento avrebbe avvisato", "bt.warned": "segnalate", "bt.seasons": "Stagioni", "bt.alerts": "Allarmi",
+      "lang.name": "Italiano", "nav.rotations": "Rotazioni",
+      "field.search_ph": "Cerca un paese o un comune…", "field.search": "Cerca", "field.search_none": "Luogo non trovato. Prova un altro nome.",
+      "field.locate": "Usa la mia posizione", "field.locate_fail": "Impossibile ottenere la tua posizione.",
+      "profile.irr.none": "Senza irrigazione", "profile.irr.limited": "Irrigazione limitata", "profile.irr.available": "Irrigazione disponibile",
+      "profile.prio.soil": "Proteggere il suolo", "profile.prio.food": "Sicurezza alimentare",
+      "dash.field_of": "Campo di {crop}", "dash.out_of": "su 100", "dash.score_q": "C'è rischio di siccità?",
+      "dash.deficit": "Mancano", "dash.surplus": "Surplus", "dash.rotations_btn": "Vedi i piani di rotazione",
+      "dash.details": "Vedi i dati scientifici", "dash.details_sub": "Indicatori NASA, grafici e motivi del rischio",
+      "dash.indicators": "Cosa dicono i satelliti", "dash.why_short": "Motivo",
+      "ind.temp": "Temperatura", "chart.soil_time": "Umidità del suolo nel tempo", "chart.et": "Evapotraspirazione",
+      "rot.title": "Piani di rotazione", "rot.sub": "Tre strade per il tuo campo, dalla più sicura alla più produttiva.",
+      "rot.risk": "Rischio", "rot.water_saving": "Risparmio d'acqua", "rot.soil": "Salute del suolo", "rot.yield": "Resa attesa",
+      "rot.why": "Perché è consigliato", "rot.actions": "Cosa fare ora", "rot.recommended": "Consigliato per te",
+      "rot.ask": "Chiedi all'assistente IA", "rot.choose": "Scegli questo piano", "rot.chosen": "Piano scelto",
+      "lvl3.low": "Basso", "lvl3.medium": "Medio", "lvl3.high": "Alto",
+      "copilot.example": "Non ho irrigazione e voglio seminare mais la prossima settimana. Cosa devo fare?",
+      "copilot.limits": "Limiti",
+      "bt.timeline": "Stagioni", "bt.anomaly": "Pioggia vs normale", "bt.soil": "Umidità del suolo", "bt.ndvi": "Tendenza NDVI",
+      "bt.score_label": "Rischio Field Shift", "bt.warned_q": "Avvisato prima della semina?", "bt.yes": "Sì, avvisato", "bt.no": "Non necessario",
+      "bt.action": "Azione consigliata", "bt.chart": "Confronto: pioggia e rischio per stagione",
+      "coop.pdf": "Scarica PDF", "coop.zone": "Campo",
+      "bt.title": "Field Shift avrebbe avvisato?", "bt.subtitle": "Testato sulle stagioni secche passate, compresi gli anni di El Niño.",
       "bt.open": "Vedi il backtesting", "bt.alert": "Allarme", "bt.rainfall": "Pioggia (% del normale)",
     },
   };
 
-  const ORDER = ["fr", "en", "it"];
-  const LOCALE = { fr: "fr-FR", en: "en-US", it: "it-IT" };
+  const ORDER = ["fr", "en", "it"]; // espagnol retiré
+  const LOCALE = { es: "es-419", en: "en-US", fr: "fr-FR", it: "it-IT" };
   const KEY = "fs_lang";
   let lang = "fr";
   try { lang = localStorage.getItem(KEY) || "fr"; } catch (e) {}
-  if (!DICT[lang]) lang = "fr";
+  if (!ORDER.includes(lang)) lang = "fr";
 
-  function t(key) { return (DICT[lang] && DICT[lang][key]) || DICT.fr[key] || key; }
+  function t(key) { return (DICT[lang] && DICT[lang][key]) || DICT.fr[key] || DICT.en[key] || key; }
   function f(key, vars) {
     return t(key).replace(/\{(\w+)\}/g, (_, k) => (vars && vars[k] != null ? vars[k] : ""));
   }
@@ -359,15 +583,53 @@
   }
 
   function setLang(l) {
-    lang = DICT[l] ? l : "fr";
+    lang = ORDER.includes(l) ? l : "fr";
     try { localStorage.setItem(KEY, lang); } catch (e) {}
     apply();
     document.dispatchEvent(new CustomEvent("fs:langchange", { detail: { lang } }));
   }
   function cycle() { setLang(ORDER[(ORDER.indexOf(lang) + 1) % ORDER.length]); }
 
+  // Ajoute des traductions (ex. textes de la landing) : { fr: {...}, en: {...}, it: {...} }
+  function extend(more) {
+    Object.keys(more || {}).forEach((l) => { DICT[l] = Object.assign(DICT[l] || {}, more[l]); });
+  }
+
+  /* Menu de langue : bouton compact « ES » → liste à grosses options. */
+  const NAMES = { es: "Español", en: "English", fr: "Français", it: "Italiano" };
+  function langButton(extraClass) {
+    return `<button type="button" class="icon-btn lang-btn ${extraClass || ""}" data-lang-menu aria-haspopup="true" aria-expanded="false" aria-label="Idioma / Language">` +
+      `<iconify-icon icon="solar:global-linear" width="20" height="20" aria-hidden="true"></iconify-icon><span data-lang-label>${lang.toUpperCase()}</span></button>`;
+  }
+  let menu = null;
+  function closeMenu() {
+    if (menu) { menu.remove(); menu = null; }
+    document.querySelectorAll("[data-lang-menu]").forEach((b) => b.setAttribute("aria-expanded", "false"));
+  }
+  function openMenu(btn) {
+    if (menu) { closeMenu(); return; }
+    menu = document.createElement("div");
+    menu.className = "lang-menu"; menu.setAttribute("role", "menu");
+    menu.innerHTML = ORDER.map((c) => `<button role="menuitemradio" aria-checked="${c === lang}" data-l="${c}"${c === lang ? ' class="is-on"' : ""}>` +
+      `<b>${c.toUpperCase()}</b>${NAMES[c]}</button>`).join("");
+    document.body.appendChild(menu);
+    const r = btn.getBoundingClientRect();
+    menu.style.top = window.scrollY + r.bottom + 8 + "px";
+    menu.style.left = Math.max(8, Math.min(window.scrollX + r.right - menu.offsetWidth, document.documentElement.clientWidth - menu.offsetWidth - 8)) + "px";
+    btn.setAttribute("aria-expanded", "true");
+    menu.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => { setLang(b.dataset.l); closeMenu(); }));
+    menu.querySelector(".is-on").focus();
+  }
+  document.addEventListener("click", (e) => {
+    const b = e.target.closest && e.target.closest("[data-lang-menu]");
+    if (b) { e.preventDefault(); openMenu(b); return; }
+    if (menu && !menu.contains(e.target)) closeMenu();
+  });
+  document.addEventListener("keydown", (e) => { if (e.key === "Escape") closeMenu(); });
+  window.addEventListener("resize", closeMenu);
+
   window.FSI18N = {
-    t, f, apply, setLang, cycle,
+    t, f, apply, setLang, cycle, extend, langButton,
     get lang() { return lang; },
     get locale() { return LOCALE[lang]; },
   };

@@ -21,9 +21,9 @@
     L.tileLayer(SAT_URL, { maxZoom: 18 }).addTo(map);
     ndviLayer = L.tileLayer(NDVI_URL, { maxNativeZoom: 9, maxZoom: 18, opacity: 0.85 });
     if (f.polygon && f.polygon.length) {
-      shape = L.polygon(f.polygon, { color: "#F2CE60", weight: 2, fillOpacity: 0.08 }).addTo(map);
+      shape = L.polygon(f.polygon, { color: "#CDE8F6", weight: 2, fillOpacity: 0.08 }).addTo(map);
     } else {
-      shape = L.circleMarker([f.latitude, f.longitude], { radius: 7, color: "#fff", weight: 2, fillColor: "#F2CE60", fillOpacity: 1 }).addTo(map);
+      shape = L.circleMarker([f.latitude, f.longitude], { radius: 7, color: "#fff", weight: 2, fillColor: "#CDE8F6", fillOpacity: 1 }).addTo(map);
     }
     frame();
     $("layer-seg").querySelectorAll("button").forEach((b) => b.addEventListener("click", () => setLayer(b.dataset.layer)));
@@ -143,7 +143,7 @@
     $("upd-list").innerHTML = rows.map((c) => {
       const m = META[c.factor];
       if (!m) return "";
-      return `<a class="row" href="/plan.html#why">
+      return `<a class="row" href="/panel.html#details">
         <span class="u-ico c-${c.level}">${FSUI.icon(m.icon, 18)}</span>
         <span class="bold">${m.text(c)}</span>
         <span class="badge ${m.cls}">${t(m.tag)}</span>

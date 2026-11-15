@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1600 1000" preserveAspectRatio="xMidYMid slice">
+  <!-- Field Shift — vue aérienne abstraite de parcelles (illustration, aucune photo). -->
+  <defs>
+    <pattern id="rowsA" width="18" height="18" patternUnits="userSpaceOnUse" patternTransform="rotate(-28)">
+      <rect width="18" height="18" fill="#2F6B3A"/><rect width="18" height="7" fill="#3E8E41"/>
+    </pattern>
+    <pattern id="rowsB" width="16" height="16" patternUnits="userSpaceOnUse" patternTransform="rotate(62)">
+      <rect width="16" height="16" fill="#8A6A3F"/><rect width="16" height="6" fill="#A7845A"/>
+    </pattern>
+    <pattern id="rowsC" width="22" height="22" patternUnits="userSpaceOnUse" patternTransform="rotate(-28)">
+      <rect width="22" height="22" fill="#5E8F4C"/><rect width="22" height="9" fill="#78A85E"/>
+    </pattern>
+    <pattern id="rowsD" width="14" height="14" patternUnits="userSpaceOnUse" patternTransform="rotate(62)">
+      <rect width="14" height="14" fill="#C9B48A"/><rect width="14" height="5" fill="#DCCBA5"/>
+    </pattern>
+    <pattern id="dots" width="26" height="26" patternUnits="userSpaceOnUse">
+      <rect width="26" height="26" fill="#245A30"/><circle cx="13" cy="13" r="6" fill="#2E6E3A"/>
+    </pattern>
+    <radialGradient id="glow" cx="72%" cy="30%" r="60%">
+      <stop offset="0" stop-color="#CDE8F6" stop-opacity=".22"/><stop offset="1" stop-color="#CDE8F6" stop-opacity="0"/>
+    </radialGradient>
+  </defs>
+
+  <rect width="1600" height="1000" fill="#1E4D2B"/>
+
+  <!-- Parcelles -->
+  <g stroke="#173D22" stroke-width="10" stroke-linejoin="round">
+    <polygon points="-40,-40 420,-40 380,300 -40,360" fill="url(#rowsA)"/>
+    <polygon points="420,-40 860,-40 820,240 380,300" fill="url(#rowsD)"/>
+    <polygon points="860,-40 1250,-40 1230,210 820,240" fill="url(#rowsC)"/>
+    <polygon points="1250,-40 1640,-40 1640,260 1230,210" fill="url(#rowsB)"/>
+    <polygon points="-40,360 380,300 350,640 -40,700" fill="url(#rowsB)"/>
+    <polygon points="380,300 820,240 790,560 350,640" fill="url(#dots)"/>
+    <polygon points="820,240 1230,210 1210,520 790,560" fill="url(#rowsA)"/>
+    <polygon points="1230,210 1640,260 1640,560 1210,520" fill="url(#rowsD)"/>
+    <polygon points="-40,700 350,640 330,1040 -40,1040" fill="url(#rowsC)"/>
+    <polygon points="350,640 790,560 770,1040 330,1040" fill="url(#rowsA)"/>
+    <polygon points="790,560 1210,520 1190,1040 770,1040" fill="url(#rowsB)"/>
+    <polygon points="1210,520 1640,560 1640,1040 1190,1040" fill="url(#rowsC)"/>
+  </g>
+
+  <!-- Rivière -->
+  <path d="M-40 880 C 220 820, 300 760, 520 780 S 900 700, 1040 760 S 1380 900, 1640 820" fill="none" stroke="#CDE8F6" stroke-width="22" stroke-linecap="round" opacity=".9"/>
+  <path d="M-40 880 C 220 820, 300 760, 520 780 S 900 700, 1040 760 S 1380 900, 1640 820" fill="none" stroke="#9FCDE6" stroke-width="8" stroke-linecap="round"/>
+
+  <!-- Arbres -->
+  <g fill="#173D22">
+    <circle cx="380" cy="300" r="22"/><circle cx="405" cy="285" r="16"/><circle cx="820" cy="240" r="20"/>
+    <circle cx="1230" cy="212" r="24"/><circle cx="1210" cy="520" r="20"/><circle cx="790" cy="560" r="18"/>
+    <circle cx="350" cy="640" r="22"/><circle cx="330" cy="660" r="14"/>
+  </g>
+
+  <!-- Balayage satellite -->
+  <rect width="1600" height="1000" fill="url(#glow)"/>
+  <g fill="none" stroke="#CDE8F6" stroke-opacity=".35" stroke-width="2">
+    <circle cx="1120" cy="300" r="180"/><circle cx="1120" cy="300" r="300" stroke-dasharray="6 14"/><circle cx="1120" cy="300" r="440" stroke-opacity=".18"/>
+  </g>
+  <g stroke="#CDE8F6" stroke-width="3" fill="none" stroke-opacity=".8">
+    <path d="M1010 380 l-20 0 0 -20 M1230 220 l20 0 0 20 M1010 220 l-20 0 0 20 M1230 380 l20 0 0 -20"/>
+  </g>
+</svg>

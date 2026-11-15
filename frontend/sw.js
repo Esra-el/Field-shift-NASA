@@ -1,20 +1,20 @@
 /* Field Shift — service worker.
-   - App shell (pages, CSS, JS, images) : pré-cache, cache d'abord.
+   - App shell (pages, CSS, JS, images) : pré-cache, réseau d'abord + cache hors ligne.
    - Librairies CDN (Chart.js, Leaflet, Iconify, polices) : stale-while-revalidate,
      pour que l'appli reste utilisable hors-ligne.
    - API et tuiles de carte : réseau (l'appli garde sa dernière reco en localStorage). */
-const CACHE = "field-shift-v6";
-const RUNTIME = "field-shift-rt-v6";
+const CACHE = "field-shift-v20";
+const RUNTIME = "field-shift-rt-v20";
 const SHELL = [
-  "/", "/index.html", "/campo.html", "/perfil.html", "/panel.html", "/analyse.html", "/plan.html",
+  "/", "/site.html", "/inicio.html", "/globo.html", "/index.html", "/campo.html", "/perfil.html", "/panel.html", "/analyse.html", "/rotaciones.html",
   "/copiloto.html", "/cooperativa.html", "/backtesting.html",
-  "/css/fieldshift.css",
+  "/css/fieldshift.css", "/css/terra.css", "/css/site.css",
   "/js/i18n.js", "/js/store.js", "/js/api.js", "/js/pwa.js", "/js/layout.js",
-  "/js/campo.js", "/js/perfil.js", "/js/panel.js", "/js/analyse.js", "/js/plan.js",
-  "/js/copiloto.js", "/js/cooperativa.js", "/js/backtesting.js",
+  "/js/campo.js", "/js/perfil.js", "/js/panel.js", "/js/analyse.js", "/js/rotaciones.js",
+  "/js/copiloto.js", "/js/cooperativa.js", "/js/backtesting.js", "/js/landing.js", "/js/terra.js", "/js/inicio.js", "/js/globo.js", "/js/assistant.js", "/js/site.js",
   "/manifest.webmanifest",
   "/icons/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png",
-  "/img/field.jpg", "/img/field-thumb.jpg", "/img/assistant.jpg",
+  "/img/fields.svg", "/img/assistant.svg", "/img/sky.jpg", "/img/photos/drought.jpg", "/img/photos/water.jpg", "/img/photos/rain.jpg", "/img/photos/seedlings.jpg", "/img/photos/mulch.jpg", "/img/photos/rows.jpg", "/img/photos/cornfield.jpg",
 ];
 const LIB_HOSTS = [
   "cdn.jsdelivr.net", "unpkg.com", "cdnjs.cloudflare.com", "code.iconify.design",
@@ -44,12 +44,13 @@ self.addEventListener("fetch", (e) => {
       e.respondWith(fetch(req).catch(() => caches.match(req)));
       return;
     }
+    // Réseau d'abord (toujours la dernière version en ligne), cache en secours hors ligne.
     e.respondWith(
-      caches.match(req, { ignoreSearch: true }).then((hit) => hit || fetch(req).then((res) => {
-        const copy = res.clone();
-        caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {});
+      fetch(req).then((res) => {
+        if (res.ok) { const copy = res.clone(); caches.open(CACHE).then((c) => c.put(req, copy)).catch(() => {}); }
         return res;
-      }).catch(() => (req.mode === "navigate" ? caches.match("/index.html") : undefined)))
+      }).catch(() => caches.match(req, { ignoreSearch: true })
+        .then((hit) => hit || (req.mode === "navigate" ? caches.match("/inicio.html") : undefined)))
     );
     return;
   }

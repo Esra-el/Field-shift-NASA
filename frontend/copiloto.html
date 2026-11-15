@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#DEDEDA" />
-  <title>Field Shift — Assistant</title>
+  <meta name="theme-color" content="#F6F1E7" />
+  <title>Field Shift — Assistant IA</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/fieldshift.css" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
 </head>
@@ -20,16 +20,18 @@
   <div class="frame">
     <header id="topbar"></header>
 
-    <section class="card" style="max-width:920px;margin:0 auto">
+    <div class="grid-dash" style="align-items:start">
+    <section class="card span-2">
       <div class="card-head" style="align-items:center;flex-wrap:wrap">
         <div style="display:flex;gap:14px;align-items:center">
-          <span class="bot-av" style="width:54px;height:54px;border-radius:18px"><iconify-icon icon="solar:stars-bold" width="28" height="28"></iconify-icon></span>
+          <img src="/img/assistant.svg" alt="" style="width:4.5rem;height:4.5rem;border-radius:1rem;object-fit:cover" />
           <div><h1 class="card-title" style="font-size:26px" data-i18n="copilot.title"></h1><p class="card-sub" data-i18n="copilot.subtitle"></p></div>
         </div>
         <span class="badge badge-gray hidden" id="ctx-chip"></span>
       </div>
 
       <div class="chat" id="chat"></div>
+      <button type="button" class="example-q" id="example-q"><iconify-icon icon="solar:chat-round-line-bold" width="22" height="22"></iconify-icon><span></span></button>
       <div class="chips" id="chips"></div>
       <form id="chat-form" style="display:flex;gap:10px;align-items:center">
         <input id="q" class="input" type="text" autocomplete="off" data-i18n-ph="copilot.placeholder" />
@@ -37,6 +39,32 @@
       </form>
       <p class="xs faint" style="text-align:center;margin-top:12px" data-i18n="copilot.disclaimer"></p>
     </section>
+
+    <aside class="stack sticky">
+      <section class="card" id="ctx-card">
+        <div class="card-head">
+          <h2 class="card-title" data-i18n="copilot.context"></h2>
+          <span class="badge badge-gray" id="ctx-risk">—</span>
+        </div>
+        <div class="mini-hero">
+          <div class="glass"><span class="xs muted" data-i18n="dash.today"></span><b id="ctx-reco">—</b></div>
+        </div>
+        <div class="ring-wrap" style="margin:4px 0 14px">
+          <div id="ctx-ring"></div>
+          <div class="ring-label"><div><div class="num" id="ctx-score" style="font-size:28px">—</div><div class="xs bold" data-i18n="dash.risk"></div></div></div>
+        </div>
+        <div class="kv-tiles">
+          <div class="tile"><span class="t-label"><iconify-icon icon="mdi:sprout" width="14" height="14"></iconify-icon><span data-i18n="profile.crop"></span></span><div class="t-value" id="ctx-crop">—</div></div>
+          <div class="tile"><span class="t-label"><iconify-icon icon="solar:waterdrop-linear" width="14" height="14"></iconify-icon><span data-i18n="panel.water"></span></span><div class="t-value" id="ctx-water">—</div></div>
+          <div class="tile wide"><span class="t-label"><iconify-icon icon="solar:calendar-linear" width="14" height="14"></iconify-icon><span data-i18n="plant.window"></span></span><div class="t-value" id="ctx-window">—</div></div>
+        </div>
+        <a class="card-foot" href="/panel.html">
+          <span style="display:flex;align-items:center;gap:6px"><iconify-icon icon="solar:widget-linear" width="16" height="16"></iconify-icon><span data-i18n="copilot.open_dash"></span></span>
+          <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16"></iconify-icon>
+        </a>
+      </section>
+    </aside>
+    </div>
   </div>
 
   <script src="/js/i18n.js"></script>

@@ -1,0 +1,219 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#04303B" />
+  <title>Field Shift — Analyser ma parcelle</title>
+  <meta name="description" content="Analyse de sécheresse de votre parcelle avec les données satellites de la NASA." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="/css/terra.css?v=20" />
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+</head>
+<body data-page="analyse">
+  <header id="nav"></header>
+
+  <div class="an-layout">
+    <!-- ===== Globe ===== -->
+    <section class="an-globe" aria-label="Globe">
+      <div class="stars" aria-hidden="true"></div>
+      <div id="globe"></div>
+      <canvas id="wind" class="wind-canvas hidden" aria-hidden="true"></canvas>
+      <div class="g-top">
+        <div class="g-loc">
+          <div class="name" id="g-name"></div>
+          <div class="coords" id="g-coords"></div>
+          <div class="g-status"><i></i><span id="g-status" data-t="an.idle"></span></div>
+        </div>
+      </div>
+      <div class="g-pick hidden" id="g-pick" data-t="f.pick_msg"></div>
+      <div class="g-bottom">
+        <div class="legend hidden" id="legend">
+          <div class="lg-row"><span class="ttl" id="lg-title"></span><span class="lg-date" id="lg-date"></span></div>
+          <div class="lg-row"><span id="lg-min"></span><span class="ramp" id="lg-ramp"></span><span id="lg-max"></span></div>
+        </div>
+        <div class="layers" role="toolbar" aria-label="Couches" id="layers"></div>
+      </div>
+    </section>
+
+    <!-- ===== Panneau ===== -->
+    <aside class="an-panel" id="panel">
+
+      <!-- ---------- Formulaire ---------- -->
+      <section id="form-view" class="view">
+        <div class="an-intro">
+          <span class="eyebrow" data-t="f.kicker"></span>
+          <h1 data-t="an.title"></h1>
+          <p data-t="an.sub"></p>
+        </div>
+
+        <form class="form-card" id="form" novalidate>
+          <fieldset class="step">
+            <legend><span class="num">1</span><span data-t="f.location"></span></legend>
+            <div class="input-row">
+              <div class="input-icon"><iconify-icon icon="lucide:map-pin" width="20" height="20"></iconify-icon>
+                <input class="input" id="loc" autocomplete="off" data-t-ph="f.location_ph" />
+              </div>
+              <button type="button" class="icon-btn" id="gps" data-t-aria="f.gps"><iconify-icon icon="lucide:locate-fixed" width="22" height="22"></iconify-icon></button>
+              <button type="button" class="icon-btn" id="pick" data-t-aria="f.pick"><iconify-icon icon="lucide:mouse-pointer-click" width="22" height="22"></iconify-icon></button>
+            </div>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend><span class="num">2</span><span data-t="f.crop_q"></span></legend>
+            <div class="input-icon"><iconify-icon icon="lucide:sprout" width="20" height="20"></iconify-icon>
+              <input class="input" id="crop" autocomplete="off" list="crop-list" data-t-ph="f.crop_ph" />
+            </div>
+            <datalist id="crop-list"></datalist>
+            <div class="suggest" id="crop-suggest"></div>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend><span class="num">3</span><span data-t="f.soil_q"></span></legend>
+            <div class="tiles tiles-soil" id="soil"></div>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend><span class="num">4</span><span data-t="f.water_q"></span></legend>
+            <div class="tiles tiles-3" id="irr"></div>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend><span class="num">5</span><span data-t="f.priority"></span></legend>
+            <div class="chips" id="prio"></div>
+          </fieldset>
+
+          <fieldset class="step">
+            <legend><span class="num">6</span><span data-t="f.have_q"></span><span class="opt" data-t="f.optional"></span></legend>
+            <textarea class="input textarea" id="have" rows="2" data-t-ph="f.have_ph"></textarea>
+          </fieldset>
+
+          <button class="btn btn-primary btn-block btn-lg" id="go" type="submit"><iconify-icon icon="lucide:scan-search" width="22" height="22"></iconify-icon><span id="go-label" data-t="cta.analyse"></span></button>
+        </form>
+      </section>
+
+      <!-- ---------- Chargement ---------- -->
+      <section id="loading-view" class="view hidden" aria-live="polite">
+        <div class="scan-card">
+          <div class="scan-orb"><span></span><span></span><iconify-icon icon="lucide:satellite" width="30" height="30"></iconify-icon></div>
+          <h2 data-t="ld.title"></h2>
+          <ol class="scan-steps" id="scan-steps">
+            <li data-t="ld.s1"></li><li data-t="ld.s2"></li><li data-t="ld.s3"></li><li data-t="ld.s4"></li>
+          </ol>
+        </div>
+      </section>
+
+      <!-- ---------- Rapport ---------- -->
+      <section id="report-view" class="view hidden">
+        <header class="rp-head">
+          <div class="rp-id">
+            <span class="eyebrow" id="rp-date"></span>
+            <h1 id="rp-place"></h1>
+            <div class="rp-tags" id="rp-tags"></div>
+          </div>
+          <button type="button" class="btn btn-ghost btn-sm" id="edit"><iconify-icon icon="lucide:pencil" width="18" height="18"></iconify-icon><span data-t="rp.edit"></span></button>
+        </header>
+
+        <div class="live-bar" id="live-bar"></div>
+
+        <article class="verdict has-photo" id="verdict">
+          <div class="v-ring" id="v-ring"></div>
+          <div class="v-body">
+            <span class="eyebrow" data-t="rp.advice"></span>
+            <h2 id="v-title"></h2>
+            <p id="v-reason"></p>
+            <span class="v-window" id="v-window"></span>
+          </div>
+        </article>
+
+        <div class="rp-duo">
+          <article class="card sc has-bg" style="--bg:url('/img/photos/drought.jpg')">
+            <header class="sc-head"><span class="sc-ic"><iconify-icon icon="lucide:sun" width="20" height="20"></iconify-icon></span><h2 data-t="q.risk"></h2></header>
+            <div class="semi">
+              <svg viewBox="0 0 220 124" aria-hidden="true">
+                <path class="semi-seg low" id="r-seg-low"/><path class="semi-seg mod" id="r-seg-mod"/><path class="semi-seg high" id="r-seg-high"/>
+                <g id="r-needle" class="needle" style="transform: rotate(-90deg)"><line x1="110" y1="112" x2="110" y2="40"/></g>
+                <circle cx="110" cy="112" r="9" class="needle-hub"/>
+              </svg>
+              <div class="semi-val"><b id="k-risk">—</b><span>/100</span></div>
+              <div class="semi-scale"><span>0</span><span>100</span></div>
+            </div>
+            <div class="sc-foot"><span class="badge" id="k-risk-b"></span><p class="desc" id="k-risk-d"></p></div>
+          </article>
+
+          <article class="card sc has-bg" style="--bg:url('/img/photos/water.jpg')" data-vivid>
+            <header class="sc-head"><span class="sc-ic water"><iconify-icon icon="lucide:droplets" width="20" height="20"></iconify-icon></span><h2 data-t="q.water"></h2></header>
+            <div class="sc-big"><b id="k-water">—</b><span>%</span><small data-t="sc.covered"></small></div>
+            <div class="wbar" aria-hidden="true">
+              <div class="wbar-track"><span class="wbar-fill" id="w-have-bar"></span><span class="wbar-goal" id="w-goal"><em data-t="sc.need"></em></span></div>
+            </div>
+            <dl class="wbar-legend">
+              <div><dt><i class="dot have"></i><span data-t="sc.have"></span></dt><dd id="w-have">—</dd></div>
+              <div><dt><i class="dot need"></i><span data-t="sc.need"></span></dt><dd id="w-need">—</dd></div>
+            </dl>
+            <div class="sc-foot"><span class="badge" id="k-water-b"></span><p class="desc" id="w-gap-txt"></p></div>
+            <p class="reco"><iconify-icon icon="lucide:lightbulb" width="20" height="20"></iconify-icon><span id="w-reco"></span></p>
+          </article>
+        </div>
+
+        <article class="card insight-card" id="insight" aria-live="polite">
+          <div class="card-head" style="margin-bottom:10px">
+            <span class="card-icon"><iconify-icon id="in-icon" icon="lucide:satellite" width="22" height="22"></iconify-icon></span>
+            <div><span class="eyebrow" data-t="rp.sat_sees"></span><div class="in-layer" id="in-layer"></div></div>
+          </div>
+          <p class="lead" id="in-lead"></p>
+          <p class="more" id="in-more"></p>
+        </article>
+
+        <section class="rp-section card fc-card" id="fc-card">
+          <h3 class="rp-h"><iconify-icon icon="lucide:cloud-rain" width="20" height="20"></iconify-icon><span data-t="fc.title"></span><b class="fc-total" id="fc-total"></b></h3>
+          <p class="card-sub" id="fc-sub"></p>
+          <div class="fc-bars" id="fc-bars"></div>
+        </section>
+
+        <section class="rp-section">
+          <h3 class="rp-h"><iconify-icon icon="lucide:list-checks" width="20" height="20"></iconify-icon><span data-t="rp.signals"></span></h3>
+          <ul class="signals" id="r-list"></ul>
+        </section>
+
+
+        <section class="rp-section card has-bg" style="--bg:url('/img/photos/rows.jpg')">
+          <h3 class="rp-h"><iconify-icon icon="lucide:calendar-range" width="20" height="20"></iconify-icon><span data-t="rp.season"></span></h3>
+          <div class="mini-tl" id="mini-tl"></div>
+        </section>
+
+        <section class="rp-section card has-bg" style="--bg:url('/img/photos/cornfield.jpg')">
+          <h3 class="rp-h"><iconify-icon icon="lucide:refresh-cw" width="20" height="20"></iconify-icon><span data-t="q.rot"></span></h3>
+          <p class="card-sub" data-t="q.rot_sub" style="margin-bottom:12px"></p>
+          <div class="seg rot-tabs" id="rot-tabs" role="tablist"></div>
+          <div id="rot-card"></div>
+        </section>
+
+        <details class="adv">
+          <summary><span data-t="adv.title"></span><iconify-icon icon="lucide:chevron-down" width="22" height="22"></iconify-icon></summary>
+          <div class="adv-body"><table class="adv-table" id="adv"></table></div>
+        </details>
+
+        <button type="button" class="ask-card" id="ask-card">
+          <span class="cp-avatar"><iconify-icon icon="lucide:sparkles" width="20" height="20"></iconify-icon></span>
+          <span class="ask-txt"><b data-t="rp.ask"></b><small data-t="chat.example"></small></span>
+          <iconify-icon icon="lucide:arrow-right" width="20" height="20"></iconify-icon>
+        </button>
+      </section>
+    </aside>
+  </div>
+
+  <script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
+  <script src="/js/terra.js?v=20"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/assistant.js"></script>
+  <script src="/js/globo.js?v=20"></script>
+</body>
+</html>

@@ -53,6 +53,19 @@
     areaEl.classList.remove("hidden");
   }
 
+  // Tuiles de la carte latérale (lat / lon / surface / type) — style tableau de bord.
+  function syncTiles() {
+    const f = FSStore.getField();
+    const set = (id, v) => { document.getElementById(id).textContent = v; };
+    set("t-lat", f ? f.latitude.toFixed(4) : "—");
+    set("t-lon", f ? f.longitude.toFixed(4) : "—");
+    set("t-area", f && f.area_ha != null ? `${Number(f.area_ha).toFixed(2)} ha` : "—");
+    const badge = document.getElementById("mode-badge");
+    badge.textContent = !f ? "—" : t(f.polygon ? "field.mode_poly" : "field.mode_point");
+    badge.className = "badge " + (f ? "badge-green" : "badge-gray");
+    FSUI.stepper(document.getElementById("steps"), 1);
+  }
+
   function savePoint(lat, lon) {
     const la = +lat.toFixed(4), lo = +lon.toFixed(4);
     drawn.clearLayers();
@@ -65,6 +78,7 @@
     setCoords(`${la}, ${lo}`);
     showArea(null);
     FSStore.setField({ latitude: la, longitude: lo, area_ha: null, polygon: null });
+    syncTiles();
   }
 
   function savePolygon(layer) {
@@ -78,11 +92,12 @@
       latitude: +c.lat.toFixed(4), longitude: +c.lng.toFixed(4), area_ha: +ha.toFixed(2),
       polygon: latlngs.map((p) => [+p.lat.toFixed(5), +p.lng.toFixed(5)]),
     });
+    syncTiles();
   }
 
   map.addControl(new L.Control.Draw({
     position: "topleft",
-    draw: { polygon: { shapeOptions: { color: "#F2CE60", weight: 3 } }, marker: true,
+    draw: { polygon: { shapeOptions: { color: "#CDE8F6", weight: 3 } }, marker: true,
       polyline: false, rectangle: false, circle: false, circlemarker: false },
     edit: { featureGroup: drawn, edit: false, remove: true },
   }));
@@ -96,7 +111,7 @@
   });
   map.on(L.Draw.Event.DELETED, () => {
     if (pointMarker) { map.removeLayer(pointMarker); pointMarker = null; }
-    FSStore.setField(null); clearCoords(); showArea(null);
+    FSStore.setField(null); clearCoords(); showArea(null); syncTiles();
   });
 
   // Clic simple (hors dessin) = poser/déplacer un point.
@@ -104,7 +119,7 @@
 
   // Restauration
   if (saved && saved.polygon && saved.polygon.length) {
-    const poly = L.polygon(saved.polygon.map((p) => L.latLng(p[0], p[1])), { color: "#F2CE60", weight: 3 });
+    const poly = L.polygon(saved.polygon.map((p) => L.latLng(p[0], p[1])), { color: "#CDE8F6", weight: 3 });
     drawn.addLayer(poly);
     map.fitBounds(poly.getBounds(), { padding: [30, 30] });
     setCoords(`${saved.latitude}, ${saved.longitude}`);
@@ -113,9 +128,40 @@
     savePoint(saved.latitude, saved.longitude);
   }
 
+  // Recherche d'un lieu (OpenStreetMap Nominatim) — seulement quand l'utilisateur clique sur « Buscar ».
+  const results = document.getElementById("search-results");
+  function goTo(lat, lon, zoom) { map.setView([lat, lon], zoom || 15); savePoint(lat, lon); results.classList.add("hidden"); }
+  document.getElementById("search-form").addEventListener("submit", async (e) => {
+    e.preventDefault();
+    const q = document.getElementById("search-q").value.trim();
+    if (!q) return;
+    results.classList.remove("hidden");
+    results.innerHTML = `<div class="sr-item muted">${t("common.loading")}</div>`;
+    try {
+      const url = "https://nominatim.openstreetmap.org/search?format=json&limit=5&q=" + encodeURIComponent(q) + "&accept-language=" + FSI18N.lang;
+      const list = await (await fetch(url)).json();
+      if (!list.length) { results.innerHTML = `<div class="sr-item muted">${t("field.search_none")}</div>`; return; }
+      results.innerHTML = list.map((r, i) => `<button type="button" class="sr-item" data-i="${i}">${FSUI.icon("solar:map-point-bold", 18)}<span>${r.display_name}</span></button>`).join("");
+      results.querySelectorAll("button").forEach((b) => b.addEventListener("click", () => {
+        const r = list[+b.dataset.i]; goTo(+r.lat, +r.lon, 15);
+      }));
+    } catch (err) {
+      results.innerHTML = `<div class="sr-item muted">${t("field.search_none")}</div>`;
+    }
+  });
+  document.getElementById("locate-btn").addEventListener("click", () => {
+    if (!navigator.geolocation) { FSUI.toast(t("field.locate_fail")); return; }
+    navigator.geolocation.getCurrentPosition((pos) => goTo(pos.coords.latitude, pos.coords.longitude, 16),
+      () => FSUI.toast(t("field.locate_fail"), "solar:gps-bold"), { timeout: 10000 });
+  });
+  // « Analizar mi parcela » : directement au résultat si le profil est déjà rempli.
+  if (FSStore.getProfile()) document.getElementById("use-btn").href = "/panel.html";
+
   document.addEventListener("fs:langchange", () => {
     localizeDraw();
     const f = FSStore.getField();
     showArea(f ? f.area_ha : null);
+    syncTiles();
   });
+  syncTiles();
 })();

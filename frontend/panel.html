@@ -3,8 +3,8 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#DEDEDA" />
-  <title>Field Shift — Tableau de bord</title>
+  <meta name="theme-color" content="#F6F1E7" />
+  <title>Field Shift — Ma parcelle</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
   <link rel="apple-touch-icon" href="/icons/icon-192.png" />
@@ -12,7 +12,7 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/fieldshift.css" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
@@ -23,81 +23,109 @@
 
     <div id="loading" class="loading"><div class="spinner"></div><p data-i18n="common.loading"></p></div>
 
-    <main id="content" class="hidden">
-      <div class="grid-dash">
-        <!-- Bandeau photo -->
-        <section class="hero span-2" style="background-image:url('/img/field.jpg')">
-          <div class="hero-top">
-            <span class="badge badge-glass" id="hero-parcel"></span>
-            <span id="hero-stamp"></span>
+    <main id="content" class="hidden stack">
+      <!-- 1. La réponse du jour (compréhensible en quelques secondes) -->
+      <section class="hero dash-hero" style="background-image:url('/img/fields.svg')">
+        <div class="hero-top">
+          <div style="display:flex;gap:.4rem;flex-wrap:wrap">
+            <span class="badge badge-glass" id="hero-field"></span>
+            <span class="badge badge-glass" id="hero-place"></span>
           </div>
-          <div class="hero-card">
-            <p class="eyebrow" data-i18n="dash.today"></p>
-            <h2 id="hero-reco"></h2>
-            <p id="hero-reason"></p>
+          <span id="hero-stamp"></span>
+        </div>
+        <div class="hero-card">
+          <p class="eyebrow"><iconify-icon icon="solar:calendar-mark-bold" width="18" height="18"></iconify-icon><span data-i18n="dash.today"></span> · <span id="hero-date"></span></p>
+          <h1 class="verdict" id="hero-reco"></h1>
+          <p id="hero-reason" data-speak></p>
+          <div class="hero-actions">
+            <button class="btn btn-dark" id="hero-listen"><iconify-icon icon="solar:volume-loud-bold" width="20" height="20"></iconify-icon><span data-i18n="dash.listen"></span></button>
+            <a class="btn btn-light" href="/rotaciones.html"><iconify-icon icon="solar:refresh-circle-bold" width="20" height="20"></iconify-icon><span data-i18n="dash.rotations_btn"></span></a>
           </div>
-        </section>
+        </div>
+      </section>
 
-        <!-- Suivi du champ -->
+      <!-- 2. Trois cartes : risque · eau · quand semer -->
+      <div class="grid-dash">
         <section class="card">
           <div class="card-head">
-            <h2 class="card-title" data-i18n="mon.title"></h2>
-            <span class="badge badge-green" id="mon-badge"></span>
-          </div>
-          <p class="xs faint" id="mon-date"></p>
-          <div class="mon-temp">
-            <span class="big" id="mon-temp"></span>
-            <div class="xs muted"><div id="mon-l1"></div><div id="mon-l2"></div></div>
+            <h2 class="card-title" data-help="risk"><span data-i18n="panel.risk"></span></h2>
+            <span class="badge" id="risk-badge"></span>
           </div>
           <div class="ring-wrap">
-            <div id="mon-ring"></div>
-            <div class="ring-label"><div><div class="num" id="mon-score"></div><div class="small bold" id="mon-level"></div></div></div>
+            <div id="risk-ring"></div>
+            <div class="ring-label"><div><div class="num" id="risk-score" style="font-size:3rem"></div><div class="small muted" data-i18n="dash.out_of"></div></div></div>
           </div>
-          <div class="tiles" id="mon-tiles"></div>
-          <a class="card-foot" href="/analyse.html">
-            <span style="display:flex;align-items:center;gap:6px"><iconify-icon icon="solar:info-circle-linear" width="16" height="16"></iconify-icon><span data-i18n="mon.link"></span></span>
-            <iconify-icon icon="solar:alt-arrow-right-linear" width="16" height="16"></iconify-icon>
-          </a>
+          <div class="risk-scale" aria-hidden="true">
+            <i class="seg low"></i><i class="seg mid"></i><i class="seg high"></i>
+            <span class="marker" id="risk-marker"></span>
+          </div>
+          <div class="risk-scale-lbl"><span data-i18n="risk.low"></span><span data-i18n="risk.moderate"></span><span data-i18n="risk.high"></span></div>
         </section>
 
-        <!-- Calendrier de semis -->
         <section class="card">
           <div class="card-head">
-            <div><h2 class="card-title" data-i18n="cal.title"></h2><p class="card-sub" data-i18n="cal.sub"></p></div>
-            <a class="round-btn" href="/plan.html" aria-label="Plan"><iconify-icon icon="solar:maximize-square-minimalistic-linear" width="18" height="18"></iconify-icon></a>
+            <h2 class="card-title" data-help="water"><span data-i18n="panel.water"></span></h2>
+            <span class="badge" id="water-status"></span>
           </div>
+          <div class="water-rows">
+            <div class="wrow"><span class="wlbl"><iconify-icon icon="mdi:sprout" width="20" height="20"></iconify-icon><span data-i18n="panel.need"></span></span><b id="w-need"></b></div>
+            <div class="wbar"><div class="need"></div></div>
+            <div class="wrow"><span class="wlbl"><iconify-icon icon="solar:waterdrops-bold" width="20" height="20"></iconify-icon><span data-i18n="panel.available"></span></span><b id="w-avail"></b></div>
+            <div class="wbar"><div class="avail" id="w-bar"></div></div>
+          </div>
+          <div class="water-delta" id="w-delta"></div>
+          <p class="small muted" id="w-explain" style="margin-top:.75rem"></p>
+        </section>
+
+        <section class="card">
+          <div class="card-head">
+            <h2 class="card-title" data-help="window"><span data-i18n="panel.timeline"></span></h2>
+            <span class="badge" id="plant-badge"></span>
+          </div>
+          <p class="xs muted" data-i18n="plant.window"></p>
+          <p class="num" id="plant-window" style="font-size:1.6rem;margin:.1rem 0 .8rem"></p>
           <div class="weekbar" id="cal-weeks"></div>
           <div class="cal-area" id="cal-area"></div>
           <div class="cal-axis" id="cal-axis"></div>
-          <p class="small muted" id="cal-text" style="margin-top:12px"></p>
-        </section>
-
-        <!-- Santé du champ -->
-        <section class="card">
-          <div class="card-head">
-            <h2 class="card-title" data-i18n="ins.title"></h2>
-            <select class="select" id="ins-var" style="width:auto;height:38px;border-radius:999px;padding:0 12px;background:#fff" aria-label="Variable"></select>
-          </div>
-          <p class="xs muted" data-i18n="ins.score"></p>
-          <p style="margin-top:2px"><span class="num" id="ins-score" style="font-size:30px"></span><span class="faint"> /100</span></p>
-          <p class="xs" id="ins-delta" style="margin-bottom:8px"></p>
-          <div class="chart-box"><canvas id="ins-chart"></canvas></div>
-        </section>
-
-        <!-- Météo & eau -->
-        <section class="card">
-          <div class="card-head">
-            <h2 class="card-title" data-i18n="wx.title"></h2>
-            <span class="small bold" data-i18n="wx.today"></span>
-          </div>
-          <div class="wx-row">
-            <div class="wx-big" id="wx-temp"></div>
-            <div class="wx-list" id="wx-list"></div>
-          </div>
-          <div class="stripes" id="wx-stripes"></div>
-          <a class="btn btn-dark btn-block" href="/plan.html" data-i18n="wx.report"></a>
         </section>
       </div>
+
+      <!-- 3. Actions principales -->
+      <div class="action-row">
+        <a class="btn btn-dark btn-xl" href="/rotaciones.html"><iconify-icon icon="solar:refresh-circle-bold" width="24" height="24"></iconify-icon><span data-i18n="dash.rotations_btn"></span><span class="arr"><iconify-icon icon="solar:arrow-right-linear" width="18" height="18"></iconify-icon></span></a>
+        <a class="btn btn-light btn-xl" href="/copiloto.html"><iconify-icon icon="solar:chat-round-dots-bold" width="24" height="24"></iconify-icon><span data-i18n="panel.ask"></span></a>
+        <a class="btn btn-light btn-xl" href="/cooperativa.html"><iconify-icon icon="solar:printer-bold" width="24" height="24"></iconify-icon><span data-i18n="panel.cooperativa"></span></a>
+      </div>
+
+      <!-- 4. Détails scientifiques (repliés par défaut) -->
+      <details class="card sci" id="details">
+        <summary>
+          <span class="card-ico dark"><iconify-icon icon="solar:satellite-bold" width="22" height="22"></iconify-icon></span>
+          <span style="flex:1"><b class="card-title" data-i18n="dash.details"></b><span class="card-sub" style="display:block" data-i18n="dash.details_sub"></span></span>
+          <span class="pm"><iconify-icon icon="solar:alt-arrow-down-linear" width="22" height="22"></iconify-icon></span>
+        </summary>
+
+        <h3 class="sci-h" data-i18n="dash.indicators"></h3>
+        <div class="ind-grid" id="indicators"></div>
+
+        <div class="grid-2" style="margin-top:1.25rem">
+          <div class="chart-card"><p class="small bold" data-help="rain"><span data-i18n="chart.rainfall"></span> </p><div class="chart-box"><canvas id="rain-chart"></canvas></div></div>
+          <div class="chart-card"><p class="small bold" data-help="soil"><span data-i18n="chart.soil_time"></span> </p><div class="chart-box"><canvas id="soil-chart"></canvas></div></div>
+          <div class="chart-card"><p class="small bold" data-help="ndvi"><span data-i18n="chart.ndvi"></span> </p><div class="chart-box"><canvas id="ndvi-chart"></canvas></div></div>
+          <div class="chart-card"><p class="small bold" data-help="et"><span data-i18n="chart.climate"></span> </p><div class="chart-box"><canvas id="climate-chart"></canvas></div></div>
+        </div>
+
+        <div class="grid-2" style="margin-top:1.25rem">
+          <div>
+            <h3 class="sci-h" data-i18n="panel.why"></h3>
+            <div id="risk-why"></div>
+          </div>
+          <div>
+            <h3 class="sci-h" data-i18n="panel.ai"></h3>
+            <p class="muted" id="ai-explain"></p>
+          </div>
+        </div>
+      </details>
     </main>
   </div>
 

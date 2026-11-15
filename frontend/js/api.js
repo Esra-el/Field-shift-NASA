@@ -36,9 +36,7 @@
       return await res.json();
     } catch (e) {
       return {
-        answer: FSI18N.lang === "en"
-          ? "I can't reach the server right now. Please try again when you are online."
-          : "No puedo conectar con el servidor ahora. Intenta de nuevo cuando tengas conexión.",
+        answer: FSI18N.t("copilot.offline"),
         sources: [], limitations: "offline", _mock: true,
       };
     }

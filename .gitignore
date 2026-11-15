@@ -22,3 +22,7 @@ backend/data/cache/
 Thumbs.db
 .vscode/
 .idea/
+
+# Build Vercel
+dist/
+.vercel/

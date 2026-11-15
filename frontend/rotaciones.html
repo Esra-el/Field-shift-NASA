@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#F6F1E7" />
+  <title>Field Shift — Plans de rotation</title>
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="apple-touch-icon" href="/icons/icon-192.png" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="/css/fieldshift.css" />
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+</head>
+<body data-page="rotations">
+  <div class="frame">
+    <header id="topbar"></header>
+
+    <section class="page-hero">
+      <div class="hero-top">
+        <span class="badge badge-glass" id="rot-field"></span>
+        <span id="rot-stamp"></span>
+      </div>
+      <div class="hero-card">
+        <p class="eyebrow" data-help="rotation"><iconify-icon icon="solar:refresh-circle-bold" width="18" height="18"></iconify-icon><span data-i18n="panel.rotations.sub"></span></p>
+        <h1 data-i18n="rot.title" data-speak></h1>
+        <p data-i18n="rot.sub" data-speak></p>
+      </div>
+    </section>
+
+    <div id="loading" class="loading"><div class="spinner"></div><p data-i18n="common.loading"></p></div>
+
+    <main id="content" class="hidden stack">
+      <div class="grid-dash rot-grid" id="rot-list"></div>
+
+      <a class="card dark-card ask-card" href="/copiloto.html">
+        <img src="/img/assistant.svg" alt="" />
+        <div>
+          <p class="card-title" data-i18n="rot.ask"></p>
+          <p class="card-sub" data-i18n="copilot.example"></p>
+        </div>
+        <span class="round-btn"><iconify-icon icon="solar:arrow-right-linear" width="20" height="20"></iconify-icon></span>
+      </a>
+    </main>
+  </div>
+
+  <script src="/js/i18n.js"></script>
+  <script src="/js/store.js"></script>
+  <script src="/js/api.js"></script>
+  <script src="/js/pwa.js"></script>
+  <script src="/js/layout.js"></script>
+  <script src="/js/rotaciones.js"></script>
+</body>
+</html>

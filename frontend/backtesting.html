@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
-  <meta name="theme-color" content="#DEDEDA" />
+  <meta name="theme-color" content="#F6F1E7" />
   <title>Field Shift — Historique</title>
   <link rel="manifest" href="/manifest.webmanifest" />
   <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
@@ -12,26 +12,56 @@
   <meta name="mobile-web-app-capable" content="yes" />
   <link rel="preconnect" href="https://fonts.googleapis.com" />
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Outfit:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700;800&family=Atkinson+Hyperlegible:wght@400;700&display=swap" rel="stylesheet" />
   <link rel="stylesheet" href="/css/fieldshift.css" />
   <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.6/dist/chart.umd.min.js"></script>
 </head>
 <body data-page="history">
   <div class="frame">
     <header id="topbar"></header>
 
-    <div class="page-head">
-      <div><h1 data-i18n="bt.title"></h1><p class="sub" data-i18n="bt.subtitle"></p></div>
-    </div>
+    <section class="page-hero">
+      <div class="hero-top">
+        <span class="badge badge-glass"><iconify-icon icon="solar:history-linear" width="14" height="14"></iconify-icon><span data-i18n="nav.backtest"></span></span>
+        <span id="bt-stamp"></span>
+      </div>
+      <div class="hero-card">
+        <p class="eyebrow" data-i18n="bt.subtitle"></p>
+        <h1 data-i18n="bt.title" data-speak></h1>
+        <p id="bt-summary" class="bold" data-i18n="common.loading" data-speak></p>
+      </div>
+    </section>
 
     <div id="loading" class="loading"><div class="spinner"></div><p data-i18n="common.loading"></p></div>
 
     <main id="content" class="hidden stack">
-      <section class="card" style="background:var(--ink);color:#fff;display:flex;align-items:center;gap:18px">
-        <span class="q-ico" style="background:rgba(255,255,255,.12);width:56px;height:56px;border-radius:18px"><iconify-icon icon="solar:history-bold" width="28" height="28"></iconify-icon></span>
-        <p id="bt-summary" class="num" style="font-size:24px;font-weight:500;line-height:1.25"></p>
+      <div class="grid-dash">
+        <section class="card">
+          <div class="card-head">
+            <div><h2 class="card-title" data-help="backtest"><span data-i18n="bt.score"></span></h2><p class="card-sub" data-i18n="bt.score_sub"></p></div>
+            <span class="badge badge-green" id="bt-badge"></span>
+          </div>
+          <div class="ring-wrap">
+            <div id="bt-ring"></div>
+            <div class="ring-label"><div><div class="num" id="bt-pct"></div><div class="small bold" data-i18n="bt.warned"></div></div></div>
+          </div>
+          <div class="tiles" style="grid-template-columns:repeat(3,minmax(0,1fr))">
+            <div class="tile"><span class="t-label"><iconify-icon icon="solar:calendar-linear" width="14" height="14"></iconify-icon><span data-i18n="bt.seasons"></span></span><div class="t-value" id="bt-total"></div></div>
+            <div class="tile is-active"><span class="t-label"><iconify-icon icon="solar:bell-linear" width="14" height="14"></iconify-icon><span data-i18n="bt.alerts"></span></span><div class="t-value" id="bt-warned"></div></div>
+            <div class="tile"><span class="t-label"><iconify-icon icon="solar:cloud-rain-linear" width="14" height="14"></iconify-icon><span data-i18n="var.rain"></span></span><div class="t-value" id="bt-rain"></div></div>
+          </div>
+        </section>
+        <section class="card span-2">
+          <div class="card-head"><h2 class="card-title" data-i18n="bt.chart"></h2></div>
+          <div class="chart-box tall"><canvas id="bt-chart"></canvas></div>
+        </section>
+      </div>
+
+      <section>
+        <h2 class="card-title" style="margin:.5rem .25rem 1rem" data-i18n="bt.timeline"></h2>
+        <ol class="bt-timeline" id="bt-list"></ol>
       </section>
-      <div class="grid-2" id="bt-list"></div>
     </main>
   </div>
 

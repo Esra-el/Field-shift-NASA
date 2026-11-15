@@ -1,0 +1,233 @@
+<!doctype html>
+<html lang="fr">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <meta name="theme-color" content="#04303B" />
+  <title>Field Shift — Semez au bon moment, avant la sécheresse</title>
+  <meta name="description" content="Field Shift transforme les données satellites de la NASA en conseils simples pour les petits agriculteurs : risque de sécheresse, budget d'eau, date de semis et rotations." />
+  <link rel="manifest" href="/manifest.webmanifest" />
+  <link rel="icon" href="/icons/icon.svg" type="image/svg+xml" />
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=BDO+Grotesk:wght@400;500;600;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.css" />
+  <link rel="stylesheet" href="/css/site.css" />
+  <script src="https://code.iconify.design/iconify-icon/3.0.0/iconify-icon.min.js"></script>
+</head>
+<body>
+  <!-- Menu pilule flottant -->
+  <header class="s-nav" id="top">
+    <a class="s-brand" href="#top"><span class="s-logo"><iconify-icon icon="lucide:sprout" width="18" height="18"></iconify-icon></span>Field Shift</a>
+    <nav class="s-links" id="s-links">
+      <a href="#solution" data-t="s.nav.solution"></a>
+      <a href="#fonctionnement" data-t="s.nav.how"></a>
+      <a href="#donnees" data-t="s.nav.data"></a>
+      <a href="#galerie" data-t="s.nav.gallery"></a>
+      <a href="#faq" data-t="s.nav.faq"></a>
+    </nav>
+    <div class="s-right">
+      <div class="s-lang" role="group" aria-label="Langue · Language · Lingua">
+        <button type="button" data-l="fr">FR</button><button type="button" data-l="en">EN</button><button type="button" data-l="it">IT</button>
+      </div>
+      <a class="s-btn s-btn-lime s-hide-sm" href="/inicio.html"><span data-t="s.open"></span><iconify-icon icon="lucide:arrow-right" width="16" height="16"></iconify-icon></a>
+      <button class="s-burger" id="burger" aria-label="Menu" aria-expanded="false"><iconify-icon icon="lucide:menu" width="22" height="22"></iconify-icon></button>
+    </div>
+  </header>
+
+  <!-- 1. Hero : vraie vue satellite qui défile -->
+  <section class="s-hero">
+    <div class="s-hero-map" id="hero-map" aria-hidden="true"></div>
+    <div class="s-hero-shade"></div>
+    <div class="s-wrap s-hero-inner">
+      <div class="s-hero-top">
+        <span class="s-kicker light" data-t="s.hero.kicker"></span>
+        <h1 data-t="s.hero.title"></h1>
+      </div>
+      <div class="s-hero-bottom">
+        <figure class="s-glass-card reveal">
+          <img src="/img/nasa/sahel-ndvi.jpg" alt="" loading="eager" />
+          <figcaption><b data-t="s.hero.card_t"></b><span data-t="s.hero.card_d"></span></figcaption>
+        </figure>
+        <div class="s-hero-cta reveal">
+          <p data-t="s.hero.lead"></p>
+          <a class="s-btn s-btn-lime" href="/globo.html"><span data-t="s.hero.cta"></span><iconify-icon icon="lucide:arrow-right" width="16" height="16"></iconify-icon></a>
+        </div>
+      </div>
+    </div>
+    <span class="s-credit" data-t="s.credit.esri"></span>
+  </section>
+
+  <!-- 2. Mission + chiffres -->
+  <section class="s-band s-beige">
+    <div class="s-wrap">
+      <div class="s-intro reveal">
+        <span class="s-kicker" data-t="s.mission.kicker"></span>
+        <h2 class="s-statement" data-t="s.mission.text"></h2>
+      </div>
+      <div class="s-stats">
+        <div class="reveal"><h3><span class="count" data-to="5">0</span></h3><p data-t="s.stat1"></p></div>
+        <div class="reveal"><h3><span class="count" data-to="60">0</span><small data-t="s.stat2u"></small></h3><p data-t="s.stat2"></p></div>
+        <div class="reveal"><h3><span class="count" data-to="30">0</span><small>s</small></h3><p data-t="s.stat3"></p></div>
+        <div class="reveal"><h3><span class="count" data-to="3">0</span></h3><p data-t="s.stat4"></p></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 3. Une plateforme, quatre réponses -->
+  <section class="s-band s-light" id="solution">
+    <div class="s-wrap">
+      <div class="s-head reveal">
+        <span class="s-kicker" data-t="s.sol.kicker"></span>
+        <h2 data-t="s.sol.title"></h2>
+      </div>
+      <div class="s-cards4">
+        <article class="s-card reveal"><div class="s-card-img"><img src="/img/nasa/am-rain.jpg" alt="" loading="lazy" /><span class="s-chip">GPM · MERRA-2</span></div>
+          <h4 data-t="s.sol.c1t"></h4><p data-t="s.sol.c1d"></p></article>
+        <article class="s-card reveal"><div class="s-card-img"><img src="/img/nasa/ca-soil.jpg" alt="" loading="lazy" /><span class="s-chip">SMAP</span></div>
+          <h4 data-t="s.sol.c2t"></h4><p data-t="s.sol.c2d"></p></article>
+        <article class="s-card reveal"><div class="s-card-img"><img src="/img/nasa/ca-ndvi.jpg" alt="" loading="lazy" /><span class="s-chip">VIIRS NDVI</span></div>
+          <h4 data-t="s.sol.c3t"></h4><p data-t="s.sol.c3d"></p></article>
+        <article class="s-card reveal"><div class="s-card-img"><img src="/img/nasa/sahel-truecolor.jpg" alt="" loading="lazy" /><span class="s-chip">NASA Blue Marble</span></div>
+          <h4 data-t="s.sol.c4t"></h4><p data-t="s.sol.c4d"></p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 4. Les données NASA (fond sombre, cartes qui défilent) -->
+  <section class="s-dark" id="donnees">
+    <div class="s-dark-bg" style="background-image:url('/img/nasa/americas-wide.jpg')"></div>
+    <div class="s-wrap">
+      <div class="s-head center reveal">
+        <span class="s-kicker light" data-t="s.data.kicker"></span>
+        <h2 data-t="s.data.title"></h2>
+        <p class="s-sub light" data-t="s.data.sub"></p>
+      </div>
+      <div class="s-data-rail" id="data-rail">
+        <article class="s-data-card"><img src="/img/nasa/am-rain.jpg" alt="" loading="lazy" /><div><span class="s-num">01</span><h4 data-t="s.d1t"></h4><p data-t="s.d1d"></p><small>NASA GPM IMERG · MERRA-2</small></div></article>
+        <article class="s-data-card"><img src="/img/nasa/ca-soil.jpg" alt="" loading="lazy" /><div><span class="s-num">02</span><h4 data-t="s.d2t"></h4><p data-t="s.d2d"></p><small>NASA SMAP L4</small></div></article>
+        <article class="s-data-card"><img src="/img/nasa/sahel-ndvi.jpg" alt="" loading="lazy" /><div><span class="s-num">03</span><h4 data-t="s.d3t"></h4><p data-t="s.d3d"></p><small>NASA VIIRS NOAA-20</small></div></article>
+        <article class="s-data-card"><img src="/img/nasa/am-temp.jpg" alt="" loading="lazy" /><div><span class="s-num">04</span><h4 data-t="s.d4t"></h4><p data-t="s.d4d"></p><small>NASA MERRA-2 · POWER</small></div></article>
+        <article class="s-data-card"><img src="/img/nasa/am-solar.jpg" alt="" loading="lazy" /><div><span class="s-num">05</span><h4 data-t="s.d5t"></h4><p data-t="s.d5d"></p><small>NASA MERRA-2 · POWER</small></div></article>
+        <article class="s-data-card"><img src="/img/nasa/am-wind.jpg" alt="" loading="lazy" /><div><span class="s-num">06</span><h4 data-t="s.d6t"></h4><p data-t="s.d6d"></p><small>NASA MERRA-2</small></div></article>
+      </div>
+      <div class="s-rail-nav">
+        <button type="button" id="rail-prev" aria-label="Précédent"><iconify-icon icon="lucide:arrow-left" width="20" height="20"></iconify-icon></button>
+        <span id="rail-count">01/06</span>
+        <button type="button" id="rail-next" aria-label="Suivant"><iconify-icon icon="lucide:arrow-right" width="20" height="20"></iconify-icon></button>
+      </div>
+    </div>
+  </section>
+
+  <!-- 5. Pensé pour le terrain -->
+  <section class="s-band s-beige">
+    <div class="s-wrap s-split">
+      <div class="reveal">
+        <span class="s-kicker" data-t="s.field.kicker"></span>
+        <h2 data-t="s.field.title"></h2>
+        <p class="s-sub" data-t="s.field.sub"></p>
+        <div class="s-feats">
+          <div><span class="s-ic"><iconify-icon icon="lucide:wifi-off" width="20" height="20"></iconify-icon></span><h4 data-t="s.f1t"></h4><p data-t="s.f1d"></p></div>
+          <div><span class="s-ic"><iconify-icon icon="lucide:languages" width="20" height="20"></iconify-icon></span><h4 data-t="s.f2t"></h4><p data-t="s.f2d"></p></div>
+          <div><span class="s-ic"><iconify-icon icon="lucide:message-circle" width="20" height="20"></iconify-icon></span><h4 data-t="s.f3t"></h4><p data-t="s.f3d"></p></div>
+          <div><span class="s-ic"><iconify-icon icon="lucide:smartphone" width="20" height="20"></iconify-icon></span><h4 data-t="s.f4t"></h4><p data-t="s.f4d"></p></div>
+        </div>
+      </div>
+      <div class="s-split-media reveal">
+        <div class="s-mini-map" id="field-map" aria-hidden="true"></div>
+        <div class="s-float-card">
+          <span class="s-dot"></span>
+          <div><b data-t="s.field.card_t"></b><span data-t="s.field.card_d"></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 6. Comment ça marche -->
+  <section class="s-band s-light" id="fonctionnement">
+    <div class="s-wrap">
+      <div class="s-head center reveal">
+        <span class="s-kicker" data-t="s.how.kicker"></span>
+        <h2 data-t="s.how.title"></h2>
+      </div>
+      <div class="s-steps">
+        <article class="s-step reveal"><span class="s-step-n" data-t="s.step1"></span><div class="s-step-ic"><iconify-icon icon="lucide:map-pin" width="26" height="26"></iconify-icon></div><h3 data-t="s.how1t"></h3><p data-t="s.how1d"></p></article>
+        <article class="s-step reveal"><span class="s-step-n" data-t="s.step2"></span><div class="s-step-ic"><iconify-icon icon="lucide:satellite" width="26" height="26"></iconify-icon></div><h3 data-t="s.how2t"></h3><p data-t="s.how2d"></p></article>
+        <article class="s-step reveal"><span class="s-step-n" data-t="s.step3"></span><div class="s-step-ic"><iconify-icon icon="lucide:clipboard-check" width="26" height="26"></iconify-icon></div><h3 data-t="s.how3t"></h3><p data-t="s.how3d"></p></article>
+      </div>
+    </div>
+  </section>
+
+  <!-- 7. Galerie : la Terre vue par nos satellites -->
+  <section class="s-band s-beige" id="galerie">
+    <div class="s-wrap">
+      <div class="s-head reveal">
+        <span class="s-kicker" data-t="s.gal.kicker"></span>
+        <h2 data-t="s.gal.title"></h2>
+      </div>
+      <div class="s-gallery">
+        <figure class="g-a reveal"><img src="/img/nasa/sahel-ndvi.jpg" alt="" loading="lazy" /><figcaption data-t="s.g1"></figcaption></figure>
+        <figure class="g-b reveal"><img src="/img/nasa/ca-truecolor.jpg" alt="" loading="lazy" /><figcaption data-t="s.g2"></figcaption></figure>
+        <figure class="g-c reveal"><img src="/img/nasa/ca-soil.jpg" alt="" loading="lazy" /><figcaption data-t="s.g3"></figcaption></figure>
+        <figure class="g-d reveal"><img src="/img/nasa/am-rain.jpg" alt="" loading="lazy" /><figcaption data-t="s.g4"></figcaption></figure>
+        <figure class="g-e reveal"><img src="/img/nasa/sahel-truecolor.jpg" alt="" loading="lazy" /><figcaption data-t="s.g5"></figcaption></figure>
+      </div>
+      <p class="s-note" data-t="s.gal.note"></p>
+    </div>
+  </section>
+
+  <!-- 8. FAQ -->
+  <section class="s-band s-light" id="faq">
+    <div class="s-wrap">
+      <div class="s-head center reveal">
+        <span class="s-kicker" data-t="s.faq.kicker"></span>
+        <h2 data-t="s.faq.title"></h2>
+      </div>
+      <div class="s-faq">
+        <div class="s-acc" id="acc">
+          <details open><summary><span data-t="s.q1"></span><iconify-icon icon="lucide:chevron-down" width="20" height="20"></iconify-icon></summary><p data-t="s.a1"></p></details>
+          <details><summary><span data-t="s.q2"></span><iconify-icon icon="lucide:chevron-down" width="20" height="20"></iconify-icon></summary><p data-t="s.a2"></p></details>
+          <details><summary><span data-t="s.q3"></span><iconify-icon icon="lucide:chevron-down" width="20" height="20"></iconify-icon></summary><p data-t="s.a3"></p></details>
+          <details><summary><span data-t="s.q4"></span><iconify-icon icon="lucide:chevron-down" width="20" height="20"></iconify-icon></summary><p data-t="s.a4"></p></details>
+          <details><summary><span data-t="s.q5"></span><iconify-icon icon="lucide:chevron-down" width="20" height="20"></iconify-icon></summary><p data-t="s.a5"></p></details>
+        </div>
+        <div class="s-faq-img reveal"><img src="/img/nasa/ca-ndvi.jpg" alt="" loading="lazy" /></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- 9. Appel à l'action -->
+  <section class="s-cta">
+    <div class="s-wrap">
+      <div class="s-cta-box reveal">
+        <div>
+          <h2 data-t="s.cta.title"></h2>
+          <p data-t="s.cta.sub"></p>
+        </div>
+        <div class="s-cta-btns">
+          <a class="s-btn s-btn-lime s-btn-lg" href="/globo.html"><span data-t="s.hero.cta"></span><iconify-icon icon="lucide:arrow-right" width="18" height="18"></iconify-icon></a>
+          <a class="s-btn s-btn-ghost s-btn-lg" href="/inicio.html"><span data-t="s.open"></span></a>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <footer class="s-foot">
+    <div class="s-wrap s-foot-inner">
+      <div>
+        <a class="s-brand light" href="#top"><span class="s-logo"><iconify-icon icon="lucide:sprout" width="18" height="18"></iconify-icon></span>Field Shift</a>
+        <p data-t="s.foot.about"></p>
+      </div>
+      <div class="s-foot-cols">
+        <div><b data-t="s.foot.prod"></b><a href="/globo.html" data-t="s.hero.cta"></a><a href="/inicio.html" data-t="s.open"></a><a href="#faq" data-t="s.nav.faq"></a></div>
+        <div><b data-t="s.foot.data"></b><span>NASA GPM IMERG</span><span>NASA SMAP</span><span>NASA VIIRS · MODIS</span><span>NASA MERRA-2 · POWER</span></div>
+      </div>
+    </div>
+    <div class="s-wrap s-foot-bottom"><span data-t="s.foot.credit"></span><span>NASA Space Apps Challenge</span></div>
+  </footer>
+
+  <script src="https://unpkg.com/maplibre-gl@5.24.1/dist/maplibre-gl.js"></script>
+  <script src="/js/terra.js"></script>
+  <script src="/js/site.js"></script>
+</body>
+</html>

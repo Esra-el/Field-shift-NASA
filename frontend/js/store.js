@@ -24,12 +24,13 @@
     buildPayload() {
       const f = read(FIELD_KEY) || { latitude: 14.8, longitude: -90.5 };
       const p = read(PROFILE_KEY) || {
-        crop: "maize", soil_type: "sandy_loam", irrigation: false, priority: "balanced",
+        crop: "maize", soil_type: "sandy_loam", irrigation: false, irrigation_level: "none", priority: "save_water",
       };
       return {
         latitude: f.latitude, longitude: f.longitude,
         crop: p.crop, soil_type: p.soil_type,
-        irrigation: !!p.irrigation, priority: p.priority,
+        irrigation: !!p.irrigation, irrigation_level: p.irrigation_level || (p.irrigation ? "available" : "none"),
+        priority: p.priority,
       };
     },
   };
