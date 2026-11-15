@@ -597,5 +597,7 @@ body.dash-an .an-panel { padding-top: 46px; }
 @media (max-width: 1099px) { body.dash-an .an-panel { padding-top: 70px; } }
 /* Pages secondaires (eau, saison, rotations, compte) : même dégagement */
 body.dash-pg .pg-main { padding-top: 58px; }
+/* Tableau de bord (inicio) : le titre dégage le burger (le bouton retour a été retiré) */
+body.dash .d-title { padding-left: 52px; }
 /* Mobile : le globe est en haut ; on décale son cartouche sous le burger */
 @media (max-width: 1099px) { body.dash-an .an-globe .g-top { left: 66px; } }
