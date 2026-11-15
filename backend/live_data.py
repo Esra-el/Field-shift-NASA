@@ -65,10 +65,13 @@ def _power_daily(lat: float, lon: float, start: date, end: date) -> dict[str, An
 
 def _power_clim(lat: float, lon: float) -> dict[str, float]:
     d = _get("https://power.larc.nasa.gov/api/temporal/climatology/point", {
-        "parameters": "PRECTOTCORR", "community": "AG",
+        "parameters": "PRECTOTCORR,T2M", "community": "AG",
         "latitude": round(lat, 4), "longitude": round(lon, 4), "format": "JSON",
     })
-    return d["properties"]["parameter"]["PRECTOTCORR"]  # mm/jour, moyenne par mois
+    p = d["properties"]["parameter"]
+    out = dict(p["PRECTOTCORR"])  # mm/jour, moyenne par mois
+    out["_T2M"] = p.get("T2M") or {}  # température moyenne par mois (°C)
+    return out
 
 
 def _open_meteo(lat: float, lon: float) -> dict[str, Any]:
@@ -183,6 +186,16 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
         out["rainfall_normal_mm"] = round(normal)
         out["clim_mm_day"] = {m: clim[m] for m in MONTHS}
 
+    # --- Anomalie de température : NASA POWER journalier vs normale NASA POWER (même source)
+    t2m = power.get("T2M") or {}
+    t_clim = (clim or {}).get("_T2M") or {}
+    if t2m and t_clim:
+        last = sorted(t2m)[-14:]  # 14 derniers jours publiés
+        diffs = [t2m[d] - t_clim[MONTHS[date.fromisoformat(d).month - 1]] for d in last
+                 if t_clim.get(MONTHS[date.fromisoformat(d).month - 1], -999) > -900]
+        if diffs:
+            out["temp_anomaly"] = round(sum(diffs) / len(diffs), 1)
+
     # --- Humidité de la zone racinaire NASA POWER (0-1), dernière valeur
     gw = power.get("GWETROOT") or {}
     if gw:
@@ -209,6 +222,7 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
         tm = [m_temp[d] for d in last7 if m_temp.get(d) is not None]
         if tm:
             out["temperature_7d_c"] = round(sum(tm) / len(tm), 1)
+
         sw = [m_sw[d] for d in last7 if m_sw.get(d) is not None]
         if sw:
             out["solar_mj_m2"] = round(sum(sw) / len(sw), 1)

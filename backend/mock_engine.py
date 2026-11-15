@@ -15,6 +15,11 @@ import math
 from datetime import date, timedelta
 from typing import Any
 
+try:  # modèle ML de risque du Flux 2 (backend/app/ml) ; absent -> règles simples
+    from app.ml.risk import predict_risk as _predict_risk
+except Exception:  # pragma: no cover
+    _predict_risk = None
+
 MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", "NOV", "DEC"]
 
 # --- Données agronomiques de démonstration (mm/saison approx.) -------------
@@ -276,14 +281,33 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
     if is_live and rainfall_normal:
         # Pluie des 60 derniers jours en dessous de la normale NASA : risque en plus
         risk_score = int(max(0, min(100, risk_score + max(0.0, 1 - rainfall_60d / rainfall_normal) * 15)))
+    risk_model, risk_confidence = "rules", None
+    if is_live and _predict_risk is not None:
+        # Score de risque du modèle ML du Flux 2, nourri avec les mesures en direct.
+        try:
+            ml = _predict_risk({
+                "rainfall_anomaly": round((rainfall_60d - rainfall_normal) / rainfall_normal, 3) if rainfall_normal else 0.0,
+                "soil_moisture": soil_moisture,
+                "ndvi_trend": ndvi_trend,
+                "et": evapotranspiration,
+                "temp_anomaly": live.get("temp_anomaly", 0.0),
+                "solar_radiation": solar_radiation,
+            })
+            # L'irrigation ne change pas le climat mais réduit le risque pour la culture.
+            risk_score = int(max(0, min(100, int(ml["risk_score"]) - irrigation_mm / 12)))
+            risk_model = "ml"
+            risk_confidence = ml.get("confidence")
+        except Exception:
+            pass
     risk_level = _risk_level(risk_score)
 
     # Recommandation de semis
-    if risk_level == "high":
-        planting_reco, planting_reason = "switch_crop", T["reason_switch"]
-    elif window_kind == "season":
+    if window_kind == "season":
+        # Saison sèche : la vraie décision est d'attendre le retour des pluies.
         planting_reco = "wait"
         planting_reason = T["reason_season"].format(date=window_start.strftime("%d/%m/%Y"))
+    elif risk_level == "high":
+        planting_reco, planting_reason = "switch_crop", T["reason_switch"]
     elif window_kind == "forecast" and window_start > today + timedelta(days=2):
         rain3 = round(sum(x["rain_mm"] for x in live["forecast"] if window_start.isoformat() <= x["date"]
                           <= (window_start + timedelta(days=2)).isoformat()))
@@ -508,6 +532,9 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
         "data_sources": live.get("sources") or [],
         "estimated": estimated,
         "live": is_live,
+        "data_mode": "real" if is_live else "mock",
+        "risk_model": risk_model,
+        "risk_confidence": risk_confidence if risk_model == "ml" else None,
         "fetched_at": live.get("fetched_at"),
         "live_errors": live.get("errors") or {},
         "_mock": not is_live,
