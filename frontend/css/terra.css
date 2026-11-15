@@ -348,7 +348,7 @@ details.adv[open] summary iconify-icon { transform: rotate(180deg); }
 /* Mes messages à DROITE (convention de chat), mais le texte retourne à la ligne —
    même un mot très long — pour qu'un message ne déborde jamais / ne soit jamais coupé. */
 .bubble { max-width: 88%; min-width: 0; overflow-wrap: anywhere; word-break: break-word; padding: 12px 15px; border-radius: 18px; font-size: .98rem; line-height: 1.45; }
-.bubble.me { justify-self: end; background: var(--forest-600); color: #fff; border-bottom-right-radius: 6px; }
+.bubble.me { justify-self: end; margin-right: 22px; background: var(--forest-600); color: #fff; border-bottom-right-radius: 6px; }
 .bubble.ai { justify-self: start; background: #fff; border: 1px solid var(--sand-200); border-bottom-left-radius: 6px; }
 .bubble.ai .src { display: block; margin-top: 8px; font-size: .8rem; color: var(--ink-3); }
 .bubble.typing { color: var(--ink-3); }
