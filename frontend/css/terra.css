@@ -944,3 +944,7 @@ body[data-page="analyse"] .an-globe .maplibregl-ctrl-top-right { top: 0; }
   body[data-page="analyse"] .an-panel > .view { width: 100%; max-width: 700px; }
   body[data-page="analyse"] .an-globe { flex: 1; border-radius: 22px; }
 }
+
+/* Couche NASA ancienne (ex. moyenne mensuelle d'il y a plusieurs mois) : avertissement visible */
+.legend.is-stale .lg-date { color: #8A2E00; font-weight: 600; }
+.legend.is-stale { box-shadow: inset 0 0 0 1.5px #E8A04A; }

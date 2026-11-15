@@ -242,7 +242,7 @@
              ramp: ["#00764E", "#1EB200", "#EFED00", "#FF532A", "#BB0000"] },
     wind:  { icon: "lucide:wind", id: "MERRA2_Surface_Wind_Speed_Monthly", tms: "GoogleMapsCompatible_Level6", z: 6, period: "month", src: "NASA MERRA-2",
              ramp: ["#5E4FA2", "#8FD2A4", "#EBF79F", "#FEE492", "#F89053", "#9E0142"] },
-    temp:  { icon: "lucide:thermometer", id: "MERRA2_2m_Air_Temperature_Monthly", tms: "GoogleMapsCompatible_Level6", z: 6, period: "month", src: "NASA MERRA-2",
+    temp:  { icon: "lucide:thermometer", id: "AIRS_L2_Surface_Air_Temperature_Day", tms: "GoogleMapsCompatible_Level6", z: 6, period: "day", src: "NASA AIRS",
              ramp: ["#5E4FA2", "#8ED1A4", "#EBF7A0", "#FEE28F", "#F88A50", "#9E0142"] },
     solar: { icon: "lucide:sun", id: "MERRA2_Incident_Shortwave_Over_Land_Monthly", tms: "GoogleMapsCompatible_Level6", z: 6, period: "month", src: "NASA MERRA-2",
              ramp: ["#5E4FA2", "#8DD1A4", "#EAF69F", "#FEE594", "#F99254", "#9E0142"] },
@@ -388,11 +388,20 @@
     $("lg-min").textContent = lg[0]; $("lg-max").textContent = lg[1];
     $("lg-ramp").style.background = `linear-gradient(90deg, ${L.ramp.join(",")})`;
     $("lg-date").textContent = L.src;
+    box.classList.remove("is-stale");
     if (state.lat == null) return;
     const d = await layerDate(k);
     if (d && state.layer === k) {
       const txt = L.period === "month" ? T("lg.month", { d: Terra.fmtDate(d, { month: "long", year: "numeric" }) }) : T("lg.date", { d: Terra.fmtDate(d, { day: "numeric", month: "long", year: "numeric" }) });
-      $("lg-date").textContent = `${L.src} · ${txt}`;
+      // Carte NASA ancienne (> ~5 semaines) : on le dit clairement pour ne pas
+      // laisser croire que c'est la météo du jour (ex. moyenne mensuelle d'il y a 3 mois).
+      const ageDays = Math.round((Date.now() - new Date(d + "T00:00:00Z")) / 864e5);
+      if (ageDays > 35) {
+        box.classList.add("is-stale");
+        $("lg-date").textContent = `⚠ ${L.src} · ${T("lg.stale", { d: Terra.fmtDate(d, { month: "long", year: "numeric" }) })}`;
+      } else {
+        $("lg-date").textContent = `${L.src} · ${txt}`;
+      }
     }
   }
 
