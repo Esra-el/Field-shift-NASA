@@ -132,12 +132,22 @@ async def copilot(payload: dict) -> JSONResponse:
     """Copilote IA (Gemini). Entrée : {question, context, lang}."""
     payload = payload or {}
     fn = engine.copilot_answer if engine is not None else mock_engine.copilot_answer
-    return JSONResponse(await run_in_threadpool(
+    result = await run_in_threadpool(
         fn,
         question=str(payload.get("question", "")),
         context=payload.get("context"),
         lang=str(payload.get("lang", "fr")),
-    ))
+    )
+    # Diagnostic temporaire : {"debug": true} renvoie l'état du copilote de LA MÊME
+    # instance qui vient de répondre (le /health peut tomber sur une autre instance
+    # serverless). Ne révèle jamais la clé. À retirer après mise au point.
+    if payload.get("debug"):
+        try:
+            from app import copilot as _cp
+            result = {**result, "_diag": _cp.status()}
+        except Exception as exc:
+            result = {**result, "_diag": {"error": type(exc).__name__}}
+    return JSONResponse(result)
 
 
 @app.get("/", include_in_schema=False)
