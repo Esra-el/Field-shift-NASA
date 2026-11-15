@@ -31,6 +31,7 @@
         crop: p.crop, soil_type: p.soil_type,
         irrigation: !!p.irrigation, irrigation_level: p.irrigation_level || (p.irrigation ? "available" : "none"),
         priority: p.priority,
+        current_rotation: p.current_rotation || "",
       };
     },
   };

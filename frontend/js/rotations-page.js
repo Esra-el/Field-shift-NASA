@@ -7,19 +7,19 @@
       "r.prio": "Ma priorité :", "r.p.save_water": "Économiser l'eau", "r.p.max_yield": "Récolter plus", "r.p.protect_soil": "Protéger le sol",
       "r.p.balanced": "Équilibre", "r.p.food_security": "Nourrir la famille",
       "r.best": "Conseillée pour vous", "r.water": "Eau économisée", "r.soil": "Santé du sol", "r.yield": "Rendement", "r.risk": "Risque",
-      "r.steps": "Ce qu'il faut faire", "r.compare": "Comparer les trois plans", "r.plan": "Plan", "r.updating": "Mise à jour…",
+      "r.steps": "Ce qu'il faut faire", "r.compare": "Comparer les plans et votre rotation actuelle", "r.plan": "Plan", "r.updating": "Mise à jour…",
     },
     en: {
       "r.prio": "My priority:", "r.p.save_water": "Save water", "r.p.max_yield": "Harvest more", "r.p.protect_soil": "Protect the soil",
       "r.p.balanced": "Balance", "r.p.food_security": "Feed the family",
       "r.best": "Recommended for you", "r.water": "Water saved", "r.soil": "Soil health", "r.yield": "Yield", "r.risk": "Risk",
-      "r.steps": "What to do", "r.compare": "Compare the three plans", "r.plan": "Plan", "r.updating": "Updating…",
+      "r.steps": "What to do", "r.compare": "Compare the plans and your current rotation", "r.plan": "Plan", "r.updating": "Updating…",
     },
     it: {
       "r.prio": "La mia priorità:", "r.p.save_water": "Risparmiare acqua", "r.p.max_yield": "Raccogliere di più", "r.p.protect_soil": "Proteggere il suolo",
       "r.p.balanced": "Equilibrio", "r.p.food_security": "Nutrire la famiglia",
       "r.best": "Consigliato per te", "r.water": "Acqua risparmiata", "r.soil": "Salute del suolo", "r.yield": "Resa", "r.risk": "Rischio",
-      "r.steps": "Cosa fare", "r.compare": "Confronta i tre piani", "r.plan": "Piano", "r.updating": "Aggiornamento…",
+      "r.steps": "Cosa fare", "r.compare": "Confronta i piani e la tua rotazione attuale", "r.plan": "Piano", "r.updating": "Aggiornamento…",
     },
   });
   const PRIOS = ["save_water", "max_yield", "protect_soil", "balanced", "food_security"];
@@ -65,6 +65,8 @@
           <div><dt>${T("r.yield")}</dt><dd>${dots(ro.yield_potential)}</dd></div>
         </dl>
         <p class="pg-muted">${ro.reason || ""}</p>
+        ${[["rot.evidence", ro.evidence], ["rot.gaps", ro.gaps], ["rot.review", ro.local_review]].filter(([, xs]) => xs && xs.length)
+          .map(([k, xs]) => `<div class="pg-steps"><span class="pg-kicker">${T(k)}</span><ul>${xs.map((x) => `<li>${x}</li>`).join("")}</ul></div>`).join("")}
         ${(ro.actions || []).length ? `<div class="pg-steps"><span class="pg-kicker">${T("r.steps")}</span><ol>${ro.actions.map((a) => `<li>${a}</li>`).join("")}</ol></div>` : ""}
       </article>`;
     }).join("");
@@ -76,7 +78,8 @@
         <tr><th>${T("r.soil")}</th>${rots.map((ro) => `<td>${dots(ro.soil_benefit)}</td>`).join("")}</tr>
         <tr><th>${T("r.yield")}</th>${rots.map((ro) => `<td>${dots(ro.yield_potential)}</td>`).join("")}</tr>
         <tr><th>${T("r.risk")}</th>${rots.map((ro) => `<td><span class="badge ${Terra.riskClass(ro.risk)}">${T("risk." + Terra.riskClass(ro.risk))}</span></td>`).join("")}</tr>
-      </tbody></table></div>`;
+      </tbody></table></div>
+      <p class="pg-muted" style="margin-top:12px">${T("rot.disclaimer")}</p>`;
   }
 
   FSPage.start(render);

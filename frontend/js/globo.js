@@ -15,6 +15,7 @@
       "f.crop_q": "Que cultivez-vous ?", "f.crop_ph": "Ex. : maïs, niébé, arachide, manioc…",
       "f.soil_q": "Comment est votre terre ?", "f.water_q": "Avez-vous de l'eau pour arroser ?",
       "f.have_q": "Ce dont vous disposez", "f.optional": "facultatif",
+      "f.cur_q": "Votre rotation actuelle", "f.cur_ph": "Ex. : maïs → maïs, ou maïs → haricot",
       "f.have_ph": "Ex. : un puits, 2 hectares, un réservoir, des animaux…",
       "f.need_loc": "Indiquez d'abord où se trouve votre parcelle.",
       "soil.unknown": "Je ne sais pas",
@@ -34,6 +35,7 @@
       "f.crop_q": "What do you grow?", "f.crop_ph": "E.g. maize, cowpea, groundnut, cassava…",
       "f.soil_q": "What is your soil like?", "f.water_q": "Do you have water to irrigate?",
       "f.have_q": "What you have", "f.optional": "optional",
+      "f.cur_q": "Your current rotation", "f.cur_ph": "E.g. maize → maize, or maize → beans",
       "f.have_ph": "E.g. a well, 2 hectares, a water tank, animals…",
       "f.need_loc": "First tell us where your field is.",
       "soil.unknown": "I don't know",
@@ -53,6 +55,7 @@
       "f.crop_q": "Cosa coltivi?", "f.crop_ph": "Es.: mais, fagiolo dall'occhio, arachidi, manioca…",
       "f.soil_q": "Com'è la tua terra?", "f.water_q": "Hai acqua per irrigare?",
       "f.have_q": "Cosa hai a disposizione", "f.optional": "facoltativo",
+      "f.cur_q": "La tua rotazione attuale", "f.cur_ph": "Es.: mais → mais, oppure mais → fagioli",
       "f.have_ph": "Es.: un pozzo, 2 ettari, una cisterna, animali…",
       "f.need_loc": "Indica prima dove si trova il tuo campo.",
       "soil.unknown": "Non lo so",
@@ -127,6 +130,7 @@
       if (IRR.some(([v]) => v === p.irrigation_level)) state.irr = p.irrigation_level;
       if (PRIOS.some(([v]) => v === p.priority)) state.prio = p.priority;
       if (p.resources) $("have").value = p.resources;
+      if (p.current_rotation) $("cur-rot").value = p.current_rotation;
     }
   }
 
@@ -203,6 +207,7 @@
         soil_type: state.soil === "unknown" ? "sandy_loam" : state.soil, soil_choice: state.soil,
         irrigation: state.irr !== "none", irrigation_level: state.irr, priority: state.prio,
         resources: $("have").value.trim(),
+        current_rotation: $("cur-rot").value.trim(),
       };
       FSStore.setField({ latitude: state.lat, longitude: state.lng });
       FSStore.setProfile(profile);
@@ -768,6 +773,13 @@
   $("r-seg-mod").setAttribute("d", arc(41.5, 68.5));
   $("r-seg-high").setAttribute("d", arc(71.5, 98.5));
 
+  /* Preuves / lacunes / vérifications locales d'une rotation (demandées par le challenge). */
+  function rotList(key, icon, items) {
+    if (!items || !items.length) return "";
+    return `<div class="rot-more"><span class="eyebrow"><iconify-icon icon="${icon}" width="14" height="14"></iconify-icon>${T(key)}</span>
+      <ul>${items.map((x) => `<li>${x}</li>`).join("")}</ul></div>`;
+  }
+
   function renderRotations() {
     const rots = state.reco.rotations || [];
     const LV = { high: "lvl.high", medium: "lvl.medium", low: "lvl.low" };
@@ -785,6 +797,9 @@
           <div><small>${T("rot.yield")}</small>${meter(ro.yield_potential)}<b>${T(LV[ro.yield_potential])}</b></div>
         </div>
         <p class="why">${ro.reason}</p>
+        ${rotList("rot.evidence", "lucide:database", ro.evidence)}
+        ${rotList("rot.gaps", "lucide:circle-help", ro.gaps)}
+        ${rotList("rot.review", "lucide:user-check", ro.local_review)}
         <div class="rot-steps"><span class="eyebrow">${T("rot.steps")}</span>
           <ol>${(ro.actions || []).map((a) => `<li>${a}</li>`).join("")}</ol>
         </div>

@@ -950,3 +950,10 @@ body[data-page="analyse"] .an-globe .maplibregl-ctrl-top-right { top: 0; }
 /* Couche NASA ancienne (ex. moyenne mensuelle d'il y a plusieurs mois) : avertissement visible */
 .legend.is-stale .lg-date { color: #8A2E00; font-weight: 600; }
 .legend.is-stale { box-shadow: inset 0 0 0 1.5px #E8A04A; }
+
+/* Rotations : preuves, lacunes, vérifications locales + avertissement */
+.rot-more { margin-top: 12px; }
+.rot-more .eyebrow { display: inline-flex; align-items: center; gap: 6px; }
+.rot-more ul { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: .9rem; line-height: 1.45; }
+.rot-disclaimer { display: flex; gap: 8px; align-items: flex-start; margin-top: 14px; font-size: .85rem; line-height: 1.45; opacity: .85; }
+.rot-disclaimer iconify-icon { flex: none; margin-top: 2px; }

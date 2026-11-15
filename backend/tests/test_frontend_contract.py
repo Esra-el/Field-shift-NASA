@@ -61,10 +61,10 @@ def test_recommendation_matches_frontend_contract(lang):
     assert WINDOW_RE.search(pt["best_window"]), "best_window illisible pour parseWindow()"
     assert isinstance(pt["reason"], str) and pt["reason"]
 
-    # --- rotations (plan.js, cooperativa.js) : 3 plans typés
+    # --- rotations (plan.js, cooperativa.js) : 3 plans typés + la rotation actuelle
     rots = d["rotations"]
-    assert len(rots) == 3
-    assert {r["type"] for r in rots} == {"safest", "balanced", "highest_yield"}
+    assert len(rots) == 4
+    assert {r["type"] for r in rots} == {"safest", "balanced", "highest_yield", "current"}
     for rr in rots:
         assert rr["risk"] in LEVELS
         assert rr["name"] and rr["reason"]

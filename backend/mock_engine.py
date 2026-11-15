@@ -132,6 +132,90 @@ TXT = {
 }
 
 
+# Pour chaque rotation : les données qui la justifient, ce qu'on ne sait pas, et ce qu'un
+# agriculteur ou un technicien local doit vérifier (demande explicite du challenge).
+RX = {
+    "fr": {
+        "ev_rain": "Pluie des 60 derniers jours : {r} mm contre {n} mm normalement ({pct} %) — {src}.",
+        "ev_budget": "Eau : la culture actuelle demande {need} mm, environ {avail} mm seront disponibles.",
+        "ev_et": "Évaporation : le sol perd environ {et} mm d'eau par jour (FAO-56).",
+        "ev_soil": "Humidité du sol : {sm} m³/m³ en surface{root}.",
+        "ev_root": ", zone des racines NASA {r} %",
+        "ev_ndvi": "Végétation (NASA MODIS) : tendance {t} sur 2 mois.",
+        "ev_fc": "Prévision : {mm} mm de pluie sur les 16 prochains jours.",
+        "ev_frost": "Risque de gel : jusqu'à {t} °C prévu dans les 16 prochains jours.",
+        "ev_legume": "Les légumineuses fixent l'azote de l'air : moins d'engrais pour la céréale suivante.",
+        "ev_cover": "Une couverture entre deux saisons limite l'érosion et l'évaporation et ajoute de la matière organique.",
+        "ev_mono": "La même culture chaque saison ne coupe pas le cycle des ravageurs et des maladies.",
+        "gap_soil": "Votre sol n'est pas mesuré : le type de sol vient de votre réponse.",
+        "gap_market": "Les prix et les débouchés locaux ne sont pas analysés.",
+        "gap_slope": "La pente et le risque d'érosion de votre parcelle ne sont pas analysés.",
+        "gap_yield": "Les rendements ne sont pas calibrés pour votre région.",
+        "gap_history": "Nous ne connaissons pas l'historique de ravageurs et de maladies de votre parcelle.",
+        "rv_variety": "Choisir des variétés adaptées à votre zone avec un technicien local.",
+        "rv_market": "Vérifier qu'il y a un marché pour le haricot et le sorgho près de chez vous.",
+        "rv_legume": "Choisir la légumineuse selon les maladies locales et la demande du marché.",
+        "rv_water": "Vérifier l'eau réellement disponible (puits, pompe) avant de semer.",
+        "rv_pests": "Faire le point sur les ravageurs et maladies observés les saisons passées.",
+        "cur_name": "{rot} (votre rotation actuelle)",
+        "cur_reason": "Votre rotation actuelle, évaluée avec les mêmes données que les autres options pour pouvoir comparer.",
+        "cur_actions": ["Comparez son besoin en eau avec les autres plans avant de décider.", "Si vous la gardez, couvrez le sol entre deux saisons.", "Ajoutez une légumineuse une saison sur deux pour nourrir le sol."],
+    },
+    "en": {
+        "ev_rain": "Rain over the last 60 days: {r} mm vs {n} mm normally ({pct}%) — {src}.",
+        "ev_budget": "Water: the current crop needs {need} mm, about {avail} mm will be available.",
+        "ev_et": "Evaporation: the soil loses about {et} mm of water per day (FAO-56).",
+        "ev_soil": "Soil moisture: {sm} m³/m³ near the surface{root}.",
+        "ev_root": ", NASA root zone {r}%",
+        "ev_ndvi": "Vegetation (NASA MODIS): {t} trend over 2 months.",
+        "ev_fc": "Forecast: {mm} mm of rain over the next 16 days.",
+        "ev_frost": "Frost risk: down to {t} °C forecast in the next 16 days.",
+        "ev_legume": "Legumes fix nitrogen from the air: less fertiliser for the next cereal.",
+        "ev_cover": "A cover crop between seasons limits erosion and evaporation and adds organic matter.",
+        "ev_mono": "Growing the same crop every season does not break pest and disease cycles.",
+        "gap_soil": "Your soil is not measured: the soil type comes from your answer.",
+        "gap_market": "Local prices and markets are not analysed.",
+        "gap_slope": "Your field's slope and erosion risk are not analysed.",
+        "gap_yield": "Yields are not calibrated for your region.",
+        "gap_history": "We don't know your field's pest and disease history.",
+        "rv_variety": "Pick varieties suited to your area with a local extension officer.",
+        "rv_market": "Check there is a market for beans and sorghum near you.",
+        "rv_legume": "Choose the legume based on local diseases and market demand.",
+        "rv_water": "Check the water you really have (well, pump) before planting.",
+        "rv_pests": "Review the pests and diseases seen in past seasons.",
+        "cur_name": "{rot} (your current rotation)",
+        "cur_reason": "Your current rotation, assessed with the same data as the other options so you can compare.",
+        "cur_actions": ["Compare its water need with the other plans before deciding.", "If you keep it, cover the soil between seasons.", "Add a legume every other season to feed the soil."],
+    },
+    "it": {
+        "ev_rain": "Pioggia degli ultimi 60 giorni: {r} mm contro {n} mm di norma ({pct}%) — {src}.",
+        "ev_budget": "Acqua: la coltura attuale chiede {need} mm, ne saranno disponibili circa {avail} mm.",
+        "ev_et": "Evaporazione: il suolo perde circa {et} mm d'acqua al giorno (FAO-56).",
+        "ev_soil": "Umidità del suolo: {sm} m³/m³ in superficie{root}.",
+        "ev_root": ", zona delle radici NASA {r}%",
+        "ev_ndvi": "Vegetazione (NASA MODIS): tendenza {t} su 2 mesi.",
+        "ev_fc": "Previsione: {mm} mm di pioggia nei prossimi 16 giorni.",
+        "ev_frost": "Rischio gelo: fino a {t} °C previsti nei prossimi 16 giorni.",
+        "ev_legume": "I legumi fissano l'azoto dell'aria: meno concime per il cereale successivo.",
+        "ev_cover": "Una copertura tra due stagioni limita erosione ed evaporazione e aggiunge sostanza organica.",
+        "ev_mono": "La stessa coltura ogni stagione non interrompe il ciclo di parassiti e malattie.",
+        "gap_soil": "Il tuo suolo non è misurato: il tipo di suolo viene dalla tua risposta.",
+        "gap_market": "Prezzi e mercati locali non sono analizzati.",
+        "gap_slope": "Pendenza e rischio di erosione del campo non sono analizzati.",
+        "gap_yield": "Le rese non sono calibrate per la tua regione.",
+        "gap_history": "Non conosciamo la storia di parassiti e malattie del tuo campo.",
+        "rv_variety": "Scegliere varietà adatte alla tua zona con un tecnico locale.",
+        "rv_market": "Verificare che ci sia un mercato per fagioli e sorgo vicino a te.",
+        "rv_legume": "Scegliere il legume in base alle malattie locali e alla domanda del mercato.",
+        "rv_water": "Verificare l'acqua realmente disponibile (pozzo, pompa) prima di seminare.",
+        "rv_pests": "Fare il punto su parassiti e malattie visti nelle stagioni passate.",
+        "cur_name": "{rot} (la tua rotazione attuale)",
+        "cur_reason": "La tua rotazione attuale, valutata con gli stessi dati delle altre opzioni per poterle confrontare.",
+        "cur_actions": ["Confronta il suo fabbisogno d'acqua con gli altri piani prima di decidere.", "Se la tieni, copri il suolo tra due stagioni.", "Aggiungi un legume una stagione su due per nutrire il suolo."],
+    },
+}
+
+
 def _L(lang: str) -> str:
     return lang if lang in TXT and lang != "es" else "fr"
 
@@ -381,6 +465,53 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
         rotations.sort(key=lambda r: ({"high": 0, "medium": 1, "low": 2}[r["soil_benefit"]], r["type"] != "safest"))
     elif priority == "food_security":
         rotations.sort(key=lambda r: {"balanced": 0, "safest": 1, "highest_yield": 2}[r["type"]])
+
+    # Preuves, lacunes et vérifications locales pour chaque rotation + la rotation actuelle.
+    X = RX.get(lang, RX["fr"])
+    tmins = [x["tmin_c"] for x in live.get("forecast") or [] if x.get("tmin_c") is not None]
+    root = live.get("root_zone_wetness")
+    ev = {
+        "rain": None if "rainfall_60d_mm" in estimated else X["ev_rain"].format(
+            r=rainfall_60d, n=rainfall_normal, pct=round(100 * rainfall_60d / rainfall_normal) if rainfall_normal else "—",
+            src=live.get("normal_source") or "NASA POWER"),
+        "budget": X["ev_budget"].format(need=crop_water_need, avail=available_water),
+        "et": X["ev_et"].format(et=evapotranspiration),
+        "soil": X["ev_soil"].format(sm=soil_moisture, root=X["ev_root"].format(r=round(root * 100)) if root is not None else ""),
+        "ndvi": None if "ndvi_trend" in estimated else X["ev_ndvi"].format(t=f"{ndvi_trend:+}"),
+        "fc": X["ev_fc"].format(mm=live["forecast_rain_16d_mm"]) if live.get("forecast_rain_16d_mm") is not None else None,
+        "frost": X["ev_frost"].format(t=round(min(tmins))) if tmins and min(tmins) <= 2 else None,
+    }
+
+    def pick_ev(*keys):
+        out = []
+        for k in keys:
+            v = ev.get(k) if k in ev else X[k]
+            if v:
+                out.append(v)
+        return out
+
+    current_txt = str(payload.get("current_rotation") or "").strip()[:80]
+    # Monoculture : rien saisi (on suppose la culture choisie chaque saison) ou une seule culture répétée.
+    parts = {x.strip().lower() for x in current_txt.replace("->", "→").replace(",", "→").split("→") if x.strip()}
+    mono = len(parts) <= 1
+    detail = {
+        "safest": (pick_ev("rain", "budget", "et", "ev_cover", "frost"), [X["gap_yield"], X["gap_market"], X["gap_soil"]], [X["rv_variety"], X["rv_market"]]),
+        "balanced": (pick_ev("soil", "ndvi", "ev_legume", "ev_cover"), [X["gap_soil"], X["gap_slope"], X["gap_market"]], [X["rv_legume"], X["rv_variety"]]),
+        "highest_yield": (pick_ev("budget", "fc", "rain", "frost"), [X["gap_yield"], X["gap_history"]], [X["rv_water"], X["rv_variety"]]),
+        "current": (pick_ev("budget", "rain", *(["ev_mono"] if mono else []), "frost"), [X["gap_history"], X["gap_soil"]], [X["rv_pests"], X["rv_water"]]),
+    }
+    crop_name = str(CROP_LABEL[lang].get(crop, crop))
+    low_txt = current_txt.lower()
+    rotations.append({
+        "type": "current",
+        "name": X["cur_name"].format(rot=current_txt or f"{crop_name.capitalize()} → {crop_name.capitalize()}"),
+        "water_saving": "low", "water_saving_pct": 0,
+        "soil_benefit": "medium" if any(w in low_txt for w in ("hari", "bean", "fagiol", "légum", "legum", "niébé", "niebe", "soja", "pois", "cece", "lentil")) else "low",
+        "yield_potential": "medium", "risk": risk_level, "reason": X["cur_reason"], "actions": X["cur_actions"], "is_current": True,
+    })
+    for r in rotations:
+        _ev, _gaps, _rv = detail[r["type"]]
+        r["evidence"], r["gaps"], r["local_review"] = _ev, _gaps, _rv
 
     # Explication IA
     ai_explanation = T["ai"].format(

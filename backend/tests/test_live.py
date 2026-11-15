@@ -118,3 +118,12 @@ def test_rain_falls_back_to_power_pair_without_era5():
 def test_grid_endpoint_rejects_bad_coords():
     assert client.post("/api/grid", json={"latitude": "x"}).status_code == 422
     assert client.post("/api/grid", json={"latitude": 95, "longitude": 0}).status_code == 422
+
+
+def test_rotations_include_current_and_evidence(live_on):
+    r = client.post("/api/recommendation", json={"latitude": 14.8, "longitude": -90.5, "crop": "maize",
+                                                  "lang": "fr", "current_rotation": "maïs → maïs"}).json()
+    rots = r["rotations"]
+    assert len(rots) == 4 and rots[-1]["type"] == "current" and "maïs → maïs" in rots[-1]["name"]
+    for ro in rots:
+        assert ro["evidence"] and ro["gaps"] and ro["local_review"]
