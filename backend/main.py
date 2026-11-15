@@ -73,8 +73,17 @@ _REAL_KEYS = ("risk_score", "risk_level", "water_budget", "planting_timeline",
 
 
 @app.get("/api/health")
-def health() -> dict[str, str]:
-    return {"status": "ok", "service": "field-shift", "mode": "live+ml" if engine else "live"}
+def health() -> dict:
+    info = {"status": "ok", "service": "field-shift", "mode": "live+ml" if engine else "live"}
+    # Non-secret copilot diagnostics (model, whether a key is set and LOOKS valid,
+    # last failure reason) so the live Gemini copilot can be checked from the
+    # browser without server logs. Never exposes the API key.
+    try:
+        from app import copilot
+        info["copilot"] = copilot.status()
+    except Exception as exc:  # pragma: no cover - never let health hard-fail
+        info["copilot"] = {"available": False, "error": type(exc).__name__}
+    return info
 
 
 @app.post("/api/recommendation")

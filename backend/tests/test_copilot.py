@@ -267,6 +267,85 @@ def test_detect_lang_unit():
     assert copilot._detect_lang("", "es") == "es"                           # empty -> default
 
 
+def test_detect_lang_respects_french_and_italian_ui():
+    # A French question that merely SHARES a word with Spanish ("que") must stay
+    # French — this is the regression that answered French users in Spanish.
+    assert copilot._detect_lang("Que dois-je faire aujourd'hui ?", "fr") == "fr"
+    assert copilot._detect_lang("Que penser de la pluie ?", "fr") == "fr"
+    assert copilot._detect_lang("Quando devo seminare il mais ?", "it") == "it"
+    # ...but a CLEARLY Spanish or English question still overrides the FR/IT UI.
+    assert copilot._detect_lang("¿Cuándo debo sembrar?", "fr") == "es"      # Spanish-only ¿
+    assert copilot._detect_lang("cuando debo sembrar maiz", "fr") == "es"   # strong margin
+    assert copilot._detect_lang("When should I plant maize?", "it") == "en"
+
+
+def test_answer_keeps_french_ui_for_a_shared_word(monkeypatch):
+    # "Que dois-je faire ?" shares "que" with Spanish; the reply must be French.
+    fake = _FakeClient(reply="ok")
+    _with_fake(monkeypatch, fake)
+    copilot.answer("Que dois-je faire ?", REC, FIELD, lang="fr")
+    assert "reply in French" in _system_of(fake.calls[0])
+
+
+def test_answer_flips_french_ui_to_spanish_on_strong_signal(monkeypatch):
+    fake = _FakeClient(reply="ok")
+    _with_fake(monkeypatch, fake)
+    copilot.answer("¿Cuándo debo sembrar el maíz?", REC, FIELD, lang="fr")
+    assert "reply in Spanish" in _system_of(fake.calls[0])
+
+
+# --------------------------------------------------------------------------- #
+# Fallback is genuinely multilingual — a French/Italian UI never degrades to
+# Spanish text when the live call is unavailable.
+# --------------------------------------------------------------------------- #
+def test_fallback_explain_speaks_french_and_italian(monkeypatch):
+    _no_keys(monkeypatch)
+    fr = copilot.explain(REC, FIELD, lang="fr")
+    it = copilot.explain(REC, FIELD, lang="it")
+    assert "sécheresse" in fr.lower()        # French, not Spanish
+    assert "riesgo" not in fr.lower()
+    assert "siccità" in it.lower()           # Italian, not Spanish
+    assert "NASA POWER" in fr and "NASA POWER" in it
+
+
+def test_fallback_answer_with_key_present_has_no_key_hint(monkeypatch):
+    # Key IS set but the live call fails -> clean rule-based answer, and it must
+    # NOT tell the user to configure a key they already configured.
+    fake = _FakeClient(raise_exc=True)
+    _with_fake(monkeypatch, fake)
+    out = copilot.answer("Que dois-je faire ?", REC, FIELD, lang="fr")
+    assert isinstance(out, str) and out.strip()
+    assert "GEMINI_API_KEY" not in out
+    assert "sécheresse" in out.lower()       # answered in French
+
+
+def test_fallback_answer_no_key_hints_in_right_language(monkeypatch):
+    _no_keys(monkeypatch)
+    out = copilot.answer("Que dois-je faire ?", REC, FIELD, lang="fr")
+    assert "GEMINI_API_KEY" in out           # dev hint only when no key at all
+    assert "sécheresse" in out.lower()       # still French
+
+
+# --------------------------------------------------------------------------- #
+# Non-secret diagnostics for /health — must never leak the key.
+# --------------------------------------------------------------------------- #
+def test_status_reports_diagnostics_without_leaking_key(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "AIzaSyFAKEfakefakefakefakefakefake12345")
+    st = copilot.status()
+    assert st["has_key"] is True
+    assert st["key_format_ok"] is True       # starts with AIza
+    assert "gemini" in st["model"].lower()
+    # The key value itself must never appear anywhere in the status payload.
+    assert "AIzaSyFAKEfakefakefakefakefakefake12345" not in json.dumps(st)
+
+
+def test_status_flags_wrong_format_key(monkeypatch):
+    monkeypatch.setenv("GEMINI_API_KEY", "not-an-aistudio-key.abc-123")
+    st = copilot.status()
+    assert st["has_key"] is True
+    assert st["key_format_ok"] is False      # wrong credential type -> will 401
+
+
 def test_fallback_is_bilingual(monkeypatch):
     _no_keys(monkeypatch)
     es = copilot.explain(REC, FIELD, lang="es")

@@ -33,8 +33,14 @@ HOW IT WORKS
 from __future__ import annotations
 
 import json
+import logging
 import os
 import re
+
+_log = logging.getLogger("copilot")
+# Last copilot failure reason (NEVER the API key) — surfaced in logs and on
+# /health so a silent fallback in production is diagnosable. None after success.
+_LAST_ERROR = None
 
 # Free-tier Gemini model. gemini-3.1-flash-lite is fast (~3s) and reliable for
 # this simple rewording task; the heavier gemini-3.8/3.6-flash were overloaded
@@ -62,26 +68,44 @@ def _summary(recommendation: dict) -> tuple:
     return rl, rs, wb.get("explanation", ""), action
 
 
+# The frontend is trilingual FR/EN/IT, plus Spanish for the pilot region, so the
+# safety-net template must speak all four — otherwise a French or Italian user
+# gets a Spanish fallback whenever the live Gemini call fails.
+_FALLBACK_TEMPLATES = {
+    "en": "Your field shows {rl} drought risk ({rs}/100). {wb} "
+          "Recommendation: {ac}. (Data: NASA POWER, GPM IMERG, SMAP, MODIS NDVI.)",
+    "es": "Su parcela muestra un riesgo de sequía {rl} ({rs}/100). {wb} "
+          "Recomendación: {ac}. (Datos: NASA POWER, GPM IMERG, SMAP, MODIS NDVI.)",
+    "fr": "Votre parcelle présente un risque de sécheresse {rl} ({rs}/100). {wb} "
+          "Recommandation : {ac}. (Données : NASA POWER, GPM IMERG, SMAP, MODIS NDVI.)",
+    "it": "Il tuo campo presenta un rischio di siccità {rl} ({rs}/100). {wb} "
+          "Raccomandazione: {ac}. (Dati: NASA POWER, GPM IMERG, SMAP, MODIS NDVI.)",
+}
+
+# Developer hint appended ONLY when no key is configured at all. When a key IS
+# set but the call fails, we show the clean rule-based answer with no developer
+# noise — telling a user to "configure GEMINI_API_KEY" they already set is wrong
+# and confusing; the real reason is logged instead (see _call_model).
+_NO_KEY_HINT = {
+    "en": " [Set GEMINI_API_KEY for full AI answers.]",
+    "es": " [Configure GEMINI_API_KEY para respuestas de IA completas.]",
+    "fr": " [Configurez GEMINI_API_KEY pour des réponses IA complètes.]",
+    "it": " [Imposta GEMINI_API_KEY per risposte IA complete.]",
+}
+
+
 def _fallback_explain(recommendation: dict, field: dict, lang: str = "es") -> str:
     rl, rs, wb_expl, action = _summary(recommendation)
-    if lang == "en":
-        return (
-            f"Your field shows {rl} drought risk ({rs}/100). {wb_expl} "
-            f"Recommendation: {action}. "
-            f"(Data: NASA POWER, GPM IMERG, SMAP, MODIS NDVI.)"
-        )
-    return (
-        f"Su parcela muestra un riesgo de sequía {rl} ({rs}/100). {wb_expl} "
-        f"Recomendación: {action}. "
-        f"(Datos: NASA POWER, GPM IMERG, SMAP, MODIS NDVI.)"
-    )
+    template = _FALLBACK_TEMPLATES.get(lang, _FALLBACK_TEMPLATES["es"])
+    return template.format(rl=rl, rs=rs, wb=wb_expl, ac=action)
 
 
 def _fallback_answer(question: str, recommendation: dict, field: dict, lang: str = "es") -> str:
     base = _fallback_explain(recommendation, field, lang)
-    if lang == "en":
-        return base + " [Copilot fallback — set GEMINI_API_KEY for full answers.]"
-    return base + " [Copiloto básico — configure GEMINI_API_KEY para respuestas completas.]"
+    if _api_key():
+        # Key present but the live call failed — give the clean answer, no noise.
+        return base
+    return base + _NO_KEY_HINT.get(lang, _NO_KEY_HINT["es"])
 
 
 # --------------------------------------------------------------------------- #
@@ -91,31 +115,60 @@ def _fallback_answer(question: str, recommendation: dict, field: dict, lang: str
 # switch languages from an instruction when the DATA context is heavily Spanish,
 # so we decide the reply language in Python and hand the model a single, hard
 # directive ("Write your entire reply in English/Spanish") — which it DOES follow.
-_ES_CHARS = set("ñ¿¡áéíóúü")
+# We only ever AUTO-detect Spanish vs English from the question text. French and
+# Italian are taken from the app toggle (the `default`) and overridden ONLY on
+# strong, distinctive evidence — never on a word Spanish merely shares with
+# French/Italian ("que", "de", "la", "y"), which used to flip a French UI to
+# Spanish (e.g. "Que dois-je faire ?" -> answered in Spanish).
+
+# Characters ONLY Spanish uses (French/Italian never do): inverted marks + ñ.
+# Plain accents (á é í ó ú ü) are shared with FR/IT, so they are NOT decisive.
+_ES_ONLY_CHARS = set("ñ¿¡")
+
+# Distinctive content words, deliberately chosen NOT to collide with French or
+# Italian — so they are safe evidence even against a French/Italian UI.
 _ES_WORDS = {
-    "que", "qué", "cuando", "cuándo", "cuanta", "cuánta", "cuanto", "cuánto",
-    "como", "cómo", "por", "para", "debo", "puedo", "siembro", "sembrar",
-    "lluvia", "agua", "suelo", "maíz", "maiz", "cosecha", "riesgo", "sequía",
-    "sequia", "mi", "el", "la", "los", "las", "de", "y", "no", "sí",
+    "qué", "cuándo", "cuando", "cuánta", "cuanta", "cuánto", "cuanto",
+    "cómo", "debo", "puedo", "siembro", "sembrar", "siembra", "lluvia",
+    "suelo", "maíz", "maiz", "cosecha", "riesgo", "sequía", "sequia",
+    "agua", "tierra", "necesito", "regar", "parcela",
 }
 _EN_WORDS = {
-    "when", "should", "plant", "why", "how", "what", "the", "is", "are", "my",
-    "rain", "water", "soil", "i", "to", "do", "can", "maize", "corn", "harvest",
-    "risk", "drought", "wait", "and", "of", "will",
+    "when", "should", "plant", "why", "how", "what", "the", "is", "are",
+    "my", "rain", "water", "soil", "do", "can", "maize", "corn", "harvest",
+    "risk", "drought", "wait", "will", "need", "i",
 }
 
 
 def _detect_lang(text: str, default: str) -> str:
-    """Return 'es' or 'en' for the farmer's question; fall back to `default`."""
+    """Pick 'es'/'en' for the farmer's question, else keep `default`.
+
+    For a French/Italian UI we keep that language unless the question is
+    *clearly* Spanish or English — a Spanish-only character, or a solid
+    word-count margin — so a shared word like French "Que dois-je…" stays French.
+    """
     t = (text or "").lower()
-    if any(ch in _ES_CHARS for ch in t):
+    toks = set(re.findall(r"[a-zñáéíóúü]+", t))
+    es = len(toks & _ES_WORDS)
+    en = len(toks & _EN_WORDS)
+    es_strong = any(ch in _ES_ONLY_CHARS for ch in t)
+
+    if default in ("es", "en"):
+        # Spanish/English UI: light touch — any clear lean (or a Spanish-only
+        # character) sets the reply language.
+        if es_strong:
+            return "es"
+        if en > es:
+            return "en"
+        if es > en:
+            return "es"
+        return default
+
+    # French/Italian UI: override only on strong, unambiguous evidence.
+    if es_strong or es >= en + 2:
         return "es"
-    toks = set(re.findall(r"[a-záéíóúñ]+", t))
-    es, en = len(toks & _ES_WORDS), len(toks & _EN_WORDS)
-    if en > es:
+    if en >= es + 2:
         return "en"
-    if es > en:
-        return "es"
     return default
 
 
@@ -189,9 +242,12 @@ def _call_model(system: str, user: str) -> str | None:
     Never raises: a missing key, network/timeout error, blocked/safety response,
     or empty output all return None so the deterministic template takes over.
     """
+    global _LAST_ERROR
     api_key = _api_key()
     if not api_key:
+        _LAST_ERROR = "no_api_key"
         return None
+    reason = None
     # One quick retry: free-tier flash-lite 503/504s are usually transient.
     for attempt in range(2):
         try:
@@ -206,12 +262,22 @@ def _call_model(system: str, user: str) -> str | None:
                 },
             )
             # resp.text can RAISE when a response is blocked/has no usable part.
-            return (getattr(resp, "text", None) or "").strip() or None
-        except Exception:
-            # Transient error -> retry once; still failing -> caller falls back.
+            text = (getattr(resp, "text", None) or "").strip() or None
+            if text:
+                _LAST_ERROR = None
+                return text
+            reason = "empty_or_blocked_response"
+            break  # an empty/blocked response won't improve on retry
+        except Exception as e:  # must NEVER propagate — the demo can't hard-fail
+            reason = f"{type(e).__name__}: {str(e)[:300]}"
             if attempt == 0:
-                continue
-            return None
+                continue  # transient (503/504 etc.) — retry once
+            break
+    # Record WHY we fell back (for logs and /health), never leaking the key.
+    if reason and api_key and api_key in reason:
+        reason = reason.replace(api_key, "<redacted>")
+    _LAST_ERROR = reason
+    _log.warning("copilot: Gemini call failed (model=%s): %s", _MODEL, reason)
     return None
 
 
@@ -239,3 +305,21 @@ def answer(question: str, recommendation: dict, field: dict, lang: str = "es") -
     except Exception:
         pass
     return _fallback_answer(question, recommendation, field, eff_lang)
+
+
+def status() -> dict:
+    """Non-secret copilot diagnostics for /health. NEVER returns the key itself.
+
+    `key_format_ok` is a cheap sanity check: a Google AI Studio (Gemini Developer
+    API) key starts with 'AIza'. A key that is set but fails this check is almost
+    certainly the wrong credential type and the live call will 401 UNAUTHENTICATED
+    — which is exactly the failure that otherwise hides behind the fallback.
+    """
+    key = _api_key()
+    return {
+        "provider": "google-gemini",
+        "model": _MODEL,
+        "has_key": bool(key),
+        "key_format_ok": bool(key and key.startswith("AIza")),
+        "last_error": _LAST_ERROR,
+    }
