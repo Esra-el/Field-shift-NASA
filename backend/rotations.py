@@ -93,6 +93,9 @@ TX = {
         "legume": "{c} fixe l'azote de l'air : la culture suivante a besoin de moins d'engrais.",
         "cover": "{c} garde le sol couvert entre deux cultures : moins d'érosion et d'évaporation, plus de matière organique.",
         "mono": "La même culture chaque saison ne coupe pas le cycle des ravageurs et des maladies.",
+        "covered": "Le sol reste couvert presque toute l'année : une couverture prend le relais entre deux cultures.",
+        "bare": "Sol nu environ {n} jours entre les cultures : il s'érode et perd son eau pendant ce temps.",
+        "mulch": "Quand c'est trop sec ou trop froid pour une couverture, laissez les résidus de récolte en paillage.",
         "slope": "Pente de la parcelle : {p} % (NASA SRTM) — risque d'érosion {lvl}.",
         "lvl": {"low": "faible", "moderate": "modéré", "high": "élevé"},
         "safest": "Les cultures les plus sûres ici avec l'eau et les températures attendues, puis une couverture pour protéger le sol.",
@@ -116,6 +119,9 @@ TX = {
         "legume": "{c} fixes nitrogen from the air: the next crop needs less fertiliser.",
         "cover": "{c} keeps the soil covered between crops: less erosion and evaporation, more organic matter.",
         "mono": "Growing the same crop every season does not break pest and disease cycles.",
+        "covered": "The soil stays covered almost all year: a cover crop takes over between crops.",
+        "bare": "Bare soil for about {n} days between crops: it erodes and loses water meanwhile.",
+        "mulch": "When it is too dry or cold for a cover crop, leave crop residues on the soil as mulch.",
         "slope": "Field slope: {p}% (NASA SRTM) — {lvl} erosion risk.",
         "lvl": {"low": "low", "moderate": "moderate", "high": "high"},
         "safest": "The safest crops here for the expected water and temperatures, then a cover crop to protect the soil.",
@@ -139,6 +145,9 @@ TX = {
         "legume": "{c} fissa l'azoto dell'aria: la coltura successiva ha bisogno di meno concime.",
         "cover": "{c} tiene il suolo coperto tra due colture: meno erosione ed evaporazione, più sostanza organica.",
         "mono": "La stessa coltura ogni stagione non interrompe il ciclo di parassiti e malattie.",
+        "covered": "Il suolo resta coperto quasi tutto l'anno: una copertura prende il posto tra due colture.",
+        "bare": "Suolo nudo per circa {n} giorni tra le colture: intanto si erode e perde acqua.",
+        "mulch": "Quando è troppo secco o freddo per una copertura, lascia i residui del raccolto come pacciamatura.",
         "slope": "Pendenza del campo: {p}% (NASA SRTM) — rischio di erosione {lvl}.",
         "lvl": {"low": "basso", "moderate": "moderato", "high": "alto"},
         "safest": "Le colture più sicure qui con l'acqua e le temperature attese, poi una copertura per proteggere il suolo.",
@@ -248,13 +257,13 @@ def assess(site: Site, key: str, start: date, first: bool) -> dict[str, Any]:
                 avail=round(avail), need=c["need"], cov=cov, score=round(score, 3), issue=issue)
 
 
-def best_start(site: Site, key: str, earliest: date, first: bool, horizon_days: int = 210) -> dict[str, Any]:
+def best_start(site: Site, key: str, earliest: date, first: bool, horizon_days: int = 210, tol: float = 0.08) -> dict[str, Any]:
     """Meilleure date de semis entre `earliest` et ~7 mois plus tard (pas de 15 jours)."""
     cands = [assess(site, key, earliest + timedelta(days=k), first and k < 30) for k in range(0, horizon_days, 15)]
     top = max(c["score"] for c in cands)
     # La date la plus PROCHE qui est presque aussi bonne que la meilleure : on ne fait pas
     # attendre six mois l'agriculteur pour gagner quelques points.
-    return next(c for c in cands if c["score"] >= top - 0.08)
+    return next(c for c in cands if c["score"] >= top - tol)
 
 
 def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, current_txt: str, soil_moisture: float,
@@ -278,20 +287,40 @@ def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, curren
     def pick(keys, weight=lambda a: a["score"]):
         return max(keys, key=lambda k: weight(first[k]))
 
-    def chain(keys: list[str], keep_order: bool = False) -> list[dict[str, Any]]:
+    def cover_at(start: date) -> dict[str, Any]:
+        """La couverture qui pousse le mieux si on la sème à `start` (juste après une récolte)."""
+        return max((assess(site, k, start, False) for k in ("mucuna", "vetch_oats")), key=lambda a: a["score"])
+
+    def chain(keys: list[str], keep_order: bool = False, fill: bool = True) -> list[dict[str, Any]]:
         # Les cultures suivent l'ordre de LEUR meilleure saison (ex. la saison des pluies
         # pour le mil), sinon une culture semée hors saison bloquerait la bonne fenêtre.
         if not keep_order:
             keys = sorted(keys, key=lambda k: first[k]["start"])
         out, at = [], sow
         for i, k in enumerate(keys):
-            a = best_start(site, k, at, i == 0, horizon_days=365 if i else 210)
+            # Culture suivante : une date proche et correcte vaut mieux que la meilleure date
+            # dans un an (moins de sol nu), tant qu'elle reste bonne (score ≥ 0,6).
+            a = best_start(site, k, at, i == 0, horizon_days=365 if i else 210, tol=0.15 if i else 0.08)
+            # Périodes nues de plus de ~6 semaines avant la culture suivante : on les comble avec
+            # des couvertures semées juste après la récolte et détruites avant le semis suivant.
+            gap_at = at
+            while fill and out and (a["start"] - gap_at).days > 40:
+                c = cover_at(gap_at)
+                if c["score"] < 0.35:  # trop sec/froid pour qu'elle pousse : paillage (voir textes)
+                    break
+                c = dict(c, end=min(c["end"], a["start"] - timedelta(days=7)), filler=True)
+                out.append(c)
+                gap_at = c["end"] + timedelta(days=5)
             out.append(a)
             at = a["end"] + timedelta(days=10)
         return out
 
-    def cover_after(prev_end: date) -> str:
-        return max(("mucuna", "vetch_oats"), key=lambda k: best_start(site, k, prev_end + timedelta(days=10), False)["score"])
+    def bare_days(steps: list[dict[str, Any]]) -> int:
+        """Jours sans rien sur le sol entre la première et la dernière culture."""
+        tot = 0
+        for prev, nxt in zip(steps, steps[1:]):
+            tot += max(0, (nxt["start"] - prev["end"]).days)
+        return tot
 
     cereals = [k for k in CROPS if CROPS[k]["kind"] == "cereal"]
     food_dry = [k for k in FOOD]
@@ -313,14 +342,17 @@ def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, curren
     plans = []
     for typ, keys in (("safest", safest), ("balanced", balanced), ("highest_yield", highest)):
         steps = chain(keys)
-        cov_k = cover_after(steps[-1]["end"])
-        steps.append(best_start(site, cov_k, steps[-1]["end"] + timedelta(days=10), False))
+        if CROPS[steps[-1]["key"]]["kind"] != "cover":
+            end_cover = cover_at(steps[-1]["end"] + timedelta(days=7))
+            if end_cover["score"] >= 0.35:
+                steps.append(end_cover)
         plans.append((typ, steps))
 
     cur_keys = parse_rotation(current_txt) or [fkey, fkey]
     if len(cur_keys) == 1:
         cur_keys = cur_keys * 2
-    plans.append(("current", chain(cur_keys[:3], keep_order=True)))
+    # La rotation actuelle est évaluée telle quelle : on ne comble pas ses périodes nues.
+    plans.append(("current", chain(cur_keys[:3], keep_order=True, fill=False)))
 
     f_need = CROPS[fkey]["need"]
     out = []
@@ -333,7 +365,10 @@ def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, curren
         has_leg = any(s["key"] in NFIX for s in steps)
         has_cover = any(CROPS[s["key"]]["kind"] == "cover" for s in steps)
         mono = len({s["key"] for s in steps}) == 1
+        bare = bare_days(steps)
         soil = "high" if has_leg and has_cover else "medium" if has_leg or has_cover else "low"
+        if bare > 150 and soil == "high":
+            soil = "medium"
         if mono:
             soil = "low"
         if ero == "high" and not has_cover:
@@ -370,6 +405,9 @@ def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, curren
             evidence.append(X["cover"].format(c=N[covers[0]].capitalize()))
         if mono:
             evidence.append(X["mono"])
+        evidence.append(X["covered"] if bare <= 45 else X["bare"].format(n=bare))
+        if bare > 45 and typ != "current":
+            evidence.append(X["mulch"])
         if ero:
             evidence.append(X["slope"].format(p=slope, lvl=X["lvl"][ero]))
 
@@ -393,8 +431,8 @@ def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, curren
                           "score": s["score"], "water_need_mm": s["need"], "water_expected_mm": s["avail"]} for s in steps],
             "water_saving": "high" if saving >= 25 else "medium" if saving >= 10 else "low", "water_saving_pct": saving,
             "soil_benefit": soil, "yield_potential": yield_lvl, "risk": risk,
-            "fit_score": round(mean_score * 100),
-            "reason": X[typ], "actions": actions[:5], "evidence": evidence[:6],
+            "fit_score": round(mean_score * 100), "bare_days": bare,
+            "reason": X[typ], "actions": actions[:6], "evidence": evidence[:8],
             "is_current": typ == "current",
         })
     return out

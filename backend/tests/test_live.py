@@ -139,3 +139,16 @@ def test_ecostress_utm_roundtrip():
     lat, lon = ecostress.utm_to_latlon(e, n, 33)
     assert abs(lat - 41.9028) < 1e-5 and abs(lon - 12.4964) < 1e-5
     assert ecostress.jet_value((0, 0, 0)) is None and ecostress.jet_value(ecostress._jet(0.9)) > 0.85
+
+
+def test_rotations_fill_bare_periods_with_cover():
+    import rotations
+    from datetime import date
+    today = date(2026, 11, 15)
+    clim = {m: 4.0 for m in MONTHS}                 # pluie toute l'année
+    tn = {m: t for m, t in zip(MONTHS, [8, 9, 12, 15, 19, 23, 26, 26, 22, 17, 12, 9])}  # climat méditerranéen
+    live = {"clim_mm_day": clim, "temp_normal_monthly": tn, "forecast": [], "slope_pct": 2.0}
+    plans = rotations.build(live, today, today, "maize", "", 0.3, 1.0, 0, "fr", "moderate")
+    for p in plans[:3]:
+        assert p["bare_days"] <= 60, (p["name"], p["bare_days"])
+        assert any(c in ("mucuna", "vetch_oats") for c in p["crops"])
