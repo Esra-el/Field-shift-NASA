@@ -132,9 +132,14 @@ async def recommendation(payload: dict) -> JSONResponse:
             a_lon = float(payload.get("longitude", -90.5))
             ana = await run_in_threadpool(analog.analog, a_lat, a_lon)
             if ana.get("source") == "power_analog":
-                result["risk_score"] = ana["risk_score"]
-                result["risk_level"] = ana["risk_level"]
+                # The analog is shown as a labeled 20-year NASA insight — we do NOT
+                # override the final risk number (the water-budget engine computes it
+                # and the explanation text quotes it; overriding only the number made
+                # the dashboard contradict itself). Coherence first.
                 result["analog"] = ana          # percentile + drivers (20 ans NASA POWER)
+                head = analog.headline(ana, str(payload.get("lang", "fr")))
+                if head:  # visible at the top of #ai-explain, no front-end change needed
+                    result["ai_explanation"] = (head + " " + (result.get("ai_explanation") or "")).strip()
                 result["data_mode"] = "real"
                 result["_mock"] = False
         except Exception:

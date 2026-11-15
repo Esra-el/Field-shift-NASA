@@ -66,6 +66,15 @@ def test_normal_year_is_middle(monkeypatch):
     assert r["risk_level"] != "high"
 
 
+def test_headline_is_localized_and_cites_nasa(monkeypatch):
+    monkeypatch.setattr(analog.power_data, "fetch_power", lambda *a, **k: _synthetic_power(0.2))
+    r = analog.analog(14.8, -90.5, today=TODAY)
+    h_en, h_fr = analog.headline(r, "en"), analog.headline(r, "fr")
+    assert "NASA POWER" in h_en and "20" in h_en and "driest" in h_en.lower()
+    assert "NASA POWER" in h_fr and "secs" in h_fr.lower()
+    assert analog.headline({"source": "unavailable"}, "en") == ""
+
+
 def test_unavailable_on_empty_power(monkeypatch):
     monkeypatch.setattr(analog.power_data, "fetch_power", lambda *a, **k: {"properties": {"parameter": {}}})
     assert analog.analog(0.0, 0.0, today=TODAY) == {"source": "unavailable"}
