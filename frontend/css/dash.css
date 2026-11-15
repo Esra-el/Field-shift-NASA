@@ -20,8 +20,9 @@ body.dash .fab { display: none; }  /* l'assistant passe par la barre « Comment 
 
 /* ---------- Barre latérale ---------- */
 .d-side { display: flex; flex-direction: column; gap: 22px; padding: 26px 14px 18px; background: var(--sage); min-height: 0; }
-.d-logo { display: flex; align-items: center; gap: 9px; padding: 0 4px; font-size: 1.28rem; font-weight: 500; letter-spacing: -.04em; color: var(--dk); text-decoration: none; }
-.d-logo-mark { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; border: 2px solid var(--dk); color: var(--dk); }
+.d-logo { display: flex; align-items: center; gap: 9px; padding: 0 4px; font-size: 1.28rem; font-weight: 600; letter-spacing: -.04em; color: #04303B; text-decoration: none; }
+/* Pastille citron pleine, identique à la page d'accueil (site.html .s-logo). */
+.d-logo-mark { width: 38px; height: 38px; border-radius: 50%; display: grid; place-items: center; background: #E7F352; color: #04303B; }
 .d-nav { display: grid; gap: 6px; margin-top: 14px; }
 .d-nav a, .d-nav button, .d-row {
   display: flex; align-items: center; gap: 10px; width: 100%; padding: 5px 6px; border: 0; border-radius: 999px;
