@@ -327,7 +327,9 @@
      Couches
      ===================================================== */
   function renderLayerButtons() {
-    $("layers").innerHTML = ORDER.map((k) => `<button class="layer-btn" data-layer="${k}" aria-pressed="${state.layer === k}" ${state.reco || k === "sat" ? "" : "disabled"}><iconify-icon icon="${LAYERS[k].icon}" width="18" height="18"></iconify-icon>${T("layer." + k)}</button>`).join("");
+    // NASA GIBS layers are GLOBAL data — togglable any time to see the situation
+    // everywhere, no field/analysis required.
+    $("layers").innerHTML = ORDER.map((k) => `<button class="layer-btn" data-layer="${k}" aria-pressed="${state.layer === k}"><iconify-icon icon="${LAYERS[k].icon}" width="18" height="18"></iconify-icon>${T("layer." + k)}</button>`).join("");
   }
 
   async function ensureGibs(k) {
@@ -480,8 +482,10 @@
         return { lead: T(hot ? "in.temp.hot" : "in.temp.ok", { t: n.temperature_c }), more: T("in.temp.more"), lvl: hot ? "bad" : "ok" };
       }
       case "solar": {
-        const high = n.solar_radiation >= 20;
-        return { lead: T(high ? "in.solar.high" : "in.solar.ok"), more: T("in.solar.more", { et: n.evapotranspiration }), lvl: high ? "warn" : "ok" };
+        // < 10 MJ/m2/day = overcast / little sun (e.g. cloudy winter), not "moderate".
+        const low = n.solar_radiation < 10, high = n.solar_radiation >= 20;
+        const key = low ? "in.solar.low" : high ? "in.solar.high" : "in.solar.ok";
+        return { lead: T(key), more: T("in.solar.more", { et: n.evapotranspiration }), lvl: high ? "warn" : "ok" };
       }
       case "soil": {
         const low = n.soil_moisture < 0.2;
