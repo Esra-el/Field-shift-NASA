@@ -189,6 +189,10 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
     # --- Anomalie de température : NASA POWER journalier vs normale NASA POWER (même source)
     t2m = power.get("T2M") or {}
     t_clim = (clim or {}).get("_T2M") or {}
+    if t_clim and all(t_clim.get(m, -999) > -900 for m in MONTHS):
+        # Température normale par mois (NASA POWER 1981-2020) — sert au moteur pour
+        # savoir si la saison est assez chaude pour semer (zones tempérées).
+        out["temp_normal_monthly"] = {m: round(t_clim[m], 1) for m in MONTHS}
     if t2m and t_clim:
         last = sorted(t2m)[-14:]  # 14 derniers jours publiés
         diffs = [t2m[d] - t_clim[MONTHS[date.fromisoformat(d).month - 1]] for d in last

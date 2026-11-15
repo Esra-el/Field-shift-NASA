@@ -26,6 +26,13 @@ MONTHS = ["JAN", "FEB", "MAR", "APR", "MAY", "JUN", "JUL", "AUG", "SEP", "OCT", 
 CROP_WATER_NEED_MM: dict[str, int] = {
     "maize": 520, "beans": 350, "sorghum": 400, "millet": 380, "cover_crop": 300, "other": 450,
 }
+# Température moyenne de l'air minimale pour semer (°C). En dessous, la graine ne
+# lève pas : il faut attendre le retour de la chaleur. Rend le moteur correct hors
+# des tropiques (ex. l'hiver en Italie), sans rien changer là où il fait toujours
+# chaud (le garde-fou ne se déclenche jamais dans le Corridor sec).
+CROP_MIN_TEMP_C: dict[str, float] = {
+    "maize": 12.0, "beans": 12.0, "sorghum": 15.0, "millet": 15.0, "cover_crop": 8.0, "other": 12.0,
+}
 SOIL_RETENTION: dict[str, float] = {
     "sandy": 0.55, "sandy_loam": 0.75, "loam": 1.0, "clay_loam": 1.15, "clay": 1.25,
 }
@@ -51,6 +58,7 @@ WS_WORD = {
 }
 TXT = {
     "es": {
+        "reason_cold": "Hace demasiado frío para sembrar ahora (unos {t}°C). Según la normal de NASA POWER, el calor vuelve hacia el {date}: espere a esa fecha para sembrar.",
         "reason_season": "Es temporada seca en su parcela. Según la normal de NASA POWER, las lluvias regresan hacia el {date}: prepare el suelo y siembre entonces.",
         "reason_forecast": "Open-Meteo prevé unos {mm} mm de lluvia a partir del {date}: siembre justo después de esa lluvia.",
         "water_expl": "La lluvia y la humedad del suelo cubren cerca del {cov}% de lo que necesita el cultivo.",
@@ -68,6 +76,7 @@ TXT = {
         "ai_tail_other": "Es mejor esperar o considerar una rotación más resistente.",
     },
     "fr": {
+        "reason_cold": "Il fait trop froid pour semer en ce moment (environ {t}°C). D'après la normale NASA POWER, la chaleur revient vers le {date} : attends cette date pour semer.",
         "reason_season": "C'est la saison sèche sur ta parcelle. D'après la normale NASA POWER, les pluies reviennent vers le {date} : prépare le sol et sème à ce moment-là.",
         "reason_forecast": "Open-Meteo prévoit environ {mm} mm de pluie à partir du {date} : sème juste après cette pluie.",
         "water_expl": "La pluie et l'humidité du sol couvrent environ {cov}% du besoin estimé de la culture.",
@@ -85,6 +94,7 @@ TXT = {
         "ai_tail_other": "Mieux vaut attendre ou envisager une rotation plus résistante.",
     },
     "en": {
+        "reason_cold": "It is too cold to plant right now (about {t}°C). According to the NASA POWER normal, warmth returns around {date}: wait until then to sow.",
         "reason_season": "It is the dry season at your field. According to the NASA POWER normal, rains return around {date}: prepare the soil and plant then.",
         "reason_forecast": "Open-Meteo forecasts about {mm} mm of rain from {date}: plant right after that rain.",
         "water_expl": "Rainfall and soil moisture cover about {cov}% of the crop's estimated need.",
@@ -102,6 +112,7 @@ TXT = {
         "ai_tail_other": "Better wait or consider a more resilient rotation.",
     },
     "it": {
+        "reason_cold": "Fa troppo freddo per seminare adesso (circa {t}°C). Secondo la normale NASA POWER, il caldo torna verso il {date}: aspetta quella data per seminare.",
         "reason_season": "È la stagione secca sul tuo campo. Secondo la normale NASA POWER, le piogge tornano verso il {date}: prepara il suolo e semina allora.",
         "reason_forecast": "Open-Meteo prevede circa {mm} mm di pioggia dal {date}: semina subito dopo quella pioggia.",
         "water_expl": "Pioggia e umidità del suolo coprono circa il {cov}% del fabbisogno stimato della coltura.",
@@ -188,9 +199,35 @@ def _onset(clim: dict[str, float], today: date) -> date:
     return today
 
 
-def _planting_window(live: dict[str, Any], today: date) -> tuple[date, str]:
-    """Fenêtre de semis réelle : sol déjà humide, pluie prévue (Open-Meteo), sinon début de saison des pluies."""
+def _first_day_of_month(y: int, m0: int) -> date:
+    """1er jour du mois d'indice m0 (0-11), en gérant le passage d'année."""
+    return date(y + m0 // 12, m0 % 12 + 1, 1)
+
+
+def _next_warm_month(clim_t: dict[str, float], today: date, min_t: float) -> date:
+    """Premier mois, à partir du mois prochain, où la normale de température ≥ min_t."""
+    for k in range(1, 13):
+        m0 = today.month - 1 + k
+        if clim_t[MONTHS[m0 % 12]] >= min_t:
+            return _first_day_of_month(today.year, m0)
+    return today + timedelta(days=30)
+
+
+def _planting_window(live: dict[str, Any], today: date, crop: str = "maize") -> tuple[date, str]:
+    """Fenêtre de semis réelle : trop froid ? sol humide ? pluie prévue ? sinon saison des pluies."""
     fc = live.get("forecast") or []
+    # Garde-fou TEMPÉRATURE : la graine ne lève pas si la saison qui vient est trop
+    # froide pour la culture. On regarde la normale de température sur ~45 jours ;
+    # si c'est sous le seuil, on attend le retour de la chaleur (zones tempérées).
+    clim_t = live.get("temp_normal_monthly")
+    min_t = CROP_MIN_TEMP_C.get(crop, 12.0)
+    if clim_t:
+        est = [clim_t[MONTHS[(today + timedelta(days=i)).month - 1]] for i in range(45)]
+        recent = live.get("temperature_7d_c")
+        season_cold = sum(est) / len(est) < min_t
+        now_cold = recent is not None and recent < min_t
+        if season_cold or now_cold:
+            return _next_warm_month(clim_t, today, min_t), "cold"
     if (live.get("soil_moisture") or 0) >= 0.26 and sum(f["rain_mm"] for f in fc[:7]) >= 8:
         return today + timedelta(days=1), "now"
     for i in range(len(fc) - 2):
@@ -241,7 +278,7 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
     # Fenêtre de semis (calculée avant le budget : l'eau attendue dépend de la date de semis)
     g, f, h = CROP_CYCLE.get(crop, CROP_CYCLE["other"])
     if is_live:
-        window_start, window_kind = _planting_window(live, today)
+        window_start, window_kind = _planting_window(live, today, crop)
     else:
         window_start, window_kind = today + timedelta(days=6), "default"
     window_end = window_start + timedelta(days=10)
@@ -302,7 +339,13 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
     risk_level = _risk_level(risk_score)
 
     # Recommandation de semis
-    if window_kind == "season":
+    if window_kind == "cold":
+        # Trop froid pour cette culture : on attend le retour de la chaleur.
+        planting_reco = "wait"
+        planting_reason = T["reason_cold"].format(
+            t=round(_first(live.get("temperature_7d_c"), (live.get("current") or {}).get("temperature_c"), 10)),
+            date=window_start.strftime("%d/%m/%Y"))
+    elif window_kind == "season":
         # Saison sèche : la vraie décision est d'attendre le retour des pluies.
         planting_reco = "wait"
         planting_reason = T["reason_season"].format(date=window_start.strftime("%d/%m/%Y"))

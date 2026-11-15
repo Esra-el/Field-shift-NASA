@@ -53,6 +53,31 @@ def test_live_recommendation_uses_ml_and_keeps_front_shape(live_on, monkeypatch,
     assert len(d["forecast"]) == 16
 
 
+def test_cold_season_blocks_planting_even_when_wet(live_on, monkeypatch):
+    # Hiver tempéré (ex. Florence) : humide MAIS trop froid -> « attendre », pas « semer ».
+    cold = _fake_live(1.0)
+    cold["temperature_7d_c"] = 8.0
+    cold["temp_normal_monthly"] = {m: t for m, t in zip(
+        MONTHS, [6, 7, 10, 13, 17, 22, 25, 25, 21, 16, 10, 7])}  # climat tempéré
+    cold["today"] = "2026-11-15"  # novembre : entrée en hiver
+    monkeypatch.setattr(live_data, "fetch", lambda lat, lon: cold)
+    d = client.post("/api/recommendation", json={"latitude": 43.77, "longitude": 11.26, "crop": "maize"}).json()
+    pt = d["planting_timeline"]
+    assert pt["recommendation"] == "wait", pt
+    assert pt["basis"] == "cold", pt
+    # La fenêtre conseillée tombe au printemps (mois chaud), pas en plein hiver.
+    assert pt["best_window"][5:7] in {"04", "05", "06"}, pt["best_window"]
+
+
+def test_warm_tropics_never_triggers_cold_gate(live_on, monkeypatch):
+    warm = _fake_live(0.2)  # sec
+    warm["temperature_7d_c"] = 28.0
+    warm["temp_normal_monthly"] = {m: 26.0 for m in MONTHS}  # toujours chaud
+    monkeypatch.setattr(live_data, "fetch", lambda lat, lon: warm)
+    d = client.post("/api/recommendation", json={"latitude": 13.3, "longitude": -87.2, "crop": "maize"}).json()
+    assert d["planting_timeline"]["basis"] != "cold"
+
+
 def test_ml_risk_is_higher_when_live_data_is_dry(live_on, monkeypatch):
     monkeypatch.setattr(live_data, "fetch", lambda lat, lon: _fake_live(1.0))
     wet = client.post("/api/recommendation", json={"latitude": 13.3, "longitude": -87.2}).json()
