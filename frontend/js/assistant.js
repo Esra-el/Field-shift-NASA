@@ -94,14 +94,26 @@
     if (!panel) return;
     const vv = window.visualViewport;
     const narrow = window.matchMedia("(max-width: 640px)").matches;
+    const sub = panel.querySelector(".cp-titles p");
     if (open && narrow && vv) {
       const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      // Clavier ouvert => la zone visible est courte. On fait remplir au panneau
+      // toute la zone visible (au-dessus du clavier) et on replie l'en-tête + les
+      // suggestions, sinon ils mangent presque toute la hauteur et le message
+      // qu'on vient d'envoyer se retrouve coupé / poussé hors de vue.
+      const compact = vv.height < 560;
       panel.style.bottom = kb + "px";
-      panel.style.maxHeight = (vv.height - 8) + "px";
+      if (compact) { panel.style.height = (vv.height - 8) + "px"; panel.style.maxHeight = "none"; }
+      else { panel.style.height = ""; panel.style.maxHeight = (vv.height - 8) + "px"; }
+      panel.classList.toggle("cp-compact", compact);
+      if (quick) quick.style.display = compact ? "none" : "";
+      if (sub) sub.style.display = compact ? "none" : "";
       toEnd();
     } else {
-      panel.style.bottom = "";
-      panel.style.maxHeight = "";
+      panel.style.bottom = ""; panel.style.height = ""; panel.style.maxHeight = "";
+      panel.classList.remove("cp-compact");
+      if (quick) quick.style.display = "";
+      if (sub) sub.style.display = "";
     }
   }
 
