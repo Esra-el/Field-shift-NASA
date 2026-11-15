@@ -53,6 +53,26 @@ try:  # risque par ANALOGUE 20 ans (NASA POWER, même date civile) — couvre to
 except Exception:  # pragma: no cover
     analog = None
 
+try:  # copilote Gemini LÉGER (app.copilot = google-genai seul) : actif même sans le stack ML.
+    from app import copilot as light_copilot
+except Exception:  # pragma: no cover
+    light_copilot = None
+
+
+def _light_copilot_answer(question, context, lang="fr"):
+    """Copilote Gemini sans dépendre du moteur ML lourd (absent sur Vercel).
+    Même sortie que real_engine.copilot_answer ; repli local si pas de clé/erreur."""
+    try:
+        if light_copilot is not None and light_copilot._api_key():
+            txt = light_copilot.answer(str(question or ""), context or {}, {}, lang=str(lang))
+            if txt and txt.strip():
+                return {"answer": txt.strip(),
+                        "sources": ["GPM IMERG", "SMAP", "MODIS/VIIRS", "NASA POWER"],
+                        "limitations": ""}
+    except Exception:
+        pass
+    return mock_engine.copilot_answer(question=str(question or ""), context=context, lang=str(lang))
+
 FRONTEND_DIR = (Path(__file__).resolve().parent.parent / "frontend")
 
 app = FastAPI(
@@ -189,7 +209,12 @@ async def backtest(payload: dict) -> JSONResponse:
 async def copilot(payload: dict) -> JSONResponse:
     """Copilote IA (Gemini). Entrée : {question, context, lang}."""
     payload = payload or {}
-    fn = engine.copilot_answer if engine is not None else mock_engine.copilot_answer
+    if engine is not None:
+        fn = engine.copilot_answer                 # moteur ML complet (dev local)
+    elif light_copilot is not None:
+        fn = _light_copilot_answer                 # Vercel : Gemini sans le stack ML
+    else:
+        fn = mock_engine.copilot_answer            # dernier repli déterministe
     result = await run_in_threadpool(
         fn,
         question=str(payload.get("question", "")),
