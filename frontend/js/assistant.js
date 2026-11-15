@@ -45,6 +45,12 @@
     document.addEventListener("keydown", (e) => { if (e.key === "Escape" && open) toggle(false); });
     quick.addEventListener("click", (e) => { const b = e.target.closest("button"); if (b) ask(b.textContent); });
     form.addEventListener("submit", (e) => { e.preventDefault(); const q = input.value.trim(); if (q) { input.value = ""; ask(q); } });
+    input.addEventListener("focus", syncKeyboard);
+    input.addEventListener("blur", () => setTimeout(syncKeyboard, 50));
+    if (window.visualViewport) {
+      window.visualViewport.addEventListener("resize", syncKeyboard);
+      window.visualViewport.addEventListener("scroll", syncKeyboard);
+    }
     paintStatic();
     Terra.apply(panel); Terra.apply(fab);
   }
@@ -54,12 +60,17 @@
     input.placeholder = T("chat.ph");
   }
 
+  function toEnd() {
+    // Défiler après le reflow, sinon le dernier message apparaît à moitié coupé.
+    requestAnimationFrame(() => { if (log) log.scrollTop = log.scrollHeight; });
+  }
+
   function bubble(text, who) {
     const b = document.createElement("div");
     b.className = "bubble " + who;
     b.textContent = text;
     log.appendChild(b);
-    log.scrollTop = log.scrollHeight;
+    toEnd();
     return b;
   }
 
@@ -74,6 +85,26 @@
     }
   }
 
+  // Garde le champ de saisie et le dernier message au-dessus du clavier mobile :
+  // le panneau est collé en bas (bottom:0) alors que le clavier recouvre le bas
+  // de l'écran. On relève le panneau de la hauteur du clavier et on limite sa
+  // hauteur à la zone réellement visible (visualViewport) — sinon le message
+  // qu'on vient d'envoyer apparaît à moitié caché derrière le clavier.
+  function syncKeyboard() {
+    if (!panel) return;
+    const vv = window.visualViewport;
+    const narrow = window.matchMedia("(max-width: 640px)").matches;
+    if (open && narrow && vv) {
+      const kb = Math.max(0, window.innerHeight - vv.height - vv.offsetTop);
+      panel.style.bottom = kb + "px";
+      panel.style.maxHeight = (vv.height - 8) + "px";
+      toEnd();
+    } else {
+      panel.style.bottom = "";
+      panel.style.maxHeight = "";
+    }
+  }
+
   function toggle(on) {
     open = on;
     panel.classList.toggle("is-open", on);
@@ -81,7 +112,8 @@
     fab.setAttribute("aria-expanded", on);
     fab.querySelector(".fab-dot").classList.add("hidden");
     document.body.classList.toggle("chat-open", on);
-    if (on) { greet(); setTimeout(() => input.focus({ preventScroll: true }), 250); }
+    syncKeyboard();
+    if (on) { greet(); setTimeout(() => { input.focus({ preventScroll: true }); syncKeyboard(); }, 250); }
   }
 
   async function ask(q) {
