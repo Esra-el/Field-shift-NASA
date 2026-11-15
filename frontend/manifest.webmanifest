@@ -3,16 +3,24 @@
   "short_name": "Field Shift",
   "description": "Décidez quoi semer avant la sécheresse, avec les données NASA.",
   "lang": "fr",
+  "id": "/inicio.html",
   "start_url": "/inicio.html",
   "scope": "/",
   "display": "standalone",
-  "orientation": "portrait",
-  "background_color": "#08110D",
-  "theme_color": "#08110D",
+  "orientation": "any",
+  "background_color": "#E6E7DE",
+  "theme_color": "#E6E7DE",
+  "categories": ["productivity", "weather", "education"],
   "icons": [
     { "src": "/icons/icon-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any" },
     { "src": "/icons/icon-maskable-512.png", "sizes": "512x512", "type": "image/png", "purpose": "maskable" },
     { "src": "/icons/icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any" }
+  ],
+  "shortcuts": [
+    { "name": "Analyser ma parcelle", "short_name": "Analyser", "url": "/globo.html", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Eau", "short_name": "Eau", "url": "/eau.html", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Saison", "short_name": "Saison", "url": "/saison.html", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] },
+    { "name": "Rotations", "short_name": "Rotations", "url": "/rotations.html", "icons": [{ "src": "/icons/icon-192.png", "sizes": "192x192" }] }
   ]
 }

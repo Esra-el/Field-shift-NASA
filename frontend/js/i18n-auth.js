@@ -1,0 +1,97 @@
+/* Field Shift — textes des comptes (connexion, inscription, mon compte) en FR / EN / IT. */
+FSI18N.extend({
+  fr: {
+    "au.tab_in": "Se connecter", "au.tab_up": "Créer un compte",
+    "au.in_title": "Bon retour", "au.in_sub": "Connectez-vous avec votre numéro de téléphone.",
+    "au.up_title": "Créer votre compte", "au.up_sub": "Votre adresse nous dit où se trouve votre parcelle : l'analyse commence directement chez vous.",
+    "au.first": "Prénom", "au.last": "Nom", "au.phone": "Numéro de téléphone", "au.phone_ph": "ex. +504 9999 0000",
+    "au.address": "Adresse (village, commune, pays)", "au.address_ph": "ex. El Triunfo, Choluteca, Honduras",
+    "au.addr_hint": "Nous trouverons votre région à partir de l'adresse.", "au.addr_found": "Région trouvée : {r}", "au.addr_none": "Adresse introuvable : précisez le village et le pays.",
+    "au.addr_search": "Recherche de la région…",
+    "au.pw": "Mot de passe", "au.pw2": "Confirmer le mot de passe", "au.show": "Afficher le mot de passe",
+    "au.consent": "J'accepte que Field Shift garde ces informations pour me donner des conseils sur ma parcelle.",
+    "au.in_btn": "Se connecter", "au.up_btn": "Créer mon compte", "au.wait": "Un instant…",
+    "au.no_account": "Pas encore de compte ?", "au.have_account": "Déjà un compte ?", "au.back": "Retour au site",
+    "au.v_title": "Votre parcelle vue du ciel", "au.v_sub": "Données NASA en direct, conseils simples.",
+    "au.err.taken": "Ce numéro a déjà un compte. Connectez-vous.", "au.err.creds": "Numéro ou mot de passe incorrect.",
+    "au.err.current": "Le mot de passe actuel est incorrect.", "au.err.phone": "Ce numéro de téléphone n'est pas valide.",
+    "au.err.form": "Vérifiez les champs : mot de passe de 6 caractères minimum.", "au.err.net": "Connexion impossible. Réessayez.",
+    "au.err.fill": "Remplissez tous les champs.", "au.err.match": "Les deux mots de passe ne sont pas identiques.",
+    "au.err.short": "Le mot de passe doit faire au moins 6 caractères.", "au.err.consent": "Cochez la case pour continuer.",
+    "ac.title": "Mon compte", "ac.sub": "Vos informations et votre parcelle.", "ac.info": "Informations personnelles",
+    "ac.place": "Ma parcelle", "ac.save": "Enregistrer", "ac.saved": "Modifications enregistrées.",
+    "ac.pw_title": "Changer le mot de passe", "ac.pw_cur": "Mot de passe actuel", "ac.pw_new": "Nouveau mot de passe",
+    "ac.pw_btn": "Changer", "ac.pw_ok": "Mot de passe changé.", "ac.danger": "Supprimer mon compte",
+    "ac.danger_txt": "Supprime définitivement votre compte et vos informations.", "ac.del_btn": "Supprimer",
+    "ac.del_confirm": "Supprimer définitivement votre compte ? Cette action ne peut pas être annulée.",
+    "ac.since": "Membre depuis le {d}", "ac.region": "Région", "ac.coords": "Coordonnées", "ac.logout": "Se déconnecter",
+    "d.nav.account": "Mon compte",
+  },
+  en: {
+    "au.tab_in": "Sign in", "au.tab_up": "Create account",
+    "au.in_title": "Welcome back", "au.in_sub": "Sign in with your phone number.",
+    "au.up_title": "Create your account", "au.up_sub": "Your address tells us where your field is: the analysis starts right at home.",
+    "au.first": "First name", "au.last": "Last name", "au.phone": "Phone number", "au.phone_ph": "e.g. +504 9999 0000",
+    "au.address": "Address (village, town, country)", "au.address_ph": "e.g. El Triunfo, Choluteca, Honduras",
+    "au.addr_hint": "We will find your region from the address.", "au.addr_found": "Region found: {r}", "au.addr_none": "Address not found: add the village and country.",
+    "au.addr_search": "Looking up the region…",
+    "au.pw": "Password", "au.pw2": "Confirm password", "au.show": "Show password",
+    "au.consent": "I agree that Field Shift keeps this information to give me advice about my field.",
+    "au.in_btn": "Sign in", "au.up_btn": "Create my account", "au.wait": "One moment…",
+    "au.no_account": "No account yet?", "au.have_account": "Already have an account?", "au.back": "Back to site",
+    "au.v_title": "Your field seen from space", "au.v_sub": "Live NASA data, simple advice.",
+    "au.err.taken": "This number already has an account. Sign in.", "au.err.creds": "Wrong number or password.",
+    "au.err.current": "The current password is wrong.", "au.err.phone": "This phone number is not valid.",
+    "au.err.form": "Check the fields: password of at least 6 characters.", "au.err.net": "Could not connect. Try again.",
+    "au.err.fill": "Fill in every field.", "au.err.match": "The two passwords do not match.",
+    "au.err.short": "The password must have at least 6 characters.", "au.err.consent": "Tick the box to continue.",
+    "ac.title": "My account", "ac.sub": "Your details and your field.", "ac.info": "Personal details",
+    "ac.place": "My field", "ac.save": "Save", "ac.saved": "Changes saved.",
+    "ac.pw_title": "Change password", "ac.pw_cur": "Current password", "ac.pw_new": "New password",
+    "ac.pw_btn": "Change", "ac.pw_ok": "Password changed.", "ac.danger": "Delete my account",
+    "ac.danger_txt": "Permanently deletes your account and your details.", "ac.del_btn": "Delete",
+    "ac.del_confirm": "Permanently delete your account? This cannot be undone.",
+    "ac.since": "Member since {d}", "ac.region": "Region", "ac.coords": "Coordinates", "ac.logout": "Sign out",
+    "d.nav.account": "My account",
+  },
+  it: {
+    "au.tab_in": "Accedi", "au.tab_up": "Crea un account",
+    "au.in_title": "Bentornato", "au.in_sub": "Accedi con il tuo numero di telefono.",
+    "au.up_title": "Crea il tuo account", "au.up_sub": "Il tuo indirizzo ci dice dove si trova il campo: l'analisi parte da casa tua.",
+    "au.first": "Nome", "au.last": "Cognome", "au.phone": "Numero di telefono", "au.phone_ph": "es. +504 9999 0000",
+    "au.address": "Indirizzo (villaggio, comune, paese)", "au.address_ph": "es. El Triunfo, Choluteca, Honduras",
+    "au.addr_hint": "Troveremo la tua regione dall'indirizzo.", "au.addr_found": "Regione trovata: {r}", "au.addr_none": "Indirizzo non trovato: aggiungi villaggio e paese.",
+    "au.addr_search": "Ricerca della regione…",
+    "au.pw": "Password", "au.pw2": "Conferma password", "au.show": "Mostra password",
+    "au.consent": "Accetto che Field Shift conservi queste informazioni per darmi consigli sul mio campo.",
+    "au.in_btn": "Accedi", "au.up_btn": "Crea il mio account", "au.wait": "Un momento…",
+    "au.no_account": "Non hai un account?", "au.have_account": "Hai già un account?", "au.back": "Torna al sito",
+    "au.v_title": "Il tuo campo visto dallo spazio", "au.v_sub": "Dati NASA in tempo reale, consigli semplici.",
+    "au.err.taken": "Questo numero ha già un account. Accedi.", "au.err.creds": "Numero o password errati.",
+    "au.err.current": "La password attuale è errata.", "au.err.phone": "Questo numero di telefono non è valido.",
+    "au.err.form": "Controlla i campi: password di almeno 6 caratteri.", "au.err.net": "Connessione impossibile. Riprova.",
+    "au.err.fill": "Compila tutti i campi.", "au.err.match": "Le due password non coincidono.",
+    "au.err.short": "La password deve avere almeno 6 caratteri.", "au.err.consent": "Spunta la casella per continuare.",
+    "ac.title": "Il mio account", "ac.sub": "I tuoi dati e il tuo campo.", "ac.info": "Dati personali",
+    "ac.place": "Il mio campo", "ac.save": "Salva", "ac.saved": "Modifiche salvate.",
+    "ac.pw_title": "Cambia password", "ac.pw_cur": "Password attuale", "ac.pw_new": "Nuova password",
+    "ac.pw_btn": "Cambia", "ac.pw_ok": "Password cambiata.", "ac.danger": "Elimina il mio account",
+    "ac.danger_txt": "Elimina definitivamente il tuo account e i tuoi dati.", "ac.del_btn": "Elimina",
+    "ac.del_confirm": "Eliminare definitivamente il tuo account? L'azione non si può annullare.",
+    "ac.since": "Membro dal {d}", "ac.region": "Regione", "ac.coords": "Coordinate", "ac.logout": "Esci",
+    "d.nav.account": "Il mio account",
+  },
+});
+
+/* Géocodage d'une adresse (Nominatim) -> { lat, lng, region, country, label }. */
+window.FSGeo = {
+  async address(q) {
+    const url = "https://nominatim.openstreetmap.org/search?format=json&addressdetails=1&limit=1&q=" + encodeURIComponent(q) + "&accept-language=" + FSI18N.lang;
+    const res = await fetch(url, { headers: { Accept: "application/json" } });
+    const js = await res.json();
+    if (!js || !js.length) return null;
+    const a = js[0].address || {};
+    const region = a.state || a.region || a.county || a.state_district || a.city || a.town || a.village || "";
+    return { lat: +js[0].lat, lng: +js[0].lon, region, country: a.country || "", label: [region, a.country].filter(Boolean).join(", ") };
+  },
+};

@@ -14,7 +14,7 @@ mkdir -p "$OUT/public" "$OUT/api/_lib"
 
 cp -r "$ROOT/frontend/." "$OUT/public/"
 cp "$ROOT/frontend/site.html" "$OUT/public/index.html"   # la racine ouvre le site public
-cp "$ROOT/backend/main.py" "$ROOT/backend/mock_engine.py" "$ROOT/backend/live_data.py" "$ROOT/backend/real_engine.py" "$OUT/api/_lib/"
+cp "$ROOT/backend/main.py" "$ROOT/backend/mock_engine.py" "$ROOT/backend/live_data.py" "$ROOT/backend/real_engine.py" "$ROOT/backend/auth.py" "$OUT/api/_lib/"
 # Moteur ML / Gemini du Flux 2 (modèle entraîné + cache NASA POWER des sites pilotes), sans les tests
 cp -r "$ROOT/backend/app" "$OUT/api/_lib/app"
 find "$OUT/api/_lib/app" \( -name "__pycache__" -o -name "test_*.py" -o -name "conftest.py" \) -prune -exec rm -rf {} +
@@ -42,6 +42,7 @@ pandas>=2.0,<2.3
 scikit-learn==1.6.1
 joblib>=1.3
 google-genai==1.47.0
+psycopg[binary]>=3.2
 TXT
 
 cat > "$OUT/vercel.json" <<'JSON'

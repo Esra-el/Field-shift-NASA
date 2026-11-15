@@ -1,0 +1,7 @@
+dist/
+.claude/
+backend/.venv/
+backend/data/
+backend/tests/
+**/__pycache__/
+*.pyc

@@ -25,6 +25,9 @@ pandas>=2.0
 scikit-learn>=1.4
 joblib>=1.3
 
+# --- Comptes (PostgreSQL en production, ex. Neon) ---
+psycopg[binary]>=3.2
+
 # --- Copilote IA (Gemini, niveau gratuit) ---
 google-genai==1.47.0
 

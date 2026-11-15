@@ -530,6 +530,9 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
         "season": season,
         "week_focus": week_focus,
         "data_sources": live.get("sources") or [],
+        # Pluie normale par mois (NASA POWER 1981-2020), en mm/mois — pour la page Saison
+        "rain_normal_monthly": ({m: round(v * 30.4) for m, v in live["clim_mm_day"].items()}
+                                if live.get("clim_mm_day") else None),
         "estimated": estimated,
         "live": is_live,
         "data_mode": "real" if is_live else "mock",

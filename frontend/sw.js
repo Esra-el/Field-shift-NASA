@@ -3,15 +3,15 @@
    - Librairies CDN (Chart.js, Leaflet, Iconify, polices) : stale-while-revalidate,
      pour que l'appli reste utilisable hors-ligne.
    - API et tuiles de carte : réseau (l'appli garde sa dernière reco en localStorage). */
-const CACHE = "field-shift-v26";
-const RUNTIME = "field-shift-rt-v26";
+const CACHE = "field-shift-v27";
+const RUNTIME = "field-shift-rt-v27";
 const SHELL = [
   "/", "/site.html", "/inicio.html", "/globo.html", "/index.html", "/campo.html", "/perfil.html", "/panel.html", "/analyse.html", "/rotaciones.html",
   "/copiloto.html", "/cooperativa.html", "/backtesting.html",
   "/css/fieldshift.css", "/css/terra.css", "/css/site.css", "/css/dash.css",
   "/js/i18n.js", "/js/store.js", "/js/api.js", "/js/pwa.js", "/js/layout.js",
   "/js/campo.js", "/js/perfil.js", "/js/panel.js", "/js/analyse.js", "/js/rotaciones.js",
-  "/js/copiloto.js", "/js/cooperativa.js", "/js/backtesting.js", "/js/landing.js", "/js/terra.js", "/js/inicio.js", "/js/globo.js", "/js/assistant.js", "/js/site.js", "/js/side.js", "/js/connexion.js", "/css/login.css", "/connexion.html",
+  "/js/copiloto.js", "/js/cooperativa.js", "/js/backtesting.js", "/js/landing.js", "/js/terra.js", "/js/inicio.js", "/js/globo.js", "/js/assistant.js", "/js/site.js", "/js/side.js", "/js/connexion.js", "/css/login.css", "/connexion.html", "/js/auth.js", "/js/i18n-auth.js", "/js/reco.js", "/js/pages.js", "/js/eau.js", "/js/saison.js", "/js/rotations-page.js", "/js/compte.js", "/eau.html", "/saison.html", "/rotations.html", "/compte.html",
   "/manifest.webmanifest",
   "/icons/icon.svg", "/icons/icon-192.png", "/icons/icon-512.png", "/icons/icon-maskable-512.png",
   "/img/fields.svg", "/img/assistant.svg", "/img/sky.jpg", "/img/photos/drought.jpg", "/img/photos/water.jpg", "/img/photos/rain.jpg", "/img/photos/seedlings.jpg", "/img/photos/mulch.jpg", "/img/photos/rows.jpg", "/img/photos/cornfield.jpg",

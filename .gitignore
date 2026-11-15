@@ -26,3 +26,8 @@ Thumbs.db
 # Build Vercel
 dist/
 .vercel/
+
+# Comptes locaux (SQLite) et clé de session
+backend/data/
+.vercel
+.env*

@@ -39,6 +39,7 @@ try:
 except Exception:
     pass
 
+import auth
 import live_data
 import mock_engine
 
@@ -62,6 +63,9 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+# Comptes utilisateurs : /api/auth/register, /login, /me
+app.include_router(auth.router)
 
 # Champs que le moteur du Flux 2 calcule sur données réelles (sites pilotes en cache).
 _REAL_KEYS = ("risk_score", "risk_level", "water_budget", "planting_timeline",
