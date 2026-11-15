@@ -127,3 +127,15 @@ def test_rotations_include_current_and_evidence(live_on):
     assert len(rots) == 4 and rots[-1]["type"] == "current" and "maïs → maïs" in rots[-1]["name"]
     for ro in rots:
         assert ro["evidence"] and ro["gaps"] and ro["local_review"]
+
+
+def test_ecostress_endpoint_rejects_bad_coords():
+    assert client.post("/api/ecostress", json={"latitude": "x"}).status_code == 422
+
+
+def test_ecostress_utm_roundtrip():
+    import ecostress
+    e, n = ecostress.latlon_to_utm(41.9028, 12.4964, 33)
+    lat, lon = ecostress.utm_to_latlon(e, n, 33)
+    assert abs(lat - 41.9028) < 1e-5 and abs(lon - 12.4964) < 1e-5
+    assert ecostress.jet_value((0, 0, 0)) is None and ecostress.jet_value(ecostress._jet(0.9)) > 0.85

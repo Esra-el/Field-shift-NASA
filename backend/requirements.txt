@@ -17,6 +17,7 @@ uvicorn[standard]>=0.27
 pydantic>=2.5,<3.0
 python-dotenv>=1.0
 certifi  # certificats Mozilla : nécessaires sur Vercel pour modis.ornl.gov
+Pillow>=10.0  # ECOSTRESS : images d aperçu NASA (points chauds)
 
 # --- Données NASA + ML ---
 requests>=2.31

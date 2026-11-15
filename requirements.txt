@@ -17,3 +17,5 @@ certifi
 requests>=2.31
 google-genai==1.47.0
 psycopg[binary]>=3.2
+# ECOSTRESS : lecture des images d aperçu NASA (points chauds), ~10 Mo
+Pillow>=10.0

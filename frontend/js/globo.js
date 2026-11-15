@@ -2,11 +2,35 @@
    couches NASA GIBS réelles une à une, réponses simples, rotations. L'assistant est flottant (assistant.js). */
 (function () {
   FSI18N.extend({
-    fr: { "src.est": "Données en direct indisponibles : estimation", "src.live": "Données en direct", "src.offline": "Hors ligne : dernière analyse enregistrée", "src.estimate": "estimation (source indisponible)",
+    fr: { "layer.heat": "Points chauds", "eco.cool": "Plus frais", "eco.hot": "Plus chaud",
+      "eco.when": "passage du {d} à {h} h ({p})", "eco.day": "jour", "eco.night": "nuit", "eco.rank": "parcelle plus chaude que {p} % de la zone",
+      "eco.loading": "Recherche du dernier passage ECOSTRESS…", "eco.none": "Pas de passage récent sans nuages au-dessus de votre parcelle.",
+      "in.heat.hot": "Votre parcelle est un point chaud : elle est plus chaude que {p} % des terres autour.",
+      "in.heat.mid": "Votre parcelle est dans la moyenne des terres autour (plus chaude que {p} %).",
+      "in.heat.cool": "Votre parcelle est plus fraîche que la plupart des terres autour (plus chaude que seulement {p} %).",
+      "in.heat.more": "NASA ECOSTRESS mesure la température de surface depuis la Station spatiale, à 70 m. Une zone plus chaude que ses voisines signale souvent un sol nu ou des plantes qui manquent d'eau. Dernier passage clair : {d} à {h} h ({p}).",
+      "in.heat.none_more": "Les derniers passages d'ECOSTRESS étaient couverts de nuages ou de nuit sans donnée. Réessayez dans quelques jours.",
+      "src.est": "Données en direct indisponibles : estimation", "src.live": "Données en direct", "src.offline": "Hors ligne : dernière analyse enregistrée", "src.estimate": "estimation (source indisponible)",
       "fc.title": "Pluie prévue · 16 jours", "fc.sub": "Maintenant : {t} °C · humidité {h} % · vent {v} km/h — prévision Open-Meteo", "adv.root": "Humidité zone racinaire" },
-    en: { "src.est": "Live data unavailable: estimate", "src.live": "Live data", "src.offline": "Offline: last saved analysis", "src.estimate": "estimate (source unavailable)",
+    en: { "layer.heat": "Hot spots", "eco.cool": "Cooler", "eco.hot": "Hotter",
+      "eco.when": "overpass on {d} at {h}:00 ({p})", "eco.day": "day", "eco.night": "night", "eco.rank": "field hotter than {p}% of the area",
+      "eco.loading": "Looking for the latest ECOSTRESS overpass…", "eco.none": "No recent cloud-free overpass over your field.",
+      "in.heat.hot": "Your field is a hot spot: it is hotter than {p}% of the land around it.",
+      "in.heat.mid": "Your field is about average for the land around it (hotter than {p}%).",
+      "in.heat.cool": "Your field is cooler than most of the land around it (hotter than only {p}%).",
+      "in.heat.more": "NASA ECOSTRESS measures surface temperature from the Space Station at 70 m. An area hotter than its neighbours often means bare soil or plants short of water. Latest clear overpass: {d} at {h}:00 ({p}).",
+      "in.heat.none_more": "The latest ECOSTRESS overpasses were cloudy or had no data. Try again in a few days.",
+      "src.est": "Live data unavailable: estimate", "src.live": "Live data", "src.offline": "Offline: last saved analysis", "src.estimate": "estimate (source unavailable)",
       "fc.title": "Rain forecast · 16 days", "fc.sub": "Now: {t} °C · humidity {h}% · wind {v} km/h — Open-Meteo forecast", "adv.root": "Root-zone wetness" },
-    it: { "src.est": "Dati in tempo reale non disponibili: stima", "src.live": "Dati in tempo reale", "src.offline": "Offline: ultima analisi salvata", "src.estimate": "stima (fonte non disponibile)",
+    it: { "layer.heat": "Punti caldi", "eco.cool": "Più fresco", "eco.hot": "Più caldo",
+      "eco.when": "passaggio del {d} alle {h} ({p})", "eco.day": "giorno", "eco.night": "notte", "eco.rank": "campo più caldo del {p}% della zona",
+      "eco.loading": "Ricerca dell'ultimo passaggio ECOSTRESS…", "eco.none": "Nessun passaggio recente senza nuvole sopra il tuo campo.",
+      "in.heat.hot": "Il tuo campo è un punto caldo: è più caldo del {p}% dei terreni intorno.",
+      "in.heat.mid": "Il tuo campo è nella media dei terreni intorno (più caldo del {p}%).",
+      "in.heat.cool": "Il tuo campo è più fresco della maggior parte dei terreni intorno (più caldo solo del {p}%).",
+      "in.heat.more": "NASA ECOSTRESS misura la temperatura della superficie dalla Stazione spaziale, a 70 m. Una zona più calda delle vicine spesso indica suolo nudo o piante a corto d'acqua. Ultimo passaggio sereno: {d} alle {h} ({p}).",
+      "in.heat.none_more": "Gli ultimi passaggi di ECOSTRESS erano nuvolosi o senza dati. Riprova tra qualche giorno.",
+      "src.est": "Dati in tempo reale non disponibili: stima", "src.live": "Dati in tempo reale", "src.offline": "Offline: ultima analisi salvata", "src.estimate": "stima (fonte non disponibile)",
       "fc.title": "Pioggia prevista · 16 giorni", "fc.sub": "Ora: {t} °C · umidità {h}% · vento {v} km/h — previsione Open-Meteo", "adv.root": "Umidità zona radicale" },
   });
   FSI18N.extend({
@@ -215,6 +239,7 @@
 
       showView("loading"); runLoadingSteps();
       loadGrid();  // carte météo du globe, en parallèle de l'analyse
+      loadEco();   // points chauds ECOSTRESS, en arrière-plan
       stopTour();
       showLayer("sat", { silent: true });
       const flight = flyToField(state.lat, state.lng);
@@ -263,7 +288,10 @@
     ndvi:  { icon: "lucide:leaf", id: "VIIRS_NOAA20_NDVI_8Day", tms: "GoogleMapsCompatible_Level8", z: 8, period: "day", src: "NASA VIIRS NOAA-20",
              ramp: ["#C8B5A5", "#9A6E59", "#64A601", "#1D7501", "#001801"] },
   };
-  const ORDER = ["sat", "rain", "wind", "temp", "solar", "soil", "ndvi"];
+  // Points chauds NASA ECOSTRESS (70 m) : image d'aperçu publique du dernier passage clair.
+  LAYERS.heat = { icon: "lucide:flame", eco: true, src: "NASA ECOSTRESS",
+    ramp: ["#00008F", "#0050FF", "#00DFFF", "#9FFF60", "#FFEF00", "#FF4000", "#800000"] };
+  const ORDER = ["sat", "rain", "wind", "temp", "heat", "solar", "soil", "ndvi"];
   const tileUrl = (L) => `${GIBS}${L.id}/default/default/${L.tms}/{z}/{y}/{x}.png`;
 
   function initMap() {
@@ -342,6 +370,44 @@
     // NASA GIBS layers are GLOBAL data — togglable any time to see the situation
     // everywhere, no field/analysis required.
     $("layers").innerHTML = ORDER.map((k) => `<button class="layer-btn" data-layer="${k}" aria-pressed="${state.layer === k}"><iconify-icon icon="${LAYERS[k].icon}" width="18" height="18"></iconify-icon>${T("layer." + k)}</button>`).join("");
+  }
+
+  /* ---------- Points chauds NASA ECOSTRESS ---------- */
+  let ecoReq = null;
+  function loadEco() {
+    if (state.lat == null) return Promise.resolve(null);
+    const key = `${state.lat.toFixed(3)},${state.lng.toFixed(3)}`;
+    if (ecoReq && ecoReq.key === key) return ecoReq.p;
+    state.eco = undefined;
+    const p = fetch("/api/ecostress", { method: "POST", headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ latitude: state.lat, longitude: state.lng }) })
+      .then((r) => (r.ok ? r.json() : null)).then((e) => (e && e.image ? e : null)).catch(() => null)
+      .then((e) => {
+        if (ecoReq && ecoReq.key === key) {
+          state.eco = e;
+          if (!e) ecoReq = null;  // échec (réseau, nuages) : on réessaiera au prochain clic
+        }
+        return e;
+      });
+    ecoReq = { key, p };
+    return p;
+  }
+  const isDay = (e) => e.local_hour >= 7 && e.local_hour <= 18;
+  function ecoWhen(e) {
+    return T("eco.when", { d: Terra.fmtDate(e.time.slice(0, 10)), h: Math.floor(e.local_hour), p: T(isDay(e) ? "eco.day" : "eco.night") });
+  }
+  async function ensureEco() {
+    await mapReady;
+    const e = await loadEco();
+    const id = "eco-heat";
+    if (!e) { if (map.getLayer(id)) map.setLayoutProperty(id, "visibility", "none"); return null; }
+    const src = map.getSource(id);
+    if (src) src.updateImage({ url: e.image, coordinates: e.coordinates });
+    else {
+      map.addSource(id, { type: "image", url: e.image, coordinates: e.coordinates });
+      map.addLayer({ id, type: "raster", source: id, layout: { visibility: "none" }, paint: { "raster-opacity": 0.7, "raster-fade-duration": 300 } }, "labels");
+    }
+    return id;
   }
 
   /* ---------- Grille météo Open-Meteo (pluie / vent / température / soleil) ---------- */
@@ -442,12 +508,18 @@
     wind(k === "wind");
     if (map) {
       await mapReady;
-      Object.keys(LAYERS).forEach((o) => ["gibs-", "grid-"].forEach((p) => { if (map.getLayer(p + o)) map.setLayoutProperty(p + o, "visibility", "none"); }));
+      Object.keys(LAYERS).forEach((o) => ["gibs-", "grid-", "eco-"].forEach((p) => { if (map.getLayer(p + o)) map.setLayoutProperty(p + o, "visibility", "none"); }));
       if (k !== "sat") {
-        const id = LAYERS[k].grid ? await ensureGrid(k) : await ensureGibs(k);
+        const id = LAYERS[k].eco ? await ensureEco() : LAYERS[k].grid ? await ensureGrid(k) : await ensureGibs(k);
         if (id && state.layer === k) map.setLayoutProperty(id, "visibility", "visible");
-        // Les données NASA couvrent une région : on recule pour voir la tendance autour du champ.
-        if (state.lat != null && map.getZoom() > 7.2) map.flyTo({ center: [state.lng, state.lat], zoom: 6.2, pitch: 20, bearing: 0, duration: 2200, essential: true });
+        if (LAYERS[k].eco) {
+          // ECOSTRESS voit à 70 m : on se place à l'échelle de la parcelle et de ses voisines.
+          if (state.lat != null) map.flyTo({ center: [state.lng, state.lat], zoom: 11, pitch: 30, bearing: 0, duration: 2200, essential: true });
+          if (state.layer === k) renderInsight(k);
+        } else if (state.lat != null && map.getZoom() > 7.2) {
+          // Les données NASA couvrent une région : on recule pour voir la tendance autour du champ.
+          map.flyTo({ center: [state.lng, state.lat], zoom: 6.2, pitch: 20, bearing: 0, duration: 2200, essential: true });
+        }
       } else if (!(opts && opts.silent) && state.lat != null && map.getZoom() < 11) {
         map.flyTo({ center: [state.lng, state.lat], zoom: 14.6, pitch: 52, bearing: -10, duration: 2600, essential: true });
       }
@@ -468,6 +540,15 @@
     box.classList.remove("is-sat");
     $("lg-ramp").style.background = `linear-gradient(90deg, ${L.ramp.join(",")})`;
     box.classList.remove("is-stale");
+    if (L.eco) {
+      $("lg-min").textContent = T("eco.cool"); $("lg-max").textContent = T("eco.hot");
+      $("lg-date").textContent = `${L.src} · ${T("eco.loading")}`;
+      const e = await loadEco();
+      if (state.layer !== k) return;
+      if (!e) { $("lg-date").textContent = `${L.src} · ${T("eco.none")}`; box.classList.add("is-stale"); return; }
+      $("lg-date").textContent = `${L.src} · ${ecoWhen(e)} · ${T("eco.rank", { p: e.field_percentile })}`;
+      return;
+    }
     if (L.grid) {
       // Échelle chiffrée + valeur exacte à la parcelle (= le chiffre du rapport).
       $("lg-min").textContent = `${L.min} ${L.unit}`; $("lg-max").textContent = "…";
@@ -542,7 +623,7 @@
   function startTour() {
     stopTour();
     renderLayerButtons();
-    const seq = ["rain", "wind", "temp", "solar", "soil", "ndvi", "sat"];
+    const seq = ["rain", "wind", "temp", "heat", "solar", "soil", "ndvi", "sat"];
     let i = 0;
     const step = () => {
       showLayer(seq[i]); i++;
@@ -597,6 +678,15 @@
         const mixed = low && root != null && root >= 0.5;
         const more = T("in.soil.more", { p: Math.round(n.soil_moisture * 100) }) + (root != null ? T("in.soil.root", { r: Math.round(root * 100) }) : "");
         return { lead: T(mixed ? "in.soil.mixed" : low ? "in.soil.low" : "in.soil.ok"), more, lvl: low ? "warn" : "ok" };
+      }
+      case "heat": {
+        const e = state.eco;
+        if (e === undefined) return { lead: T("eco.loading"), more: "", lvl: "info" };
+        if (!e) return { lead: T("eco.none"), more: T("in.heat.none_more"), lvl: "info" };
+        const p = e.field_percentile, hot = p >= 75, cool = p <= 30;
+        const d = Terra.fmtDate(e.time.slice(0, 10), { day: "numeric", month: "long" });
+        return { lead: T(hot ? "in.heat.hot" : cool ? "in.heat.cool" : "in.heat.mid", { p }),
+          more: T("in.heat.more", { d, h: Math.floor(e.local_hour), p: T(isDay(e) ? "eco.day" : "eco.night") }), lvl: hot ? "warn" : "ok" };
       }
       case "ndvi": {
         const stress = n.ndvi_trend < -0.04;

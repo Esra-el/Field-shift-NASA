@@ -197,6 +197,26 @@ async def weather_grid(payload: dict) -> JSONResponse:
         return JSONResponse({"error": type(e).__name__}, status_code=502)
 
 
+@app.post("/api/ecostress")
+async def ecostress_hotspots(payload: dict) -> JSONResponse:
+    """Points chauds NASA ECOSTRESS (70 m) : dernier passage de jour sans nuage sur la
+    parcelle, image géoréférencée + rang de la parcelle (« plus chaude que X % de la zone »)."""
+    payload = payload or {}
+    try:
+        lat = float(payload.get("latitude")); lon = float(payload.get("longitude"))
+    except (TypeError, ValueError):
+        return JSONResponse({"error": "bad_coords"}, status_code=422)
+    if not (-90 <= lat <= 90 and -180 <= lon <= 180):
+        return JSONResponse({"error": "bad_coords"}, status_code=422)
+    import ecostress
+    try:
+        return JSONResponse(await run_in_threadpool(ecostress.hotspots, lat, lon))
+    except LookupError as e:  # pas de passage récent, ou nuages sur la parcelle
+        return JSONResponse({"error": str(e) or "no_data"}, status_code=404)
+    except Exception as e:
+        return JSONResponse({"error": type(e).__name__}, status_code=502)
+
+
 @app.post("/api/backtesting")
 async def backtest(payload: dict) -> JSONResponse:
     """Backtesting : « l'outil aurait-il prévenu ? » sur les saisons sèches passées."""
