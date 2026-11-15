@@ -102,6 +102,78 @@ def _ndvi(lat: float, lon: float, today: date) -> list[tuple[str, float]]:
     return sorted(pts)
 
 
+# NDVI (MODIS) : le serveur NASA ORNL est lent (18-55 s), trop pour une requête
+# serverless (budget ~12 s). On garde donc le NDVI d'une région dans la base Neon
+# (partagée, permanente) : récupéré une fois par /api/ndvi, puis servi à tout le
+# monde instantanément, même après un redémarrage. Composite tous les 16 jours ->
+# le garder 14 jours est correct. Sans base, repli sur le cache mémoire.
+_NDVI_DB_TTL = 14 * 86400
+
+
+def _ndvi_key(lat: float, lon: float) -> str:
+    return f"{round(lat, 2)}:{round(lon, 2)}"
+
+
+def _db():
+    try:
+        import auth
+        d = auth.db()
+        d.q("CREATE TABLE IF NOT EXISTS ndvi_cache (k TEXT PRIMARY KEY, pts TEXT NOT NULL, fetched_at BIGINT NOT NULL)", write=True)
+        return d
+    except Exception:
+        return None
+
+
+def _ndvi_db_get(key: str) -> list | None:
+    d = _db()
+    if not d:
+        return None
+    try:
+        row = d.q("SELECT pts, fetched_at FROM ndvi_cache WHERE k = ?", (key,), one=True)
+        if row and time.time() - row["fetched_at"] < _NDVI_DB_TTL:
+            return [tuple(p) for p in json.loads(row["pts"])]
+    except Exception:
+        pass
+    return None
+
+
+def _ndvi_db_put(key: str, pts: list) -> None:
+    d = _db()
+    if not d or not pts:
+        return
+    try:
+        payload = json.dumps(pts)
+        now = int(time.time())
+        if d.pg:
+            d.q("INSERT INTO ndvi_cache (k, pts, fetched_at) VALUES (?, ?, ?) "
+                "ON CONFLICT (k) DO UPDATE SET pts = EXCLUDED.pts, fetched_at = EXCLUDED.fetched_at",
+                (key, payload, now), write=True)
+        else:
+            d.q("INSERT OR REPLACE INTO ndvi_cache (k, pts, fetched_at) VALUES (?, ?, ?)", (key, payload, now), write=True)
+    except Exception:
+        pass
+
+
+def warm_ndvi(lat: float, lon: float) -> dict[str, Any]:
+    """Récupère le NDVI avec un budget dédié (jusqu'à ~25 s) et le garde dans Neon.
+    Appelé par /api/ndvi, en arrière-plan côté front. Ne lève jamais d'exception."""
+    key = _ndvi_key(lat, lon)
+    cached = _ndvi_db_get(key)
+    if cached:
+        last = cached[-1]
+        return {"ndvi": last[1], "date": last[0], "cached": True}
+    try:
+        fut = _POOL.submit(_ndvi, lat, lon, date.today())
+        pts = fut.result(timeout=26)
+    except Exception as e:
+        return {"error": (type(e).__name__)[:60]}
+    if not pts:
+        return {"error": "no_data"}
+    _ndvi_db_put(key, pts)
+    _NDVI[key] = (time.time(), pts)
+    return {"ndvi": pts[-1][1], "date": pts[-1][0], "cached": False}
+
+
 def fetch(lat: float, lon: float) -> dict[str, Any]:
     """Toutes les données réelles disponibles pour le point. Ne lève jamais d'exception."""
     key = f"{round(lat, 2)}:{round(lon, 2)}"
@@ -118,15 +190,22 @@ def fetch(lat: float, lon: float) -> dict[str, Any]:
     }
     raw: dict[str, Any] = {}
     errors: dict[str, str] = {}
+    # NDVI : d'abord le cache Neon (permanent), puis le cache mémoire.
+    nd_db = _ndvi_db_get(key)
     nd_hit = _NDVI.get(key)
-    if nd_hit and time.time() - nd_hit[0] < _NDVI_TTL:
+    if nd_db:
+        raw["ndvi"] = nd_db
+        jobs.pop("ndvi")
+    elif nd_hit and time.time() - nd_hit[0] < _NDVI_TTL:
         raw["ndvi"] = nd_hit[1]
         jobs.pop("ndvi")
     futs = {k: _POOL.submit(f) for k, f in jobs.items()}
     if "ndvi" in futs:
         def _keep(fu, k=key):
             if not fu.cancelled() and fu.exception() is None:
-                _NDVI[k] = (time.time(), fu.result())
+                pts = fu.result()
+                _NDVI[k] = (time.time(), pts)
+                _ndvi_db_put(k, pts)  # persiste pour les prochaines requêtes (toutes instances)
         futs["ndvi"].add_done_callback(_keep)
     deadline = time.time() + 12  # l'analyse n'attend pas plus de ~12 s
     for k, f in futs.items():

@@ -119,6 +119,19 @@ async def recommendation(payload: dict) -> JSONResponse:
     return JSONResponse(result)
 
 
+@app.post("/api/ndvi")
+async def ndvi(payload: dict) -> JSONResponse:
+    """Végétation NDVI (NASA MODIS) avec un budget dédié + cache Neon permanent.
+    Le front l'appelle en arrière-plan : le serveur ORNL est trop lent pour l'analyse
+    principale, mais ici on peut l'attendre, puis tout le monde profite du cache."""
+    payload = payload or {}
+    try:
+        lat = float(payload.get("latitude")); lon = float(payload.get("longitude"))
+    except (TypeError, ValueError):
+        return JSONResponse({"error": "bad_coords"}, status_code=422)
+    return JSONResponse(await run_in_threadpool(live_data.warm_ndvi, lat, lon))
+
+
 @app.post("/api/backtesting")
 async def backtest(payload: dict) -> JSONResponse:
     """Backtesting : « l'outil aurait-il prévenu ? » sur les saisons sèches passées."""

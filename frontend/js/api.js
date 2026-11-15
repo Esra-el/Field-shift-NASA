@@ -17,6 +17,15 @@
       if (!res.ok) throw new Error("HTTP " + res.status);
       const data = await res.json();
       FSStore.setLastReco(data);
+      // Végétation NDVI (NASA MODIS) en arrière-plan : le serveur NASA est lent,
+      // donc on le charge à part et on le met en cache (Neon) pour les prochaines
+      // analyses de la région. Sans bloquer l'affichage (pas de await).
+      if ((data.estimated || []).includes("ndvi_trend") && payload.latitude != null) {
+        fetch(BASE + "/api/ndvi", {
+          method: "POST", headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ latitude: payload.latitude, longitude: payload.longitude }),
+        }).catch(() => {});
+      }
       return { data, offline: false };
     } catch (e) {
       const cached = FSStore.getLastReco();
