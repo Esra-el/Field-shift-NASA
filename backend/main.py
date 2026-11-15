@@ -48,6 +48,11 @@ try:  # vrai moteur du Flux 2 (ML + Gemini). S'il manque une dépendance, on res
 except Exception:  # pragma: no cover
     engine = None
 
+try:  # risque par ANALOGUE 20 ans (NASA POWER, même date civile) — couvre toute la planète.
+    from app.ml import analog
+except Exception:  # pragma: no cover
+    analog = None
+
 FRONTEND_DIR = (Path(__file__).resolve().parent.parent / "frontend")
 
 app = FastAPI(
@@ -112,6 +117,24 @@ async def recommendation(payload: dict) -> JSONResponse:
                 for k in _REAL_KEYS:
                     if k in real:
                         result[k] = real[k]
+                result["data_mode"] = "real"
+                result["_mock"] = False
+        except Exception:
+            pass
+
+    # Score de risque par ANALOGUE sur 20 ans de NASA POWER à la MÊME date civile :
+    # on compare les conditions récentes à chaque 15/11 (±10 j) des 20 dernières années
+    # pour ce point précis. Source NASA unique, globale. Ne bloque jamais la réponse.
+    analog_on = os.environ.get("FIELDSHIFT_ANALOG", "1").lower() not in ("0", "false", "no")
+    if analog is not None and analog_on and payload.get("live", True):
+        try:
+            a_lat = float(payload.get("latitude", 14.8))
+            a_lon = float(payload.get("longitude", -90.5))
+            ana = await run_in_threadpool(analog.analog, a_lat, a_lon)
+            if ana.get("source") == "power_analog":
+                result["risk_score"] = ana["risk_score"]
+                result["risk_level"] = ana["risk_level"]
+                result["analog"] = ana          # percentile + drivers (20 ans NASA POWER)
                 result["data_mode"] = "real"
                 result["_mock"] = False
         except Exception:
