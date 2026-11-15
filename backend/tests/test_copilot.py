@@ -261,14 +261,16 @@ def test_answer_prompt_allows_explicit_language_override(monkeypatch):
     assert "answer in italian" in sysp and "reply in another language" in sysp
 
 
-def test_answer_prompt_asks_instead_of_dumping_on_vague_question(monkeypatch):
-    # A vague "I need help" must get a short clarifying reply, not the whole
-    # recommendation dumped out.
+def test_answer_prompt_stays_conversational_not_a_report(monkeypatch):
+    # Greetings, small talk, a language-switch request, etc. must NOT trigger a
+    # full recommendation dump — the copilot stays a chat assistant and asks.
     fake = _FakeClient(reply="ok")
     _with_fake(monkeypatch, fake)
     copilot.answer("I need help", REC, FIELD, lang="en")
     sysp = _system_of(fake.calls[0]).lower()
-    assert "vague" in sysp and "ask what they want" in sysp
+    assert "chat assistant, not a report" in sysp
+    assert "ask what they would like to know" in sysp
+    assert "never volunteer" in sysp
 
 
 def test_answer_fallback_uses_app_language_not_question(monkeypatch):

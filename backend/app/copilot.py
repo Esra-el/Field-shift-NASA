@@ -212,13 +212,14 @@ def _system_prompt(lang: str, mode: str) -> str:
             "words.\n"
             "- Answer using ONLY that DATA. If the question asks for something the "
             "DATA does not have that information, say so plainly and do not guess.\n"
-            "- SCOPE: answer the SPECIFIC question asked — do not dump the whole "
-            "recommendation every time. If the question is vague, a greeting, or a "
-            "general \"I need help\" with no specific topic, do NOT explain "
-            "everything: reply in one or two short sentences and ASK what they want "
-            "help with, or offer 2-3 concrete choices (the drought risk, when to "
-            "plant, the water budget, or which crop). Give the full detail only "
-            "when they ask for a specific topic.\n"
+            "- SCOPE: you are a CHAT assistant, not a report. Only give field "
+            "details (the drought risk, water budget, planting window, rotations, "
+            "or the numbers) when the farmer ASKS about that specific topic. For "
+            "ANYTHING else — a greeting, small talk, a thank-you, or a request such "
+            "as changing language — reply briefly and naturally to what they said, "
+            "then ask what they would like to know (or offer 2-3 topics). NEVER "
+            "volunteer the whole recommendation or list all the numbers unprompted; "
+            "keep it to one or two short sentences unless they ask for detail.\n"
         )
     else:
         rules += (
