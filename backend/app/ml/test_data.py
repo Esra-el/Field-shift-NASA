@@ -18,6 +18,12 @@ def _fake_payload(lat, lon):
     }
 
 
+def test_power_params_include_soil_moisture():
+    # GWETROOT (root-zone) / GWETTOP (surface) wetness are what retire the proxy
+    assert "GWETROOT" in D.POWER_PARAMETERS
+    assert "GWETTOP" in D.POWER_PARAMETERS
+
+
 def test_cache_path_is_stable_and_descriptive(tmp_path):
     p = D.cache_path(14.8, -90.5, "20040101", "20241231", cache_dir=tmp_path)
     assert p.parent == tmp_path
@@ -60,3 +66,53 @@ def test_fetch_uses_cache_even_if_network_would_fail(tmp_path, monkeypatch):
     monkeypatch.setattr(D, "_http_get_json", boom)
     got = D.fetch_power(13.2, -86.1, "20040101", "20241231", cache_dir=tmp_path)
     assert got["geometry"]["coordinates"][:2] == [-86.1, 13.2]
+
+
+# --------------------------------------------------------------------------- #
+# MODIS NDVI fetch + cache (keyless ORNL DAAC REST)
+# --------------------------------------------------------------------------- #
+def _fake_modis(lat, lon):
+    return {
+        "subset": [{"calendar_date": "2026-06-10", "data": [2253]}],
+        "scale": 0.0001,
+        "latitude": lat,
+        "longitude": lon,
+    }
+
+
+def test_modis_cache_path_stable(tmp_path):
+    p = D.modis_cache_path(43.77, 11.26, "20240101", "20241231", cache_dir=tmp_path)
+    assert p.parent == tmp_path
+    assert p == D.modis_cache_path(43.77, 11.26, "20240101", "20241231", cache_dir=tmp_path)
+    assert "43.77" in p.name and "11.26" in p.name
+
+
+def test_modis_fetch_writes_then_serves_from_cache(tmp_path, monkeypatch):
+    calls = {"n": 0}
+
+    def fake_get(url, params):
+        calls["n"] += 1
+        return _fake_modis(params["latitude"], params["longitude"])
+
+    monkeypatch.setattr(D, "_modis_get_json", fake_get)
+    # a <=150-day range is a single chunk -> one upstream call
+    first = D.fetch_modis_ndvi(43.77, 11.26, "20240101", "20240301", cache_dir=tmp_path)
+    assert first["subset"][0]["data"] == [2253]
+    assert calls["n"] == 1
+    assert D.modis_cache_path(43.77, 11.26, "20240101", "20240301", cache_dir=tmp_path).exists()
+
+    second = D.fetch_modis_ndvi(43.77, 11.26, "20240101", "20240301", cache_dir=tmp_path)
+    assert second == first
+    assert calls["n"] == 1  # served from cache, no second call
+
+
+def test_modis_fetch_uses_cache_when_network_would_fail(tmp_path, monkeypatch):
+    p = D.modis_cache_path(13.2, -86.1, "20240101", "20241231", cache_dir=tmp_path)
+    p.write_text(json.dumps(_fake_modis(13.2, -86.1)))
+
+    def boom(url, params):
+        raise AssertionError("network must not be touched when cache exists")
+
+    monkeypatch.setattr(D, "_modis_get_json", boom)
+    got = D.fetch_modis_ndvi(13.2, -86.1, "20240101", "20241231", cache_dir=tmp_path)
+    assert got["subset"][0]["data"] == [2253]

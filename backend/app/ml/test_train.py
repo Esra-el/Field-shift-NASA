@@ -41,6 +41,60 @@ def _synthetic_table():
     return pd.DataFrame(rows)
 
 
+def _synth_site_payloads():
+    import datetime as dt
+    import numpy as np
+
+    years = list(range(2010, 2024))
+    rng = np.random.default_rng(2)
+    params = {k: {} for k in ("PRECTOTCORR", "T2M", "T2M_MAX", "T2M_MIN", "ALLSKY_SFC_SW_DWN", "GWETROOT")}
+    for y in years:
+        # per-YEAR values so seasonal means carry real inter-annual variance
+        rain = 600 + rng.normal(0, 70)
+        gwet = 0.40 + rng.normal(0, 0.03)
+        tmean_y = 24.0 + rng.normal(0, 0.7)
+        solar_y = 20.0 + rng.normal(0, 0.8)
+        days = [dt.date(y, m, dd) for m in range(5, 11) for dd in range(1, 29)]
+        for d in days:
+            k = d.strftime("%Y%m%d")
+            params["PRECTOTCORR"][k] = max(0.0, rain) / len(days)
+            params["T2M"][k] = tmean_y
+            params["T2M_MAX"][k] = tmean_y + 6.0
+            params["T2M_MIN"][k] = tmean_y - 6.0
+            params["ALLSKY_SFC_SW_DWN"][k] = solar_y
+            params["GWETROOT"][k] = gwet
+    power = {"properties": {"parameter": params}, "geometry": {"coordinates": [0, 0, 0]}}
+    modis = {"subset": [{"calendar_date": f"{y}-06-10", "data": [int((0.5 + rng.normal(0, 0.04)) / 0.0001)]} for y in years], "scale": 0.0001}
+    return power, modis
+
+
+def test_global_sites_span_climates():
+    from app.ml import data as D
+
+    assert len(D.GLOBAL_SITES) >= 10
+    lats = [s["latitude"] for s in D.GLOBAL_SITES]
+    assert any(35 <= lat <= 50 for lat in lats)   # a Mediterranean / temperate point
+    assert any(lat < 0 for lat in lats)           # a Southern-hemisphere point
+
+
+def test_build_global_training_table_is_zscored(monkeypatch):
+    from app.ml import data as D
+
+    power, _modis = _synth_site_payloads()
+    monkeypatch.setattr(D, "fetch_power", lambda *a, **k: power)
+    table = T.build_global_training_table(sites=D.GLOBAL_SITES[:3])
+    for col in FEATURE_ORDER + ["year", "location", "seasonal_rainfall_mm"]:
+        assert col in table.columns
+    # POWER-derived columns are per-site z-scored -> ~0 mean, ~unit spread
+    import numpy as np
+
+    for col in ["soil_moisture", "temp_anomaly", "solar_radiation"]:
+        assert abs(table[col].mean()) < 0.2
+        assert abs(np.std(table[col]) - 1.0) < 0.3
+    # NDVI trains neutral (real only at inference)
+    assert (table["ndvi_trend"] == 0).all()
+
+
 def test_proxy_labels_flag_driest_and_known_drought_years():
     table = _synthetic_table()
     y = T.proxy_labels(table)

@@ -23,6 +23,7 @@ import os
 from ..schemas import FieldRequest
 from ..ml import data as power_data
 from ..ml import features as power_features
+from ..ml.features import FEATURE_ORDER
 
 # The NASA POWER window already cached for the pilot sites.
 REAL_START, REAL_END = "20040101", "20241231"
@@ -110,7 +111,8 @@ def _synthetic_indicators(req: FieldRequest) -> dict:
 
 
 def risk_features(indicators: dict) -> dict:
-    """Slice the indicators down to exactly what `ml.predict_risk` expects."""
+    """Legacy absolute-feature slice. Kept for reference; the model now consumes
+    z-scores (see risk_features_z)."""
     return {
         "rainfall_anomaly": indicators["rainfall_anomaly"],
         "soil_moisture": indicators["soil_moisture"],
@@ -119,3 +121,41 @@ def risk_features(indicators: dict) -> dict:
         "temp_anomaly": indicators["temp_anomaly"],
         "solar_radiation": indicators["solar_radiation"],
     }
+
+
+def _clip(z: float, lim: float = 4.0) -> float:
+    return max(-lim, min(lim, z))
+
+
+# Rough global spreads to turn absolute indicators into approximate z-scores on
+# the fallback path (uncached/synthetic fields). The real path (risk_features_z
+# via assess_location) uses the location's OWN history instead.
+def _approx_z(indicators: dict) -> dict:
+    return {
+        "rainfall_anomaly": _clip(float(indicators["rainfall_anomaly"]) / 0.25),
+        "soil_moisture": _clip((float(indicators["soil_moisture"]) - 0.25) / 0.08),
+        "ndvi_trend": _clip(float(indicators["ndvi_trend"]) / 0.09),
+        "et": _clip((float(indicators["evapotranspiration"]) - 4.5) / 1.5),
+        "temp_anomaly": _clip(float(indicators["temp_anomaly"]) / 0.6),
+        "solar_radiation": _clip((float(indicators["solar_radiation"]) - 19.0) / 1.5),
+    }
+
+
+def risk_features_z(req: FieldRequest, indicators: dict) -> dict:
+    """The six z-score features `ml.predict_risk` now expects.
+
+    Real path: `assess_location` standardizes this point vs its OWN ~20yr NASA
+    POWER history (cache-first, POWER-only so it's fast). Fallback: approximate
+    z-scores from the absolute indicators, for uncached/synthetic fields.
+    """
+    lat, lon = req.latitude, req.longitude
+    start, end = power_data.history_range()
+    if power_data.cache_path(lat, lon, start, end).exists() or _ALLOW_FETCH:
+        try:
+            from ..ml.assess import assess_location
+
+            feats = assess_location(lat, lon, with_ndvi=False)
+            return {k: float(feats[k]) for k in FEATURE_ORDER}
+        except Exception:
+            pass
+    return _approx_z(indicators)

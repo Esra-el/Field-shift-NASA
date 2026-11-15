@@ -4,13 +4,15 @@ Interface (DO NOT change the signature — the pipeline + `main` depend on it):
 
     predict_risk(features: dict) -> dict
 
-Input `features` (all optional; missing keys default sanely):
-    rainfall_anomaly   float  # (recent - normal) / normal; negative = drier
-    soil_moisture      float  # m3/m3, ~0.05..0.45
-    ndvi_trend         float  # slope; negative = vegetation declining
-    et                 float  # evapotranspiration, mm/day
-    temp_anomaly       float  # deg C vs climatology
-    solar_radiation    float  # MJ/m2/day
+Input `features` — standardized anomalies vs the location's OWN history
+(z-scores; 0 = exactly normal for that place). Produced by `assess.assess_location`.
+All optional; a missing key defaults to 0.0 (no signal):
+    rainfall_anomaly   float  # SPI: negative = drier than this location's normal
+    soil_moisture      float  # z of root-zone wetness; negative = drier than normal
+    ndvi_trend         float  # z of vegetation greenness; negative = browner than normal
+    et                 float  # z of evapotranspiration; positive = more water demand
+    temp_anomaly       float  # z of temperature; positive = hotter than normal
+    solar_radiation    float  # z of solar radiation; positive = higher than normal
 
 Output:
     {

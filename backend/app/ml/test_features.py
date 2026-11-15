@@ -69,12 +69,9 @@ def test_feature_vector_respects_order_and_values():
 
 
 def test_feature_vector_fills_missing_with_neutral_defaults():
+    # features are z-scores vs local normal, so every missing one defaults to 0
     vec = F.feature_vector({})
-    # neutral season: no anomaly, mid soil moisture, flat vegetation
-    assert vec[F.FEATURE_ORDER.index("rainfall_anomaly")] == 0.0
-    assert vec[F.FEATURE_ORDER.index("ndvi_trend")] == 0.0
-    assert vec[F.FEATURE_ORDER.index("temp_anomaly")] == 0.0
-    assert 0.2 <= vec[F.FEATURE_ORDER.index("soil_moisture")] <= 0.3
+    assert vec.tolist() == [0.0] * len(F.FEATURE_ORDER)
 
 
 # --------------------------------------------------------------------------- #

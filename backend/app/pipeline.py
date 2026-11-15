@@ -15,7 +15,7 @@ Nothing here needs to change when they swap their stubs for the real thing.
 from __future__ import annotations
 
 from .schemas import FieldRequest, Recommendation, NasaIndicators, RiskLevel
-from .data.indicators import get_indicators, risk_features
+from .data.indicators import get_indicators, risk_features_z
 from .ml.risk import predict_risk
 from .engines.water_budget import compute_water_budget
 from .engines.planting import compute_planting
@@ -26,8 +26,9 @@ from . import copilot
 def build_recommendation(req: FieldRequest, lang: str = "es") -> Recommendation:
     indicators = get_indicators(req)
 
-    # 1) ml agent's module — drought risk from the indicators (irrigation-independent)
-    risk = predict_risk(risk_features(indicators))
+    # 1) ml agent's module — drought risk as z-scores vs this location's own
+    #    history (global SPI model; irrigation-independent)
+    risk = predict_risk(risk_features_z(req, indicators))
     risk_level = RiskLevel(risk["risk_level"])
 
     # 2) deterministic rule engines

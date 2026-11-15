@@ -21,11 +21,12 @@ def _ensure_trained_model():
 
     if ST.load_bundle() is not None:
         return
-    cached = [
-        D.cache_path(s["latitude"], s["longitude"], T.TRAIN_START, T.TRAIN_END)
-        for s in D.PILOT_SITES
-    ]
+    start, end = D.history_range()
+    cached = []
+    for s in D.GLOBAL_SITES:
+        cached.append(D.cache_path(s["latitude"], s["longitude"], start, end))
+        cached.append(D.modis_cache_path(s["latitude"], s["longitude"], start, end))
     if all(p.exists() for p in cached):
-        T.train()  # offline: fetch_power serves every site from cache
+        T.train()  # offline: both fetchers serve every site from cache
     else:
         pytest.skip("No trained model and no NASA cache; run `python -m app.ml.train`.")

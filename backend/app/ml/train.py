@@ -36,9 +36,14 @@ from . import data as D
 from . import scoring as S
 from . import store as ST
 from .features import FEATURE_ORDER, build_feature_matrix
+from .location_features import location_seasons, standardize_all
 
 # El Nino drought years that hit the Central American Dry Corridor hardest.
 KNOWN_DROUGHT_YEARS = {2009, 2015, 2018, 2023}
+
+# The known drought years are Central-American events; the backtest validates
+# "would it have flagged" on those pilot sites, not globally.
+CA_SITES = {s["location"] for s in D.PILOT_SITES}
 
 # Bottom-percentile rainfall that counts as a drought season (per location).
 DROUGHT_PERCENTILE = 20.0
@@ -120,18 +125,31 @@ def train_from_table(table: pd.DataFrame) -> dict:
     }
 
 
-def assemble_training_table() -> pd.DataFrame:
-    """Fetch (cached) NASA POWER for every pilot site and build the season table."""
+def build_global_training_table(sites=None) -> pd.DataFrame:
+    """Per-site, per-season z-scored real features over a climate-diverse set.
+
+    Each site's seasons are standardized against that site's own history, so
+    stacking them yields a location-agnostic table the model trains on.
+    """
+    sites = sites if sites is not None else D.GLOBAL_SITES
+    start, end = D.history_range()
     parts = []
-    for site in D.PILOT_SITES:
-        payload = D.fetch_power(site["latitude"], site["longitude"], TRAIN_START, TRAIN_END)
-        parts.append(build_feature_matrix(payload, site["latitude"], site["location"]))
+    for site in sites:
+        power = D.fetch_power(site["latitude"], site["longitude"], start, end)
+        # Training is POWER-only: dense historical MODIS would be ~500 chunked
+        # calls (10-composite API cap). ndvi_trend trains neutral (empty MODIS);
+        # it is real at inference, where assess_location fetches live MODIS.
+        modis = {"subset": [], "scale": 0.0001}
+        seasons = location_seasons(power, modis, site["latitude"], site["location"])
+        if len(seasons) < 2:
+            continue
+        parts.append(standardize_all(seasons))
     return pd.concat(parts, ignore_index=True)
 
 
 def train() -> dict:
-    """Full offline pipeline: fetch -> build table -> fit -> save bundle."""
-    table = assemble_training_table()
+    """Full offline pipeline: fetch -> build global table -> fit -> save bundle."""
+    table = build_global_training_table()
     bundle = train_from_table(table)
     ST.save_bundle(bundle)
     return bundle
@@ -161,7 +179,9 @@ def backtest(bundle: dict = None, high_threshold: int = 70, elevated_threshold: 
     table = bundle["training_table"].reset_index(drop=True)
     y = proxy_labels(table)
 
-    is_test = table["year"].isin(KNOWN_DROUGHT_YEARS).to_numpy()
+    # validate "would it have flagged" on the Central-American pilot sites,
+    # where the known El Nino drought years actually occurred
+    is_test = (table["year"].isin(KNOWN_DROUGHT_YEARS) & table["location"].isin(CA_SITES)).to_numpy()
     train_idx = np.where(~is_test)[0]
     test_idx = np.where(is_test)[0]
 

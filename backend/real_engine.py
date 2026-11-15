@@ -27,10 +27,11 @@ from typing import Any
 
 # Vrai pipeline (déplacé sous backend/app/ par le Flux 2).
 from app.schemas import FieldRequest, Priority, RiskLevel
-from app.data.indicators import get_indicators, risk_features, REAL_START, REAL_END
+from app.data.indicators import get_indicators, risk_features_z
 from app.ml.risk import predict_risk
 from app.ml import data as power_data
-from app.ml import features as power_features
+from app.ml.location_features import location_seasons, standardize_all
+from app.ml.features import FEATURE_ORDER
 from app.engines.water_budget import compute_water_budget
 from app.engines.planting import compute_planting
 from app.engines.rotation import rank_rotations
@@ -101,8 +102,8 @@ def _generate(payload: dict[str, Any]) -> dict[str, Any]:
     indicators = get_indicators(req)
     is_real = indicators.get("source") == "power"
 
-    # 1) Risque de sécheresse (ML, indépendant de l'irrigation).
-    risk = predict_risk(risk_features(indicators))
+    # 1) Risque de sécheresse (ML : z-scores vs l'historique propre du lieu).
+    risk = predict_risk(risk_features_z(req, indicators))
     risk_score = int(risk["risk_score"])
     risk_level = risk["risk_level"]
 
@@ -281,34 +282,31 @@ def _real_backtest(payload: dict[str, Any]):
     lat, lon = req.latitude, req.longitude
 
     # Pas de réseau implicite : on n'utilise le vrai backtest que si POWER est en cache.
-    cached = power_data.cache_path(lat, lon, REAL_START, REAL_END).exists()
+    start, end = power_data.history_range()
+    cached = power_data.cache_path(lat, lon, start, end).exists()
     allow_fetch = os.environ.get("FIELDSHIFT_ALLOW_FETCH", "").lower() in ("1", "true", "yes")
     if not cached and not allow_fetch:
         return None
 
-    payload_power = power_data.fetch_power(lat, lon, REAL_START, REAL_END)  # cache-first
-    matrix = power_features.build_feature_matrix(payload_power, lat, f"{lat},{lon}")
-    if matrix is None or matrix.empty:
+    payload_power = power_data.fetch_power(lat, lon, start, end)  # cache-first
+    # POWER-only (NDVI neutral, as in training); per-season z-scores vs this site.
+    seasons_df = location_seasons(payload_power, {"subset": [], "scale": 0.0001}, lat, f"{lat},{lon}")
+    if seasons_df.empty or len(seasons_df) < 2:
         return None
-    clim = float(matrix["seasonal_rainfall_mm"].mean())
+    ztab = standardize_all(seasons_df)
+    clim = float(seasons_df["seasonal_rainfall_mm"].mean())
 
     seasons, warned = [], 0
     for name, (year, tag) in _BT_YEARS.items():
-        rows = matrix[matrix["year"] == year]
-        if rows.empty:
+        zrows = ztab[ztab["year"] == year]
+        if zrows.empty:
             continue
-        row = rows.iloc[-1]
-        feats = {
-            "rainfall_anomaly": float(row["rainfall_anomaly"]),
-            "soil_moisture": float(row["soil_moisture"]),
-            "ndvi_trend": float(row["ndvi_trend"]),
-            "et": float(row["et"]),
-            "temp_anomaly": float(row["temp_anomaly"]),
-            "solar_radiation": float(row["solar_radiation"]),
-        }
+        zrow = zrows.iloc[-1]
+        feats = {k: float(zrow[k]) for k in FEATURE_ORDER}
         r = predict_risk(feats)
         score, level = int(r["risk_score"]), r["risk_level"]
-        rainfall_pct = round(float(row["seasonal_rainfall_mm"]) / clim * 100) if clim else 100
+        srow = seasons_df[seasons_df["year"] == year].iloc[-1]
+        rainfall_pct = round(float(srow["seasonal_rainfall_mm"]) / clim * 100) if clim else 100
         did_warn = score >= 50
         warned += int(did_warn)
         seasons.append({

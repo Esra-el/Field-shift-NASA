@@ -38,18 +38,9 @@ FEATURE_ORDER = [
     "solar_radiation",
 ]
 
-# Neutral "near seasonal normal" defaults for any feature the caller omits.
-# The anomaly/trend features are 0 at normal; the absolute features (et, solar,
-# soil) use the Dry-Corridor seasonal climatology so an omitted value reads as
-# typical, not anomalous. (Matches the trained scaler means ~4.0 and ~18.8.)
-FEATURE_DEFAULTS = {
-    "rainfall_anomaly": 0.0,
-    "soil_moisture": 0.25,
-    "ndvi_trend": 0.0,
-    "et": 4.0,
-    "temp_anomaly": 0.0,
-    "solar_radiation": 18.8,
-}
+# Features are standardized anomalies vs the location's own normal (z-scores;
+# 0 = exactly normal). So every omitted feature defaults to 0.0 = "no signal".
+FEATURE_DEFAULTS = {name: 0.0 for name in FEATURE_ORDER}
 
 # Main rain-fed growing season for the Central American Dry Corridor
 # (primera + canicula + postrera). Seasonal totals are built over these months.
