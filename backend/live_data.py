@@ -166,15 +166,20 @@ def grid(lat: float, lon: float) -> dict[str, Any]:
     lats = [max(-89.9, min(89.9, lat + GRID_STEP * (half - i))) for i in range(GRID_N)]   # nord -> sud
     lons = [lon + GRID_STEP * (j - half) for j in range(GRID_N)]                          # ouest -> est
     pts = [(a, ((b + 180) % 360) - 180) for a in lats for b in lons]
-    resp = _get("https://api.open-meteo.com/v1/forecast", {
-        "latitude": ",".join(f"{a:.4f}" for a, _ in pts),
-        "longitude": ",".join(f"{b:.4f}" for _, b in pts),
-        "current": "temperature_2m,wind_speed_10m,wind_direction_10m",
-        "daily": "precipitation_sum,shortwave_radiation_sum",
-        "past_days": 60, "forecast_days": 1, "timezone": "auto",
-    })
-    if isinstance(resp, dict):
-        resp = [resp]
+    def _chunk(part):
+        r = _get("https://api.open-meteo.com/v1/forecast", {
+            "latitude": ",".join(f"{a:.4f}" for a, _ in part),
+            "longitude": ",".join(f"{b:.4f}" for _, b in part),
+            "current": "temperature_2m,wind_speed_10m,wind_direction_10m",
+            "daily": "precipitation_sum,shortwave_radiation_sum",
+            "past_days": 60, "forecast_days": 1, "timezone": "auto",
+        })
+        return r if isinstance(r, list) else [r]
+
+    # 81 points en UNE requête dépassait le délai depuis les serveurs Vercel : 3 requêtes
+    # de 27 points en parallèle, dans l'ordre d'origine.
+    parts = [pts[i:i + 27] for i in range(0, len(pts), 27)]
+    resp = [x for chunk in _POOL.map(_chunk, parts) for x in chunk]
     temp, wind, wdir, rain60, solar7 = [], [], [], [], []
     when = None
     for r in resp:
