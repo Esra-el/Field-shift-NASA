@@ -849,3 +849,98 @@ body { background: var(--sand-100); }
 .fc-day.wet .fc-col i { background: var(--sky-700); }
 .fc-d { display: grid; justify-items: center; font-size: .7rem; color: var(--ink-3); line-height: 1.15; text-transform: capitalize; }
 .fc-d small { font-size: .66rem; }
+
+/* =====================================================
+   v8 — menu pilule identique au site public + fond satellite qui défile
+   ===================================================== */
+.nav {
+  position: fixed; z-index: 60; top: 12px; left: 50%; transform: translateX(-50%);
+  width: min(1200px, calc(100% - 24px)); min-height: 0; gap: 16px;
+  padding: 8px 8px 8px 14px; border: 0; border-radius: 999px;
+  background: rgba(255,255,255,.96); color: var(--forest-900);
+  box-shadow: 0 8px 30px rgba(4,48,59,.14); backdrop-filter: blur(10px); -webkit-backdrop-filter: blur(10px);
+}
+.nav .brand { font-family: var(--font); font-weight: 600; font-size: 1.2rem; letter-spacing: -.04em; color: var(--forest-900); }
+.nav .brand-mark { width: 34px; height: 34px; border-radius: 50%; background: #E7F352; color: #04303B; }
+.nav .nav-links { gap: 6px; margin: 0 auto; }
+.nav .nav-links a { min-height: 40px; padding: 0 16px; font-weight: 500; font-size: .95rem; color: #04303B; opacity: .85; background: transparent; }
+.nav .nav-links a:hover { opacity: 1; background: #F2F3EE; }
+.nav .nav-links a[aria-current="page"] { opacity: 1; background: #04303B; color: #fff; }
+.nav-right { display: flex; align-items: center; gap: 8px; }
+.nav .lang-seg { border: 0; background: #F2F3EE; gap: 0; }
+.nav .lang-seg button { min-width: 36px; min-height: 34px; font-family: var(--font); font-weight: 600; font-size: .8rem; color: #6E8288; }
+.nav .lang-seg button[aria-pressed="true"] { background: #04303B; color: #fff; }
+.nav-cta { display: inline-flex; align-items: center; gap: 8px; min-height: 44px; padding: 0 18px; border-radius: 999px; background: #E7F352; color: #04303B; font-weight: 500; font-size: .95rem; text-decoration: none; white-space: nowrap; transition: background .2s ease, transform .2s ease; }
+.nav-cta:hover { background: #CFDC3A; transform: translateY(-1px); }
+.nav-burger { display: none; width: 44px; height: 44px; border: 0; border-radius: 50%; background: #F2F3EE; color: #04303B; cursor: pointer; place-items: center; }
+@media (max-width: 960px) {
+  .nav .nav-links { display: none; position: absolute; top: calc(100% + 8px); left: 0; right: 0; flex-direction: column; gap: 0; padding: 8px; border-radius: 24px; background: #fff; box-shadow: 0 16px 40px rgba(4,48,59,.18); }
+  .nav .nav-links.is-open { display: flex; }
+  .nav .nav-links a { min-height: 48px; padding: 0 16px; border-radius: 14px; font-size: 1.05rem; }
+  .nav .nav-links a span { display: inline; }
+  .nav-burger { display: grid; }
+  .nav-right { margin-left: auto; }
+}
+@media (max-width: 560px) { .nav-cta { display: none; } .nav .brand-name { display: inline; font-size: 1.05rem; } }
+
+/* Le menu flotte au-dessus du contenu : on libère la place en haut */
+.hero-inner { padding-top: 104px; }
+@media (min-width: 900px) { .hero-inner { padding-top: 120px; } }
+.an-layout { padding-top: 0; }
+.an-globe .g-top { top: 84px; }
+.an-panel { padding-top: 84px; }
+@media (min-width: 900px) { .an-layout { height: 100vh; } }
+@media (max-width: 899px) { .an-globe { padding-top: 76px; } .an-panel { padding-top: 0; } }
+
+/* Fond : vue satellite réelle qui défile (au lieu de la photo du ciel) */
+.hero, .an-globe { position: relative; background: #0F2F2A; }
+.sat-bg { position: absolute; inset: 0; z-index: -2; background: #1E3B22 url('/img/nasa/sahel-truecolor.jpg') center / cover; }
+.sat-bg .maplibregl-ctrl-attrib, .sat-bg .maplibregl-ctrl-bottom-right { display: none; }
+.sat-shade { position: absolute; inset: 0; z-index: -1; pointer-events: none;
+  background: linear-gradient(90deg, rgba(4,30,26,.78) 0%, rgba(4,30,26,.45) 45%, rgba(4,30,26,.2) 75%); }
+.an-globe .sat-shade { background: linear-gradient(180deg, rgba(4,30,26,.55) 0%, rgba(4,30,26,.25) 45%, rgba(4,30,26,.65) 100%); }
+@media (max-width: 899px) { .hero .sat-shade { background: linear-gradient(180deg, rgba(4,30,26,.75) 0%, rgba(4,30,26,.45) 60%, rgba(4,30,26,.3) 100%); } }
+.an-globe .maplibregl-ctrl-top-right { top: 74px; }
+
+/* =====================================================
+   v9 — retour du ciel, qui bouge lentement (zoom et dérive très doux)
+   ===================================================== */
+.sat-bg { inset: -6%; background: #2E6E8E url('/img/sky.jpg') center / cover no-repeat; transform-origin: 60% 40%;
+  animation: skyDrift 60s ease-in-out infinite alternate; will-change: transform; }
+@keyframes skyDrift {
+  0%   { transform: scale(1) translate3d(0, 0, 0); }
+  50%  { transform: scale(1.08) translate3d(-2.5%, 1%, 0); }
+  100% { transform: scale(1.04) translate3d(2%, -1.5%, 0); }
+}
+@media (prefers-reduced-motion: reduce) { .sat-bg { animation: none; } }
+.hero .sat-shade { background: linear-gradient(90deg, rgba(4,48,59,.78) 0%, rgba(4,48,59,.45) 45%, rgba(4,48,59,.05) 75%); }
+.an-globe .sat-shade { background: linear-gradient(180deg, rgba(4,48,59,.35) 0%, rgba(4,48,59,.05) 40%, rgba(4,48,59,.45) 100%); }
+.hero, .an-globe { overflow: hidden; }
+@media (max-width: 899px) { .hero .sat-shade { background: linear-gradient(180deg, rgba(4,48,59,.72) 0%, rgba(4,48,59,.35) 60%, rgba(4,48,59,.1) 100%); } }
+
+/* =====================================================
+   v10 — page d'analyse : menu à sa place (au-dessus, pas par-dessus) + écran partagé 50/50 sur PC
+   ===================================================== */
+body[data-page="analyse"] { background: var(--sand-100); }
+body[data-page="analyse"] .nav {
+  position: relative; top: auto; left: auto; transform: none;
+  margin: 10px auto; width: calc(100% - 24px); max-width: none;
+  box-shadow: 0 2px 14px rgba(4,48,59,.08);
+}
+body[data-page="analyse"] .an-panel { padding-top: 8px; }
+body[data-page="analyse"] .an-globe { padding-top: 0; }
+body[data-page="analyse"] .an-globe .g-top { top: 14px; }
+body[data-page="analyse"] .an-globe .maplibregl-ctrl-top-right { top: 0; }
+@media (max-width: 999px) {
+  body[data-page="analyse"] .an-layout { height: auto; }
+  body[data-page="analyse"] .an-globe { margin: 0 12px; border-radius: 22px; }
+}
+@media (min-width: 1000px) {
+  body[data-page="analyse"] .an-layout { flex-direction: row; height: calc(100vh - 80px); gap: 12px; padding: 0 12px 12px; }
+  body[data-page="analyse"] .an-panel {
+    width: 50%; flex: none; border-right: 0; border-radius: 22px; background: var(--sand-100);
+    padding: 8px 28px 110px; justify-items: center;
+  }
+  body[data-page="analyse"] .an-panel > .view { width: 100%; max-width: 700px; }
+  body[data-page="analyse"] .an-globe { flex: 1; border-radius: 22px; }
+}

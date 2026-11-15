@@ -3,7 +3,7 @@
 (function () {
   const DICT = {
     fr: {
-      "nav.home": "Accueil", "nav.analyse": "Analyser",
+      "nav.home": "Accueil", "nav.analyse": "Analyser", "nav.site": "Le projet",
       "tagline": "Décidez quoi semer avant l'arrivée de la sécheresse.",
       "home.hello": "Bonjour, bienvenue sur Field Shift.",
       "home.lead": "Les données des satellites de la NASA transformées en réponses simples pour votre parcelle.",
@@ -97,7 +97,7 @@
       "region": "Amérique centrale",
     },
     en: {
-      "nav.home": "Home", "nav.analyse": "Analyze",
+      "nav.home": "Home", "nav.analyse": "Analyze", "nav.site": "About",
       "tagline": "Decide what to plant before a drought hits.",
       "home.hello": "Hello, welcome to Field Shift.",
       "home.lead": "NASA satellite data turned into simple answers for your field.",
@@ -186,7 +186,7 @@
       "region": "Central America",
     },
     it: {
-      "nav.home": "Home", "nav.analyse": "Analizza",
+      "nav.home": "Home", "nav.analyse": "Analizza", "nav.site": "Il progetto",
       "tagline": "Decidi cosa seminare prima che arrivi la siccità.",
       "home.hello": "Ciao, benvenuto su Field Shift.",
       "home.lead": "I dati dei satelliti NASA trasformati in risposte semplici per il tuo campo.",
@@ -305,10 +305,11 @@
   function extend(more) { Object.keys(more).forEach((l) => { if (DICT[l]) Object.assign(DICT[l], more[l]); }); }
   window.FSI18N = { get lang() { return lang; }, get locale() { return LOCALE[lang]; }, t, apply, setLang, extend };
 
-  /* ---------- Navigation ---------- */
+  /* ---------- Navigation : même menu pilule que le site public ---------- */
   const NAV = [
-    { href: "/inicio.html", key: "nav.home", icon: "lucide:house", id: "home" },
-    { href: "/globo.html", key: "nav.analyse", icon: "lucide:earth", id: "analyse" },
+    { href: "/inicio.html", key: "nav.home", id: "home" },
+    { href: "/globo.html", key: "nav.analyse", id: "analyse" },
+    { href: "/", key: "nav.site", id: "site" },
   ];
   function renderNav() {
     const el = document.getElementById("nav");
@@ -316,17 +317,45 @@
     const page = document.body.dataset.page;
     el.className = "nav";
     el.innerHTML = `
-      <a class="brand" href="/"><span class="brand-mark"><iconify-icon icon="lucide:sprout" width="20" height="20"></iconify-icon></span><span class="brand-name">Field Shift</span></a>
-      <nav class="nav-links" aria-label="Menu">
-        ${NAV.map((n) => `<a href="${n.href}" ${n.id === page ? 'aria-current="page"' : ""}><iconify-icon icon="${n.icon}" width="20" height="20"></iconify-icon><span data-t="${n.key}"></span></a>`).join("")}
+      <a class="brand" href="/inicio.html"><span class="brand-mark"><iconify-icon icon="lucide:sprout" width="18" height="18"></iconify-icon></span><span class="brand-name">Field Shift</span></a>
+      <nav class="nav-links" id="nav-links" aria-label="Menu">
+        ${NAV.map((n) => `<a href="${n.href}" ${n.id === page ? 'aria-current="page"' : ""}><span data-t="${n.key}"></span></a>`).join("")}
       </nav>
-      <div class="lang-seg" role="group" aria-label="Langue · Language · Lingua">
-        ${LANGS.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === lang}">${l.toUpperCase()}</button>`).join("")}
+      <div class="nav-right">
+        <div class="lang-seg" role="group" aria-label="Langue · Language · Lingua">
+          ${LANGS.map((l) => `<button type="button" data-l="${l}" aria-pressed="${l === lang}">${l.toUpperCase()}</button>`).join("")}
+        </div>
+        ${page === "analyse" ? "" : `<a class="nav-cta" href="/globo.html"><span data-t="cta.analyse"></span><iconify-icon icon="lucide:arrow-right" width="16" height="16"></iconify-icon></a>`}
+        <button type="button" class="nav-burger" aria-label="Menu" aria-expanded="false"><iconify-icon icon="lucide:menu" width="22" height="22"></iconify-icon></button>
       </div>`;
     el.querySelector(".lang-seg").addEventListener("click", (e) => {
       const b = e.target.closest("button[data-l]");
       if (b && b.dataset.l !== lang) setLang(b.dataset.l);
     });
+    const burger = el.querySelector(".nav-burger"), links = el.querySelector(".nav-links");
+    burger.addEventListener("click", () => {
+      const open = links.classList.toggle("is-open");
+      burger.setAttribute("aria-expanded", open);
+    });
+  }
+
+  /* ---------- Fond animé : vue satellite réelle qui dérive (comme le site public) ---------- */
+  function driftBg(el, opts) {
+    if (!el || !window.maplibregl || !hasWebGL()) return null;
+    const o = Object.assign({ center: [-87.255, 13.215], zoom: 14.2, pitch: 38, bearing: -20,
+      path: [[-87.255, 13.215], [-87.215, 13.235], [-87.19, 13.205], [-87.235, 13.19]], ms: 26000 }, opts || {});
+    const style = satStyle(false);
+    style.projection = { type: "mercator" };
+    delete style.sky;
+    const map = new maplibregl.Map({ container: el, style, center: o.center, zoom: o.zoom, pitch: o.pitch, bearing: o.bearing,
+      interactive: false, attributionControl: false, fadeDuration: 0 });
+    if (!window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+      let i = 0;
+      const go = () => { i = (i + 1) % o.path.length; map.easeTo({ center: o.path[i], duration: o.ms, easing: (t) => t, bearing: map.getBearing() + 4 }); };
+      map.on("moveend", go);
+      map.once("load", go);
+    }
+    return map;
   }
 
   /* ---------- Helpers ---------- */
@@ -373,7 +402,7 @@
       version: 8,
       projection: { type: "globe" },
       sky: {
-        "sky-color": "#06101A", "horizon-color": "#7FB8E6", "fog-color": "#06101A",
+        "sky-color": "rgba(6,16,26,0)", "horizon-color": "#7FB8E6", "fog-color": "rgba(6,16,26,0)",
         "sky-horizon-blend": 0.6, "horizon-fog-blend": 0.9, "fog-ground-blend": 0.95,
         "atmosphere-blend": ["interpolate", ["linear"], ["zoom"], 0, 1, 5, 0.9, 8, 0],
       },
@@ -432,7 +461,7 @@
   window.Terra = {
     extend, cropKey, cropLabel,
     t, apply, renderNav, fmtDate, fmtWindow, riskClass, wsClass, plClass, toast,
-    getPlace, setPlace, fmtCoords, hasWebGL, satStyle, spinGlobe,
+    getPlace, setPlace, fmtCoords, hasWebGL, satStyle, spinGlobe, driftBg,
   };
 
   document.addEventListener("DOMContentLoaded", () => { renderNav(); apply(); });
