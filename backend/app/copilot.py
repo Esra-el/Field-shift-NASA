@@ -212,6 +212,13 @@ def _system_prompt(lang: str, mode: str) -> str:
             "words.\n"
             "- Answer using ONLY that DATA. If the question asks for something the "
             "DATA does not have that information, say so plainly and do not guess.\n"
+            "- SCOPE: answer the SPECIFIC question asked — do not dump the whole "
+            "recommendation every time. If the question is vague, a greeting, or a "
+            "general \"I need help\" with no specific topic, do NOT explain "
+            "everything: reply in one or two short sentences and ASK what they want "
+            "help with, or offer 2-3 concrete choices (the drought risk, when to "
+            "plant, the water budget, or which crop). Give the full detail only "
+            "when they ask for a specific topic.\n"
         )
     else:
         rules += (

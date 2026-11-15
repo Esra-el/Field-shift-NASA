@@ -261,6 +261,16 @@ def test_answer_prompt_allows_explicit_language_override(monkeypatch):
     assert "answer in italian" in sysp and "reply in another language" in sysp
 
 
+def test_answer_prompt_asks_instead_of_dumping_on_vague_question(monkeypatch):
+    # A vague "I need help" must get a short clarifying reply, not the whole
+    # recommendation dumped out.
+    fake = _FakeClient(reply="ok")
+    _with_fake(monkeypatch, fake)
+    copilot.answer("I need help", REC, FIELD, lang="en")
+    sysp = _system_of(fake.calls[0]).lower()
+    assert "vague" in sysp and "ask what they want" in sysp
+
+
 def test_answer_fallback_uses_app_language_not_question(monkeypatch):
     # No key -> rule-based fallback, in the app's SELECTED language, regardless of
     # the language the question happens to be typed in.
