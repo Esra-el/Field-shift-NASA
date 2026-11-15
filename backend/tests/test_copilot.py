@@ -238,60 +238,52 @@ def test_explain_prompt_is_spanish_by_default(monkeypatch):
     assert "Spanish" in _system_of(fake.calls[0])
 
 
-def test_answer_detects_english_question_even_when_app_is_spanish(monkeypatch):
-    # Farmer types English while the app toggle is Spanish -> answer in English.
+# The reply language follows the QUESTION the farmer typed (input-driven), not
+# the app toggle: a French question gets a French answer even if the UI is
+# English. The live model mirrors it; the no-key fallback detects it.
+def test_answer_prompt_tells_model_to_mirror_the_question_language(monkeypatch):
     fake = _FakeClient(reply="ok")
     _with_fake(monkeypatch, fake)
+    # English question, Spanish UI -> the model is told to answer in the
+    # question's language, NOT forced into the Spanish toggle.
     copilot.answer("When should I plant, and why?", REC, FIELD, lang="es")
-    assert "reply in English" in _system_of(fake.calls[0])
+    sysp = _system_of(fake.calls[0]).lower()
+    assert "same language as" in sysp
+    assert "reply in spanish" not in sysp
 
 
-def test_answer_detects_spanish_question_even_when_app_is_english(monkeypatch):
-    fake = _FakeClient(reply="ok")
-    _with_fake(monkeypatch, fake)
-    copilot.answer("¿Cuándo debo sembrar el maíz?", REC, FIELD, lang="en")
-    assert "reply in Spanish" in _system_of(fake.calls[0])
+def test_answer_fallback_follows_english_question(monkeypatch):
+    _no_keys(monkeypatch)
+    out = copilot.answer("I need help, what should I do?", REC, FIELD, lang="es").lower()
+    assert "drought risk" in out        # English, although the UI toggle is Spanish
+    assert "riesgo" not in out
 
 
-def test_answer_language_defaults_to_app_when_question_is_ambiguous(monkeypatch):
-    fake = _FakeClient(reply="ok")
-    _with_fake(monkeypatch, fake)
-    copilot.answer("12345 ???", REC, FIELD, lang="en")   # no language signal
-    assert "reply in English" in _system_of(fake.calls[0])
+def test_answer_fallback_follows_french_question(monkeypatch):
+    _no_keys(monkeypatch)
+    out = copilot.answer("J'ai besoin d'aide, que faire ?", REC, FIELD, lang="en").lower()
+    assert "sécheresse" in out          # French, although the UI toggle is English
+    assert "drought risk" not in out
 
 
-def test_detect_lang_unit():
-    assert copilot._detect_lang("When should I plant maize?", "es") == "en"
-    assert copilot._detect_lang("¿Cuánta lluvia cayó?", "en") == "es"
-    assert copilot._detect_lang("cuando debo sembrar maiz", "en") == "es"   # no accents
-    assert copilot._detect_lang("", "es") == "es"                           # empty -> default
+def test_answer_fallback_follows_italian_question(monkeypatch):
+    _no_keys(monkeypatch)
+    out = copilot.answer("Ho bisogno di aiuto, cosa devo fare?", REC, FIELD, lang="en").lower()
+    assert "siccità" in out             # Italian
 
 
-def test_detect_lang_respects_french_and_italian_ui():
-    # A French question that merely SHARES a word with Spanish ("que") must stay
-    # French — this is the regression that answered French users in Spanish.
-    assert copilot._detect_lang("Que dois-je faire aujourd'hui ?", "fr") == "fr"
-    assert copilot._detect_lang("Que penser de la pluie ?", "fr") == "fr"
-    assert copilot._detect_lang("Quando devo seminare il mais ?", "it") == "it"
-    # ...but a CLEARLY Spanish or English question still overrides the FR/IT UI.
-    assert copilot._detect_lang("¿Cuándo debo sembrar?", "fr") == "es"      # Spanish-only ¿
-    assert copilot._detect_lang("cuando debo sembrar maiz", "fr") == "es"   # strong margin
-    assert copilot._detect_lang("When should I plant maize?", "it") == "en"
+def test_answer_fallback_short_question_uses_ui_language(monkeypatch):
+    # Too short / no signal -> fall back to the app's chosen language.
+    _no_keys(monkeypatch)
+    out = copilot.answer("ok?", REC, FIELD, lang="fr").lower()
+    assert "sécheresse" in out
 
 
-def test_answer_keeps_french_ui_for_a_shared_word(monkeypatch):
-    # "Que dois-je faire ?" shares "que" with Spanish; the reply must be French.
+def test_answer_prompt_forbids_mixing_languages(monkeypatch):
     fake = _FakeClient(reply="ok")
     _with_fake(monkeypatch, fake)
     copilot.answer("Que dois-je faire ?", REC, FIELD, lang="fr")
-    assert "reply in French" in _system_of(fake.calls[0])
-
-
-def test_answer_flips_french_ui_to_spanish_on_strong_signal(monkeypatch):
-    fake = _FakeClient(reply="ok")
-    _with_fake(monkeypatch, fake)
-    copilot.answer("¿Cuándo debo sembrar el maíz?", REC, FIELD, lang="fr")
-    assert "reply in Spanish" in _system_of(fake.calls[0])
+    assert "Do NOT mix languages" in _system_of(fake.calls[0])
 
 
 # --------------------------------------------------------------------------- #
@@ -344,6 +336,14 @@ def test_status_flags_wrong_format_key(monkeypatch):
     st = copilot.status()
     assert st["has_key"] is True
     assert st["key_format_ok"] is False      # wrong credential type -> will 401
+
+
+def test_status_accepts_new_aq_key_format(monkeypatch):
+    # Newer Google AI Studio keys start with 'AQ.' — must be accepted as valid.
+    monkeypatch.setenv("GEMINI_API_KEY", "AQ.Ab8RNfakefakefakefakefakefakefakefake")
+    st = copilot.status()
+    assert st["has_key"] is True
+    assert st["key_format_ok"] is True
 
 
 def test_fallback_is_bilingual(monkeypatch):
