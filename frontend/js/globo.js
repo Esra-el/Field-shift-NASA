@@ -733,7 +733,7 @@
     if (r.live && srcs.length && !state.offline) {
       const chips = srcs.map((s) => {
         const dt = String(s.date || "");
-        const when = dt.length > 10 ? `${Terra.fmtDate(dt.slice(0, 10))} ${dt.slice(11, 16)}` : Terra.fmtDate(dt);
+        const when = !dt ? "" : dt.length > 10 ? `${Terra.fmtDate(dt.slice(0, 10))} ${dt.slice(11, 16)}` : Terra.fmtDate(dt);
         return `<span class="lv-src"><b>${s.name}</b>${when}</span>`;
       }).join("");
       bar.className = "live-bar is-live";

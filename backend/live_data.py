@@ -85,6 +85,34 @@ def _open_meteo(lat: float, lon: float) -> dict[str, Any]:
     })
 
 
+# Pente de la parcelle : altitude NASA SRTM (30 m) au point et ~90 m autour, via Open
+# Topo Data (serveur public qui sert les tuiles SRTM de la NASA). Sert au risque
+# d'érosion des rotations. Cache long : le relief ne change pas.
+_SRTM: dict[str, tuple[float, dict[str, Any]]] = {}
+_SRTM_TTL = 30 * 86400
+
+
+def _srtm_slope(lat: float, lon: float) -> dict[str, Any]:
+    import math
+    key = f"{round(lat, 4)}:{round(lon, 4)}"
+    hit = _SRTM.get(key)
+    if hit and time.time() - hit[0] < _SRTM_TTL:
+        return hit[1]
+    d_lat = 0.0008                                   # ~89 m
+    d_lon = d_lat / max(0.2, math.cos(math.radians(lat)))
+    pts = [(lat, lon), (lat + d_lat, lon), (lat - d_lat, lon), (lat, lon + d_lon), (lat, lon - d_lon)]
+    r = _get("https://api.opentopodata.org/v1/srtm30m", {"locations": "|".join(f"{a:.5f},{b:.5f}" for a, b in pts)})
+    z = [x.get("elevation") for x in r.get("results") or []]
+    if len(z) != 5 or any(v is None for v in z):
+        raise ValueError("srtm_no_data")      # hors couverture SRTM (au-delà de 60°N / 56°S, mer)
+    dy = 2 * d_lat * 111_320
+    dx = 2 * d_lon * 111_320 * math.cos(math.radians(lat))
+    slope = 100 * math.hypot((z[3] - z[4]) / dx, (z[1] - z[2]) / dy)
+    out = {"slope_pct": round(slope, 1), "elevation_m": round(z[0])}
+    _SRTM[key] = (time.time(), out)
+    return out
+
+
 # Normale de pluie ERA5 (1991-2020) via l'archive Open-Meteo : même famille de modèles
 # que la pluie récente Open-Meteo, donc « pluie des 60 j vs normale » se compare à
 # armes égales. (NASA POWER donnait ~2x la pluie des autres sources sous les tropiques.)
@@ -273,6 +301,7 @@ def fetch(lat: float, lon: float) -> dict[str, Any]:
         "clim": lambda: _power_clim(lat, lon),
         "meteo": lambda: _open_meteo(lat, lon),
         "era5": lambda: _era5_normal(lat, lon),
+        "srtm": lambda: _srtm_slope(lat, lon),
         "ndvi": lambda: _ndvi(lat, lon, today),
     }
     raw: dict[str, Any] = {}
@@ -434,6 +463,13 @@ def summarize(raw: dict[str, Any], today: date) -> dict[str, Any]:
                         "soil": {d: round(sum(v) / len(v), 3) for d, v in soil_day.items()}}
         out["today"] = today.isoformat()
         out["sources"].append({"name": "Open-Meteo", "what": "weather_forecast", "date": cur.get("time"), "live": True})
+
+    # --- Pente / altitude NASA SRTM
+    srtm = raw.get("srtm")
+    if srtm:
+        out["slope_pct"] = srtm["slope_pct"]
+        out["elevation_m"] = srtm["elevation_m"]
+        out["sources"].append({"name": "NASA SRTM", "what": "slope", "date": None, "live": True})
 
     # --- NDVI MODIS
     nd = raw.get("ndvi") or []

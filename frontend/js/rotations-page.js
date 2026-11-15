@@ -27,9 +27,9 @@
   const IMG = (w) => {
     w = String(w).toLowerCase();
     if (/ma[iï]s|maize|corn/.test(w)) return "cornfield.jpg";
-    if (/haricot|bean|fagiol|légum|legum|legume/.test(w)) return "seedlings.jpg";
-    if (/sorgh|sorgo|mil|miglio|millet|céréale|cereal|cereale/.test(w)) return "rows.jpg";
-    if (/couvert|cover|copertura|jachère|fallow|maggese/.test(w)) return "mulch.jpg";
+    if (/couvert|cover|copertura|jachère|fallow|maggese|mucuna|vesce|vetch|veccia/.test(w)) return "mulch.jpg";
+    if (/haricot|bean|fagiol|légum|legum|legume|niébé|cowpea|arachide|groundnut|soja|soy|pois|chickpea|cece|fève|faba|fava|lentil/.test(w)) return "seedlings.jpg";
+    if (/sorgh|sorgo|mil|miglio|millet|céréale|cereal|cereale|blé|wheat|frumento|orge|barley|orzo|tournesol|sunflower|girasole/.test(w)) return "rows.jpg";
     return "seedlings.jpg";
   };
   const dots = (lvl) => `<span class="pg-dots">${[1, 2, 3].map((i) => `<i class="${i <= (LV[lvl] || 0) ? "on" : ""}"></i>`).join("")}</span>`;

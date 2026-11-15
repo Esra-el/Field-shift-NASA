@@ -15,6 +15,11 @@ import math
 from datetime import date, timedelta
 from typing import Any
 
+try:  # rotations calculées pour le lieu (backend/rotations.py)
+    from rotations import build as _rot_build, TX as _ROT_TX
+except Exception:  # pragma: no cover
+    _rot_build, _ROT_TX = None, {}
+
 try:  # modèle ML de risque du Flux 2 (backend/app/ml) ; absent -> règles simples
     from app.ml.risk import predict_risk as _predict_risk
 except Exception:  # pragma: no cover
@@ -457,14 +462,18 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
          "soil_benefit": "medium", "yield_potential": "high", "risk": "high" if risk_level == "high" else "moderate",
          "reason": T["rot_yield_reason"], "actions": ROT_ACTIONS[lang]["highest_yield"]},
     ]
-    if priority == "save_water":
-        rotations.sort(key=lambda r: {"high": 0, "medium": 1, "low": 2}[r["water_saving"]])
-    elif priority == "max_yield":
-        rotations.sort(key=lambda r: 0 if r["type"] == "highest_yield" else 1)
-    elif priority == "protect_soil":
-        rotations.sort(key=lambda r: ({"high": 0, "medium": 1, "low": 2}[r["soil_benefit"]], r["type"] != "safest"))
-    elif priority == "food_security":
-        rotations.sort(key=lambda r: {"balanced": 0, "safest": 1, "highest_yield": 2}[r["type"]])
+    def _sort_rots(rots):
+        if priority == "save_water":
+            rots.sort(key=lambda r: ({"high": 0, "medium": 1, "low": 2}[r["water_saving"]], -r.get("water_saving_pct", 0)))
+        elif priority == "max_yield":
+            rots.sort(key=lambda r: 0 if r["type"] == "highest_yield" else 1)
+        elif priority == "protect_soil":
+            rots.sort(key=lambda r: ({"high": 0, "medium": 1, "low": 2}[r["soil_benefit"]], r["type"] != "safest"))
+        elif priority == "food_security":
+            rots.sort(key=lambda r: {"balanced": 0, "safest": 1, "highest_yield": 2}[r["type"]])
+        return rots
+
+    _sort_rots(rotations)
 
     # Preuves, lacunes et vérifications locales pour chaque rotation + la rotation actuelle.
     X = RX.get(lang, RX["fr"])
@@ -512,6 +521,31 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
     for r in rotations:
         _ev, _gaps, _rv = detail[r["type"]]
         r["evidence"], r["gaps"], r["local_review"] = _ev, _gaps, _rv
+
+    # Rotations CALCULÉES pour ce lieu et cette culture (rotations.py) dès que les normales
+    # réelles sont là ; les modèles ci-dessus restent le secours hors ligne.
+    if is_live and _rot_build is not None:
+        try:
+            built = _rot_build(live, today, window_start, crop, current_txt, soil_moisture, retention,
+                               irrigation_mm, lang, risk_level)
+        except Exception:
+            built = None
+        if built:
+            RT = _ROT_TX.get(lang, _ROT_TX["fr"])
+            old = {r["type"]: r for r in rotations}
+            has_slope = live.get("slope_pct") is not None
+            for b_ in built:
+                o = old[b_["type"]]
+                gaps = [RT["gap_values"]] + [g_ for g_ in o["gaps"] if g_ != X["gap_slope"]]
+                if not has_slope:
+                    gaps.append(RT["gap_slope"])
+                extra = [ev["rain"]] if b_["type"] in ("safest", "current") and ev.get("rain") else []
+                b_["evidence"] = (b_["evidence"] + extra)[:7]
+                b_["gaps"] = gaps[:4]
+                b_["local_review"] = o["local_review"]
+                if b_["type"] == "current":
+                    b_["name"] = X["cur_name"].format(rot=current_txt or b_["name"])
+            rotations = _sort_rots([b_ for b_ in built if b_["type"] != "current"]) + [b_ for b_ in built if b_["type"] == "current"]
 
     # Explication IA
     ai_explanation = T["ai"].format(
