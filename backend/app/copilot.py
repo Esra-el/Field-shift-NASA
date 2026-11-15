@@ -17,14 +17,15 @@ Rules the `ai` agent must honor:
     the live demo can never hard-fail on this call.
 
 REPLY LANGUAGE
-  * explain()  — has no question, so it replies in the language the user SELECTED
-    in the app (the `lang` toggle): FR / EN / IT, or ES for the pilot region.
-  * answer()   — replies in the language the farmer TYPED the question in (the
-    input drives the output). A French question gets a French answer, an English
-    question an English answer, even if the app toggle is set to something else.
-    The live model mirrors the question's language itself; the no-AI fallback
-    uses a small language detector. Either way the reply is ONE language, never
-    a French/English mix.
+  * Both explain() and answer() reply in the language the user SELECTED in the app
+    (the `lang` toggle) by DEFAULT: FR / EN / IT, or ES for the pilot region.
+  * answer() also honors an explicit in-question override — "answer in Italian",
+    "reply in Chinese" — in which case the live model replies in THAT language
+    (any language, not just the four). The no-AI fallback has no model, so it
+    always uses the selected language.
+  * Either way the reply is ONE language, never a French/English/Spanish mix: the
+    model gets one named default and is told to TRANSLATE the (possibly
+    other-language) data rather than copy foreign words.
 
 HOW IT WORKS
   One Gemini call (a fast, free-tier Flash model) turns the structured
@@ -46,7 +47,6 @@ from __future__ import annotations
 import json
 import logging
 import os
-import re
 
 _log = logging.getLogger("copilot")
 # Last copilot failure reason (NEVER the API key) — surfaced in logs and on
@@ -66,53 +66,6 @@ _NASA_SOURCES = (
     "GPM IMERG (rainfall), SMAP (soil moisture), MODIS/VIIRS (NDVI vegetation)"
 )
 _LANGS = ("en", "es", "fr", "it")
-
-
-# --------------------------------------------------------------------------- #
-# Language detection for the no-AI fallback (the live model detects it itself)
-# --------------------------------------------------------------------------- #
-# Distinctive, high-frequency markers per language. ES/FR/IT share Latin roots,
-# so we lean on words that are unique to one language ("aide"=FR, "ayuda"=ES,
-# "aiuto"=IT, "help"=EN; "besoin"/"necesito"/"bisogno"/"need") plus accented
-# characters. A weak/ambiguous signal keeps the app's selected language.
-_LANG_MARKERS = {
-    "en": {"the", "what", "when", "how", "should", "need", "help", "water", "drought",
-           "plant", "my", "soil", "rain", "why", "can", "do", "is", "and", "for", "hello"},
-    "es": {"el", "la", "los", "que", "cómo", "cuándo", "por", "para", "qué", "agua",
-           "sequía", "sembrar", "debo", "necesito", "ayuda", "cultivo", "lluvia",
-           "suelo", "mi", "está", "hola", "cuánta", "cualquier", "cosa", "hacer",
-           "ahora", "puedo"},
-    "fr": {"le", "la", "les", "que", "comment", "quand", "pour", "quoi", "dois",
-           "besoin", "aide", "eau", "sécheresse", "semer", "sol", "pluie", "est",
-           "quelle", "mon", "bonjour", "je", "faire"},
-    "it": {"il", "la", "che", "come", "quando", "per", "cosa", "devo", "bisogno",
-           "aiuto", "acqua", "siccità", "seminare", "suolo", "pioggia", "quale",
-           "mio", "ciao", "ho", "fare"},
-}
-_LANG_CHARS = {"es": "ñ¿¡", "fr": "çàâêëîïôûœ", "it": "àèéìòù"}
-
-
-def _detect_lang(text: str, default: str = "es") -> str:
-    """Best-effort guess of the language `text` is written in (one of _LANGS).
-
-    Returns `default` when the text is too short or the signal is ambiguous, so
-    a one-word "ok?" never flips the language away from what the user chose.
-    """
-    default = default if default in _LANGS else "es"
-    t = (text or "").lower()
-    if len(t.strip()) < 2:
-        return default
-    tokens = set(re.findall(r"[a-zà-ÿñ]+", t))
-    scores = {lg: len(tokens & words) for lg, words in _LANG_MARKERS.items()}
-    for lg, chars in _LANG_CHARS.items():
-        if any(c in t for c in chars):
-            scores[lg] += 2
-    best = max(scores, key=scores.get)
-    ranked = sorted(scores.values(), reverse=True)
-    # No real signal, or a tie for first place -> trust the app's chosen language.
-    if scores[best] == 0 or (len(ranked) > 1 and ranked[0] == ranked[1]):
-        return default
-    return best
 
 
 # --------------------------------------------------------------------------- #
@@ -216,8 +169,9 @@ def _fallback_explain(recommendation: dict, field: dict, lang: str = "es") -> st
 
 
 def _fallback_answer(question: str, recommendation: dict, field: dict, lang: str = "es") -> str:
-    # The answer echoes the language the question was written in (input-driven).
-    reply_lang = _detect_lang(question, default=lang)
+    # No live model here, so there is no way to honor an explicit "answer in X"
+    # override — the rule-based fallback simply uses the app's selected language.
+    reply_lang = lang if lang in _LANGS else "es"
     base = _loc(_ANSWER_OPENER, reply_lang) + _fallback_summary(recommendation, reply_lang)
     if _api_key():
         # Key present but the live call failed — give the clean answer, no noise.
@@ -229,6 +183,13 @@ def _fallback_answer(question: str, recommendation: dict, field: dict, lang: str
 # Prompt construction
 # --------------------------------------------------------------------------- #
 def _system_prompt(lang: str, mode: str) -> str:
+    # `lang` is the app's SELECTED language (the website toggle) — the DEFAULT
+    # reply language for both explain() and answer(). For answer(), the farmer can
+    # override it right in the question ("answer in Italian", "reply in Chinese"),
+    # which the multilingual model handles for ANY language. We hand the model one
+    # explicit named default and tell it to TRANSLATE the (possibly other-language)
+    # data — that is what stops the French/English/Spanish mixing.
+    reply_lang = {"en": "English", "es": "Spanish", "fr": "French", "it": "Italian"}.get(lang, "Spanish")
     rules = (
         "You are Field Shift's copilot. You help a rain-fed farmer understand a "
         "drought-planning recommendation.\n"
@@ -241,23 +202,22 @@ def _system_prompt(lang: str, mode: str) -> str:
         "- Be short and concrete, and finish with one clear next action.\n"
     )
     if mode == "answer":
-        # Input-driven: the reply language follows the farmer's question, not the
-        # app toggle. The model detects and mirrors it.
         rules += (
-            "- LANGUAGE: write your ENTIRE reply in the SAME language as the "
-            "farmer's question below. If the question is in English, answer in "
-            "English; in French, answer in French; in Spanish, Spanish; in "
-            "Italian, Italian. Do NOT mix languages, and do not use any other "
-            "language even if the DATA is written in a different one.\n"
+            f"- LANGUAGE: reply in {reply_lang} by DEFAULT (the app's selected "
+            "language). EXCEPTION: if the farmer's question explicitly asks you to "
+            "reply in another language (for example \"answer in Italian\", \"reply "
+            "in Chinese\"), reply in THAT language instead. Either way: Do NOT mix "
+            "languages, use one language only. The DATA may be in another language; "
+            "TRANSLATE anything you use into your reply language, never copy foreign "
+            "words.\n"
             "- Answer using ONLY that DATA. If the question asks for something the "
             "DATA does not have that information, say so plainly and do not guess.\n"
         )
     else:
-        reply_lang = {"en": "English", "es": "Spanish", "fr": "French", "it": "Italian"}.get(lang, "Spanish")
         rules += (
             f"- LANGUAGE: write your ENTIRE reply in {reply_lang}. Do NOT mix "
-            "languages and do not use any other language, even if the DATA is "
-            "written in a different one.\n"
+            "languages, use no other language. The DATA may be in another language; "
+            f"TRANSLATE anything you use into {reply_lang}, never copy foreign words.\n"
         )
     return rules
 
@@ -361,17 +321,18 @@ def explain(recommendation: dict, field: dict, lang: str = "es") -> str:
 
 
 def answer(question: str, recommendation: dict, field: dict, lang: str = "es") -> str:
-    # Input-driven: the reply is written in the language the farmer typed the
-    # question in. The live model mirrors it (see the "answer" system prompt);
-    # the no-AI fallback detects it. `lang` is only the default when the
-    # question is too short/ambiguous to tell.
+    # Reply language = the app's SELECTED language (`lang`, the website toggle) by
+    # DEFAULT. The farmer can override it inside the question itself ("answer in
+    # Italian"), which the model honors. No question-language guessing — the stable
+    # toggle default is also what stops the mixing.
+    reply_lang = lang if lang in _LANGS else "es"
     try:
-        text = _call_model(_system_prompt(lang, "answer"), _answer_user(question, recommendation, field))
+        text = _call_model(_system_prompt(reply_lang, "answer"), _answer_user(question, recommendation, field))
         if text:
             return text
     except Exception:
         pass
-    return _fallback_answer(question, recommendation, field, lang)
+    return _fallback_answer(question, recommendation, field, reply_lang)
 
 
 def status() -> dict:

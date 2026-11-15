@@ -238,38 +238,49 @@ def test_explain_prompt_is_spanish_by_default(monkeypatch):
     assert "Spanish" in _system_of(fake.calls[0])
 
 
-# The reply language follows the QUESTION the farmer typed (input-driven), not
-# the app toggle: a French question gets a French answer even if the UI is
-# English. The live model mirrors it; the no-key fallback detects it.
-def test_answer_prompt_tells_model_to_mirror_the_question_language(monkeypatch):
+# The reply language is the app's SELECTED language (the toggle) by DEFAULT; the
+# farmer can override it inside the question ("answer in Italian"), which the
+# model honors. No question-language guessing.
+def test_answer_prompt_defaults_to_app_language(monkeypatch):
     fake = _FakeClient(reply="ok")
     _with_fake(monkeypatch, fake)
-    # English question, Spanish UI -> the model is told to answer in the
-    # question's language, NOT forced into the Spanish toggle.
-    copilot.answer("When should I plant, and why?", REC, FIELD, lang="es")
+    # English question but the app toggle is French -> the DEFAULT reply is French
+    # (the toggle), not driven by the question's language.
+    copilot.answer("When should I plant, and why?", REC, FIELD, lang="fr")
+    sysp = _system_of(fake.calls[0])
+    assert "French by DEFAULT" in sysp
+    assert "English by DEFAULT" not in sysp
+
+
+def test_answer_prompt_allows_explicit_language_override(monkeypatch):
+    fake = _FakeClient(reply="ok")
+    _with_fake(monkeypatch, fake)
+    copilot.answer("Answer in Italian please", REC, FIELD, lang="fr")
     sysp = _system_of(fake.calls[0]).lower()
-    assert "same language as" in sysp
-    assert "reply in spanish" not in sysp
+    # The override instruction is present so the model can switch on request.
+    assert "answer in italian" in sysp and "reply in another language" in sysp
 
 
-def test_answer_fallback_follows_english_question(monkeypatch):
+def test_answer_fallback_uses_app_language_not_question(monkeypatch):
+    # No key -> rule-based fallback, in the app's SELECTED language, regardless of
+    # the language the question happens to be typed in.
     _no_keys(monkeypatch)
-    out = copilot.answer("I need help, what should I do?", REC, FIELD, lang="es").lower()
-    assert "drought risk" in out        # English, although the UI toggle is Spanish
-    assert "riesgo" not in out
-
-
-def test_answer_fallback_follows_french_question(monkeypatch):
-    _no_keys(monkeypatch)
-    out = copilot.answer("J'ai besoin d'aide, que faire ?", REC, FIELD, lang="en").lower()
-    assert "sécheresse" in out          # French, although the UI toggle is English
+    out = copilot.answer("When should I plant?", REC, FIELD, lang="es").lower()
+    assert "riesgo" in out              # Spanish (the toggle), not the English question
     assert "drought risk" not in out
 
 
-def test_answer_fallback_follows_italian_question(monkeypatch):
+def test_answer_fallback_french_toggle(monkeypatch):
     _no_keys(monkeypatch)
-    out = copilot.answer("Ho bisogno di aiuto, cosa devo fare?", REC, FIELD, lang="en").lower()
-    assert "siccità" in out             # Italian
+    out = copilot.answer("When should I plant?", REC, FIELD, lang="fr").lower()
+    assert "sécheresse" in out          # French (the toggle)
+    assert "drought risk" not in out
+
+
+def test_answer_fallback_italian_toggle(monkeypatch):
+    _no_keys(monkeypatch)
+    out = copilot.answer("When should I plant?", REC, FIELD, lang="it").lower()
+    assert "siccità" in out             # Italian (the toggle)
 
 
 def test_answer_fallback_short_question_uses_ui_language(monkeypatch):
