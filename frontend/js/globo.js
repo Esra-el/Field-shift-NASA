@@ -349,7 +349,10 @@
   function flyToField(lat, lng) {
     if (!map) return new Promise((r) => setTimeout(r, 600));
     spinner.pause();
-    return mapReady.then(() => new Promise((resolve) => {
+    // Garde-fou : si le navigateur met l'animation en pause (onglet en arrière-plan,
+    // carte qui ne charge pas), le rapport s'affiche quand même après 7 s.
+    const cap = new Promise((r) => setTimeout(r, 7000));
+    return Promise.race([cap, mapReady.then(() => new Promise((resolve) => {
       placeMarker(lat, lng);
       map.flyTo({ center: [lng, lat], zoom: 2.2, pitch: 0, bearing: 0, duration: 1600, essential: true });
       map.once("moveend", () => {
@@ -360,7 +363,7 @@
           resolve();
         });
       });
-    }));
+    }))]);
   }
 
   /* =====================================================

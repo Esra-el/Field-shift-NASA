@@ -566,7 +566,7 @@
   const LOCALE = { es: "es-419", en: "en-US", fr: "fr-FR", it: "it-IT" };
   const KEY = "fs_lang";
   let lang = "fr";
-  try { lang = localStorage.getItem(KEY) || "fr"; } catch (e) {}
+  try { lang = localStorage.getItem(KEY) || (() => { try { const n = (navigator.languages || [navigator.language || ""]).map((x) => String(x).slice(0, 2).toLowerCase()); return n.find((x) => ["fr", "en", "it"].includes(x)) || "en"; } catch (e) { return "en"; } })(); } catch (e) {}
   if (!ORDER.includes(lang)) lang = "fr";
 
   function t(key) { return (DICT[lang] && DICT[lang][key]) || DICT.fr[key] || DICT.en[key] || key; }

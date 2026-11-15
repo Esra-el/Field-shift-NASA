@@ -267,7 +267,7 @@ def best_start(site: Site, key: str, earliest: date, first: bool, horizon_days: 
 
 
 def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, current_txt: str, soil_moisture: float,
-          retention: float, irrigation_mm: float, lang: str, risk_level: str) -> list[dict[str, Any]] | None:
+          retention: float, irrigation_mm: float, lang: str, risk_level: str, lat: float = 0.0) -> list[dict[str, Any]] | None:
     """Trois rotations calculées pour le lieu + la rotation actuelle. None si les normales manquent."""
     if not live.get("clim_mm_day"):
         return None
@@ -287,9 +287,12 @@ def build(live: dict[str, Any], today: date, sow: date, farmer_crop: str, curren
     def pick(keys, weight=lambda a: a["score"]):
         return max(keys, key=lambda k: weight(first[k]))
 
+    # Le mucuna est une couverture TROPICALE : on ne le propose qu'entre ~25° N et 25° S.
+    covers = ("mucuna", "vetch_oats") if abs(lat) <= 25 else ("vetch_oats",)
+
     def cover_at(start: date) -> dict[str, Any]:
         """La couverture qui pousse le mieux si on la sème à `start` (juste après une récolte)."""
-        return max((assess(site, k, start, False) for k in ("mucuna", "vetch_oats")), key=lambda a: a["score"])
+        return max((assess(site, k, start, False) for k in covers), key=lambda a: a["score"])
 
     def chain(keys: list[str], keep_order: bool = False, fill: bool = True) -> list[dict[str, Any]]:
         # Les cultures suivent l'ordre de LEUR meilleure saison (ex. la saison des pluies

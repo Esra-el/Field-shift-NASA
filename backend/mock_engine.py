@@ -527,7 +527,7 @@ def generate_recommendation(payload: dict[str, Any], live: dict[str, Any] | None
     if is_live and _rot_build is not None:
         try:
             built = _rot_build(live, today, window_start, crop, current_txt, soil_moisture, retention,
-                               irrigation_mm, lang, risk_level)
+                               irrigation_mm, lang, risk_level, lat=latitude)
         except Exception:
             built = None
         if built:

@@ -3,6 +3,9 @@
   const T = Terra.t;
   const $ = (id) => document.getElementById(id);
 
+  // En mode invité il n'y a pas de compte à gérer : on propose d'en créer un.
+  if (FSAuth.guest && FSAuth.guest()) { location.replace("/connexion.html#inscription"); return; }
+
   function u() { return FSAuth.user() || {}; }
 
   function paintId() {

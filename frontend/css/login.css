@@ -63,3 +63,9 @@ body { margin: 0; min-height: 100vh; background: #E6E7DE; color: #1D231B; font-f
 .lg-form input { width: 100%; }
 @media (max-width: 520px) { .lg-row { grid-template-columns: 1fr; } }
 .lg-check input { width: 18px !important; flex: none; padding: 0; }
+
+/* Accès invité */
+.lg-guest { display: grid; gap: 6px; margin-top: 18px; padding-top: 18px; border-top: 1px solid rgba(29,35,27,.12); }
+.lg-btn-ghost { background: transparent; color: #1D231B; border: 1.5px solid #1D231B; }
+.lg-btn-ghost:hover { background: rgba(29,35,27,.06); }
+.lg-guest .lg-sub { margin: 0; font-size: .85rem; }

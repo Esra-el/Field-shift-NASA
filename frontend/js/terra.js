@@ -307,7 +307,8 @@
   const LOCALE = { fr: "fr-FR", en: "en-US", it: "it-IT" };
 
   let lang = "fr";
-  try { lang = localStorage.getItem("fs_lang") || "fr"; } catch (e) {}
+  // Premier passage : la langue du navigateur (FR/EN/IT), sinon l'anglais (jury international).
+  try { lang = localStorage.getItem("fs_lang") || (() => { try { const n = (navigator.languages || [navigator.language || ""]).map((x) => String(x).slice(0, 2).toLowerCase()); return n.find((x) => ["fr", "en", "it"].includes(x)) || "en"; } catch (e) { return "en"; } })(); } catch (e) {}
   if (!DICT[lang]) lang = "fr";
 
   function t(key, vars) {

@@ -86,6 +86,9 @@
     } catch (x) { err("up-err", FSAuth.errKey(x)); busy($("up-go"), false); }
   });
 
+  /* ---------- Essayer sans compte (jury, démo) ---------- */
+  $("guest-go").addEventListener("click", () => { FSAuth.startGuest(); location.href = next ? dest : "/globo.html"; });
+
   /* ---------- Langue ---------- */
   document.querySelector(".lg-lang").addEventListener("click", (e) => {
     const b = e.target.closest("button[data-l]");
