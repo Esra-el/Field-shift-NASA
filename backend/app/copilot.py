@@ -59,7 +59,7 @@ _LAST_ERROR = None
 # flash-lite is purpose-built for high-volume, low-latency tasks. Override via
 # env GEMINI_MODEL if you want a different one.
 _MODEL = os.environ.get("GEMINI_MODEL", "gemini-3.1-flash-lite")
-_MAX_TOKENS = 500          # short output -> low latency
+_MAX_TOKENS = 220          # force SHORT chat replies (also low latency)
 _TIMEOUT_MS = 10_000       # per-attempt; API minimum is 10s (8s is rejected 400)
 _NASA_SOURCES = (
     "NASA POWER (weather, solar radiation, evapotranspiration), "
@@ -199,7 +199,9 @@ def _system_prompt(lang: str, mode: str) -> str:
         "- When you mention a measurement, name the NASA source behind it: "
         f"{_NASA_SOURCES}.\n"
         "- Use simple, warm, farmer-friendly words. No jargon.\n"
-        "- Be short and concrete, and finish with one clear next action.\n"
+        "- Keep EVERY reply SHORT: 1-3 sentences, direct and plain. Never write "
+        "long paragraphs or list out all the data unless the farmer explicitly "
+        "asks for full detail.\n"
     )
     if mode == "answer":
         rules += (
@@ -212,14 +214,13 @@ def _system_prompt(lang: str, mode: str) -> str:
             "words.\n"
             "- Answer using ONLY that DATA. If the question asks for something the "
             "DATA does not have that information, say so plainly and do not guess.\n"
-            "- SCOPE: you are a CHAT assistant, not a report. Only give field "
-            "details (the drought risk, water budget, planting window, rotations, "
-            "or the numbers) when the farmer ASKS about that specific topic. For "
-            "ANYTHING else — a greeting, small talk, a thank-you, or a request such "
-            "as changing language — reply briefly and naturally to what they said, "
-            "then ask what they would like to know (or offer 2-3 topics). NEVER "
-            "volunteer the whole recommendation or list all the numbers unprompted; "
-            "keep it to one or two short sentences unless they ask for detail.\n"
+            "- SCOPE: you are a CHAT assistant, not a report. For a greeting, small "
+            "talk, a thank-you, a language request, or any message that is NOT a "
+            "specific question about the field, reply with ONLY a short greeting or "
+            "acknowledgement plus a question about what they want to know (or 2-3 "
+            "topic options) — include NO risk score, NO water numbers, NO planting "
+            "window, and no other field data at all. Give field details ONLY when "
+            "the farmer asks about that specific topic, and keep even those short.\n"
         )
     else:
         rules += (
