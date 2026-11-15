@@ -268,8 +268,9 @@ def test_answer_prompt_stays_conversational_not_a_report(monkeypatch):
     _with_fake(monkeypatch, fake)
     copilot.answer("I need help", REC, FIELD, lang="en")
     sysp = _system_of(fake.calls[0]).lower()
-    assert "chat assistant, not a report" in sysp
-    assert "no risk score" in sysp          # a greeting carries NO field data
+    assert "not a report" in sysp
+    assert "off-topic" in sysp              # declines recipes / unrelated chit-chat
+    assert "rephrase" in sysp               # handles gibberish
     assert "1-3 sentences" in sysp          # every reply stays short
 
 
