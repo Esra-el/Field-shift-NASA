@@ -24,9 +24,38 @@
 
   function initials(u) { return ((u.first_name || " ")[0] + (u.last_name || " ")[0]).toUpperCase().trim() || "?"; }
 
+  /* ---- Menu « burger » : la barre latérale devient un tiroir ---- */
+  function setNav(on) {
+    document.body.classList.toggle("nav-open", on);
+    const b = document.querySelector(".nav-burger");
+    if (b) { b.setAttribute("aria-expanded", on ? "true" : "false"); b.querySelector("iconify-icon").setAttribute("icon", on ? "lucide:x" : "lucide:menu"); }
+    const s = document.getElementById("d-side");
+    if (s) s.setAttribute("aria-hidden", on ? "false" : "true");
+  }
+
+  function ensureChrome() {
+    if (document.querySelector(".nav-burger")) return;
+    const burger = document.createElement("button");
+    burger.type = "button";
+    burger.className = "nav-burger";
+    burger.setAttribute("aria-label", "Menu");
+    burger.setAttribute("aria-expanded", "false");
+    burger.setAttribute("aria-controls", "d-side");
+    burger.innerHTML = `<iconify-icon icon="lucide:menu" width="24" height="24"></iconify-icon>`;
+    const scrim = document.createElement("div");
+    scrim.className = "nav-scrim";
+    scrim.setAttribute("aria-hidden", "true");
+    burger.addEventListener("click", () => setNav(!document.body.classList.contains("nav-open")));
+    scrim.addEventListener("click", () => setNav(false));
+    document.addEventListener("keydown", (e) => { if (e.key === "Escape" && document.body.classList.contains("nav-open")) setNav(false); });
+    document.body.append(scrim, burger);
+  }
+
   function render() {
     const el = document.getElementById("d-side");
     if (!el) return;
+    ensureChrome();
+    el.setAttribute("aria-hidden", document.body.classList.contains("nav-open") ? "false" : "true");
     const page = document.body.dataset.page;
     const u = FSAuth.user() || {};
     const ic = (i) => `<span class="d-ic"><iconify-icon icon="${i}" width="18" height="18"></iconify-icon></span>`;
@@ -48,7 +77,7 @@
       const b = e.target.closest("button[data-l]");
       if (b) FSI18N.setLang(b.dataset.l);
     });
-    el.querySelector("#d-nav-ai").addEventListener("click", () => window.FSAssistant && FSAssistant.open());
+    el.querySelector("#d-nav-ai").addEventListener("click", () => { setNav(false); window.FSAssistant && FSAssistant.open(); });
     el.querySelector("#d-logout").addEventListener("click", () => FSAuth.logout());
     Terra.apply(el);
   }
@@ -61,6 +90,6 @@
     if (i) i.textContent = initials(u);
   });
 
-  window.FSSide = { setAlerts() {} };
+  window.FSSide = { setAlerts() {}, openNav: () => setNav(true), closeNav: () => setNav(false) };
   document.addEventListener("DOMContentLoaded", render);
 })();

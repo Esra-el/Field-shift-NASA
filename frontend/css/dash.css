@@ -12,7 +12,7 @@ body.dash {
   --lime-2: #D3E23A;
   --line: rgba(29, 35, 27, .12);
   margin: 0; height: 100vh; overflow: hidden;
-  display: grid; grid-template-columns: 168px minmax(0, 1fr);
+  display: grid; grid-template-columns: 1fr; /* barre latérale en tiroir (burger) : le contenu prend toute la largeur */
   background: var(--sage); color: var(--dk); font-family: "BDO Grotesk", system-ui, sans-serif;
 }
 body.dash h1, body.dash h2 { margin: 0; letter-spacing: -.03em; }
@@ -273,24 +273,58 @@ body.dash-an .fab { display: inline-flex; }
 /* =====================================================
    Analyse v2 : l'espace derrière le globe + textes plus lisibles
    ===================================================== */
-/* Fond spatial étoilé (au lieu de la photo du ciel) */
-body.dash-an .an-globe { background: #05080D; }
+/* ============================================================
+   Fond « espace réel » derrière le globe : ciel profond + nébuleuse
+   douce + trois couches d'étoiles de tailles variées, scintillement lent.
+   ============================================================ */
+body.dash-an .an-globe { background: #03060C; }
+
+/* Ciel profond + voie lactée en diagonale (bande d'étoiles diffuse, teintes froides) */
 body.dash-an .an-globe .sat-bg {
   inset: 0; animation: none; transform: none;
   background:
-    radial-gradient(1px 1px at 12% 18%, rgba(255,255,255,.9), transparent 60%),
-    radial-gradient(1px 1px at 27% 72%, rgba(255,255,255,.7), transparent 60%),
-    radial-gradient(1.5px 1.5px at 41% 33%, rgba(255,255,255,.85), transparent 60%),
-    radial-gradient(1px 1px at 58% 84%, rgba(255,255,255,.6), transparent 60%),
-    radial-gradient(1.5px 1.5px at 69% 12%, rgba(255,255,255,.9), transparent 60%),
-    radial-gradient(1px 1px at 83% 46%, rgba(255,255,255,.75), transparent 60%),
-    radial-gradient(1px 1px at 91% 78%, rgba(255,255,255,.65), transparent 60%),
-    radial-gradient(1px 1px at 6% 58%, rgba(255,255,255,.6), transparent 60%),
-    radial-gradient(1px 1px at 35% 93%, rgba(255,255,255,.55), transparent 60%),
-    radial-gradient(1px 1px at 76% 64%, rgba(255,255,255,.5), transparent 60%),
-    radial-gradient(1px 1px at 18% 40%, rgba(255,255,255,.45), transparent 60%),
-    radial-gradient(1px 1px at 52% 6%, rgba(255,255,255,.6), transparent 60%),
-    radial-gradient(120% 90% at 50% 45%, #0E1B2A 0%, #070B12 55%, #030508 100%);
+    radial-gradient(70% 55% at 80% 12%, rgba(86, 120, 210, .20), transparent 68%),
+    radial-gradient(60% 52% at 16% 86%, rgba(132, 86, 182, .18), transparent 70%),
+    radial-gradient(44% 34% at 60% 58%, rgba(44, 162, 162, .10), transparent 70%),
+    linear-gradient(116deg, transparent 30%, rgba(150, 170, 225, .10) 44%, rgba(182, 158, 220, .12) 51%, rgba(150, 170, 225, .08) 58%, transparent 70%),
+    radial-gradient(135% 105% at 50% 40%, #0C1830 0%, #080E1E 44%, #04070F 76%, #01030A 100%);
+}
+
+/* Couche A : étoiles vives, en motif répété pour une densité réaliste. Scintillement lent. */
+body.dash-an .an-globe .sat-bg::before {
+  content: ""; position: absolute; inset: -2%; pointer-events: none; z-index: 0;
+  background-repeat: repeat;
+  background-size: 260px 240px;
+  background-image:
+    radial-gradient(2px 2px at 36px 44px, rgba(255,255,255,1), transparent 58%),
+    radial-gradient(1.6px 1.6px at 190px 30px, rgba(216,232,255,.95), transparent 60%),
+    radial-gradient(1.8px 1.8px at 118px 150px, rgba(255,255,255,.98), transparent 58%),
+    radial-gradient(1.5px 1.5px at 232px 196px, rgba(255,246,232,.92), transparent 60%),
+    radial-gradient(1.4px 1.4px at 66px 214px, rgba(205,224,255,.9), transparent 60%),
+    radial-gradient(1.7px 1.7px at 150px 92px, rgba(255,255,255,.96), transparent 58%);
+  animation: twinkle-a 5.6s ease-in-out infinite;
+}
+
+/* Couche B : poussière d'étoiles fines et nombreuses (motif plus serré, décalé). */
+body.dash-an .an-globe .sat-bg::after {
+  content: ""; position: absolute; inset: -2%; pointer-events: none; z-index: 0;
+  background-repeat: repeat;
+  background-size: 150px 140px;
+  background-position: 40px 20px;
+  background-image:
+    radial-gradient(1px 1px at 18px 24px, rgba(255,255,255,.75), transparent 60%),
+    radial-gradient(1px 1px at 92px 14px, rgba(255,255,255,.62), transparent 60%),
+    radial-gradient(.8px .8px at 134px 62px, rgba(210,228,255,.6), transparent 60%),
+    radial-gradient(1px 1px at 52px 88px, rgba(255,255,255,.68), transparent 60%),
+    radial-gradient(.8px .8px at 112px 116px, rgba(255,248,236,.58), transparent 60%),
+    radial-gradient(1px 1px at 8px 120px, rgba(255,255,255,.64), transparent 60%),
+    radial-gradient(.8px .8px at 142px 36px, rgba(255,255,255,.52), transparent 60%);
+  animation: twinkle-b 8s ease-in-out infinite;
+}
+@keyframes twinkle-a { 0%,100% { opacity: 1; } 48% { opacity: .66; } }
+@keyframes twinkle-b { 0%,100% { opacity: .78; } 42% { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) {
+  body.dash-an .an-globe .sat-bg::before, body.dash-an .an-globe .sat-bg::after { animation: none; }
 }
 body.dash-an .an-globe .sat-shade { background: none; }
 
@@ -494,3 +528,73 @@ a.d-me[aria-current="page"] { background: rgba(255,255,255,.55); }
 body.dash-pg .fab { display: inline-flex; }
 .pg-main { grid-template-columns: minmax(0, 1fr); }
 .pg-main > .pg-card { grid-column: 1 / -1; }
+
+/* =====================================================
+   Menu « burger » : la barre latérale devient un tiroir
+   (toutes les pages de l'app : inicio, analyse, eau, saison, rotations, compte)
+   ===================================================== */
+.nav-burger {
+  position: fixed; top: 14px; left: 14px; z-index: 95;
+  width: 46px; height: 46px; border: 0; border-radius: 14px;
+  background: var(--sage, #E6E7DE); color: var(--dk, #1D231B);
+  box-shadow: 0 4px 16px rgba(0,0,0,.16); display: grid; place-items: center; cursor: pointer;
+  transition: background .18s ease, transform .18s ease;
+}
+.nav-burger:hover { background: #fff; transform: translateY(-1px); }
+.nav-burger:active { transform: translateY(0); }
+.nav-burger iconify-icon { pointer-events: none; }
+body.nav-open .nav-burger { background: #fff; }
+
+.nav-scrim {
+  position: fixed; inset: 0; z-index: 88;
+  background: rgba(10,14,8,.44); -webkit-backdrop-filter: blur(2px); backdrop-filter: blur(2px);
+  opacity: 0; visibility: hidden; transition: opacity .28s ease, visibility .28s ease;
+}
+body.nav-open .nav-scrim { opacity: 1; visibility: visible; }
+
+/* Tiroir : vaut à toutes les tailles (bat la règle mobile grâce à body.dash) */
+body.dash .d-side {
+  position: fixed; top: 0; left: 0; z-index: 90;
+  width: 232px; max-width: 86vw; height: 100vh; height: 100dvh;
+  flex-direction: column; align-items: stretch; gap: 22px;
+  padding: 76px 16px 20px; overflow-x: hidden; overflow-y: auto;
+  background: var(--sage); box-shadow: 0 0 46px rgba(0,0,0,.30);
+  transform: translateX(-102%); transition: transform .3s cubic-bezier(.33,1,.68,1);
+}
+body.dash.nav-open .d-side { transform: none; }
+
+/* Dans le tiroir, on rétablit l'affichage complet même sur mobile
+   (la barre mobile compacte est neutralisée). */
+body.dash .d-side .d-nav { display: grid; margin-top: 14px; gap: 6px; flex: initial; }
+body.dash .d-side .d-nav a, body.dash .d-side .d-nav button { padding: 5px 6px; width: 100%; }
+body.dash .d-side .d-nav a span:not(.d-ic), body.dash .d-side .d-nav button span:not(.d-ic) { display: inline; }
+body.dash .d-side .d-side-bottom { display: grid; margin: auto 0 0; flex: initial; gap: 8px; }
+body.dash .d-side .d-side-bottom .d-row > span:not(.d-ic):not(.d-avatar):not(.d-me-txt) { display: inline; }
+body.dash .d-side .d-side-bottom .d-me-txt { display: grid; }
+body.dash .d-side .d-me { display: flex; }
+body.dash .d-side .d-lang .d-ic { display: grid; }
+
+/* =====================================================
+   Page analyse : l'assistant IA devient une pastille ronde,
+   posée sous les commandes de zoom (+ / −) en haut à droite du globe,
+   de la même forme que ces boutons mais dans sa couleur citron.
+   ===================================================== */
+body.dash-an .fab {
+  top: 150px; right: 18px; bottom: auto; left: auto;
+  width: 46px; min-width: 0; height: 46px; padding: 0; gap: 0;
+  border-radius: 50%; justify-content: center;
+  background: var(--leaf-300); color: var(--ink);
+  box-shadow: 0 8px 22px rgba(4,48,59,.40), 0 0 0 1px rgba(255,255,255,.14);
+}
+body.dash-an .fab .fab-label { display: none; }
+body.dash-an .fab .fab-dot { top: -2px; right: -2px; }
+/* Plus besoin de réserver la place du bouton flottant en bas à droite */
+@media (min-width: 1000px) { body.dash-an .an-globe .g-bottom { padding-right: 0; } }
+
+/* Laisser respirer le coin haut-gauche sous le bouton burger */
+body.dash-an .an-panel { padding-top: 46px; }
+@media (max-width: 1099px) { body.dash-an .an-panel { padding-top: 70px; } }
+/* Pages secondaires (eau, saison, rotations, compte) : même dégagement */
+body.dash-pg .pg-main { padding-top: 58px; }
+/* Mobile : le globe est en haut ; on décale son cartouche sous le burger */
+@media (max-width: 1099px) { body.dash-an .an-globe .g-top { left: 66px; } }
