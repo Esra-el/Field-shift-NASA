@@ -32,17 +32,6 @@ It also shows a 3D globe with the data layers, a water budget, a planting window
 
 We checked the numbers against independent forecasts (MET Norway, ECMWF, ERA5) in 6 locations: Rome, Paris, Brazzaville, Dakar, Nairobi and Guatemala.
 
-## Run locally
-
-```bash
-cd backend
-python -m venv .venv && .venv/Scripts/activate   # macOS/Linux: source .venv/bin/activate
-pip install -r requirements.txt
-uvicorn main:app --reload                        # → http://127.0.0.1:8000
-```
-
-Optional: `GEMINI_API_KEY=…` in `backend/.env` for the AI assistant (it falls back to built-in answers without a key). Tests: `pytest` in `backend/`.
-
 ## Code
 
 - `backend/`: FastAPI. `live_data.py` (live data), `rotations.py` (rotation engine), `ecostress.py`, `mock_engine.py` (analysis), `app/ml/` (risk model)
